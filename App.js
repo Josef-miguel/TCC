@@ -1,11 +1,14 @@
-import { StatusBar } from 'expo-status-bar';
+
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function App() {
   return (
+    // Fazer tela splash com o ícone
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <Text>Página Inicial</Text>
+{/* Tela login  */}
+<Text>Ainda não possui uma conta</Text>
+{/* Leva para tela de registro */}
     </View>
   );
 }
