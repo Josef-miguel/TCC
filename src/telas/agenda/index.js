@@ -1,0 +1,1 @@
+// Nesta tela deverá estar contido uma agenda com as viagens ou excursões marcadas

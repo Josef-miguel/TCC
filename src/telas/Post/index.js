@@ -1,2 +1,3 @@
 // Nesta seção deverão estar contidas todas as informações da viagem/excrusão como um mapa com a localização da excursão, imagens do destino, sistema de avaliação, um botão para entrar em contato com o organização e um botão de participar da viagem que leva para um modal de confirmação
 // O modal de confirmação devem ter perguntas sobre quem irá viajar e quem vai ir na viagem, que por sua vez leva para um modal de pagamento na qual estão disponíveis opções de pagamento e um botão pagar que abrirá um alerta de pagamento concluído.
+//Modal para o chat
