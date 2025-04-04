@@ -1,10 +1,13 @@
+// Modal de gostos ou algoritomo de recomendação antes da tela de feed em si.
+// A tela de feed deverá conter uma sidebar com os botões Agenda, Minhas viagens. Para o organizador deverá ter um botão extra Criar viagem. Alem de um ícone de perfil que leva para a tela perfil
+// Também deverá conter posts que levam para os mesmos e uma seção de mais populares, além de um sistema de pesquisa
 
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBackground} from 'react-native';
 import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
 
 
-export default function Login({navigation}) {
+export default function Home({navigation}) {
 
   const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
   const[opac] = useState(new Animated.Value(0));

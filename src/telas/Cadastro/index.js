@@ -4,7 +4,7 @@ import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBac
 import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
 
 
-export default function Login({navigation}) {
+export default function Cadastro({navigation}) {
 
   const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
   const[opac] = useState(new Animated.Value(0));
@@ -84,7 +84,7 @@ export default function Login({navigation}) {
       <TouchableOpacity 
         style={styles.botaoRecuperar}
        onPress={() => navigation.navigate('Produtos')}>
-         <Text style={styles.textoRecuperar}>Ainda não possui uma conta? Registre-se</Text>
+         <Text style={styles.textoRecuperar}>Já possui conta?</Text>
       </TouchableOpacity>
 
     </Animated.View>
