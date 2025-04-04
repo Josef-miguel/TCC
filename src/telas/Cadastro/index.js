@@ -57,7 +57,21 @@ export default function Login({navigation}) {
       dataCorrect={false}
       onChangeText={()=>{}}
       ></TextInput>
-    
+      <TextInput 
+      style={styles.input}
+      placeholder="CPF"
+      type='numeric'
+      dataCorrect={false}
+      onChangeText={()=>{}}
+      ></TextInput>
+        <TextInput 
+      style={styles.input}
+      placeholder="Data de nascimento"
+      type='numeric'
+      dataCorrect={false}
+      onChangeText={()=>{}}
+      ></TextInput>
+
       
       <View style={styles.viewBotao}>
       <TouchableOpacity 

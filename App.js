@@ -9,7 +9,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 
 import Login from './src/telas/Login';
-
+import Cadastro from './src/telas/Cadastro'
 
 import {Ionicons} from '@expo/vector-icons';
 
