@@ -66,7 +66,7 @@ const Stack= createStackNavigator();
 
       </Stack.Screen>
       {/* <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> */}
-
+{/* miguel */}
 
     </Stack.Navigator>
   </NavigationContainer>
