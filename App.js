@@ -10,7 +10,13 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import Login from './src/telas/Login';
 import Cadastro from './src/telas/Cadastro'
- import Home from './src/telas/Home'
+import Home from './src/telas/Home'
+import agenda from './src/telas/agenda'
+import formapagamento from './src/telas/formapagamento'
+import historico from './src/telas/historico'
+import perfil from './src/telas/perfil'
+import Post from './src/telas/Post'
+import Registro from './src/telas/Registro'
 import {Ionicons} from '@expo/vector-icons';
 
 const Tab= createBottomTabNavigator();
@@ -47,6 +53,12 @@ function Tabs(){
       <Tab.Screen name= "Login" component={Login}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen>
        <Tab.Screen name= "Home" component={Home}></Tab.Screen> 
+       <Tab.Screen name= "agenda" component={agenda}></Tab.Screen> 
+       <Tab.Screen name= "formapagamento" component={formapagamento}></Tab.Screen> 
+       <Tab.Screen name= "historico" component={historico}></Tab.Screen> 
+       <Tab.Screen name= "perfil" component={perfil}></Tab.Screen> 
+       <Tab.Screen name= "Post" component={Post}></Tab.Screen> 
+       <Tab.Screen name= "Registro" component={Registro}></Tab.Screen> 
       {/* <Tab.Screen name= "Produtos" component={Produtos}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
     </Tab.Navigator>
@@ -70,6 +82,13 @@ const Stack= createStackNavigator();
       </Stack.Screen>
        <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> 
         <Stack.Screen name ="Home" component={Home} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="agenda" component={agenda} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="formapagamento" component={formapagamento} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="historico" component={historico} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="perfil" component={perfil} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="Post" component={Post} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="Registro" component={Registro} options={{headerShown: false}}></Stack.Screen>  
+
 {/* miguel */}
 
     </Stack.Navigator>
