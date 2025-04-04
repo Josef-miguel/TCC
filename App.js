@@ -10,7 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import Login from './src/telas/Login';
 import Cadastro from './src/telas/Cadastro'
-
+ import Home from './src/telas/Home'
 import {Ionicons} from '@expo/vector-icons';
 
 const Tab= createBottomTabNavigator();
@@ -30,6 +30,7 @@ function Tabs(){
         }else if (route.name === 'Login') {
           iconName = focused ? 'people' : 'people';
         }
+        
         else if (route.name === 'Cadastro'){
           iconName = focused ? 'albums-outline' : 'albums-outline';
         }
@@ -44,6 +45,8 @@ function Tabs(){
     }}    
     >  
       <Tab.Screen name= "Login" component={Login}></Tab.Screen>
+      <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen>
+       <Tab.Screen name= "Home" component={Home}></Tab.Screen> 
       {/* <Tab.Screen name= "Produtos" component={Produtos}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
     </Tab.Navigator>
@@ -65,7 +68,8 @@ const Stack= createStackNavigator();
           >
 
       </Stack.Screen>
-      {/* <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> */}
+       <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> 
+        <Stack.Screen name ="Home" component={Home} options={{headerShown: false}}></Stack.Screen>  
 {/* miguel */}
 
     </Stack.Navigator>
