@@ -1,157 +1,72 @@
-// Modal de gostos ou algoritomo de recomendação antes da tela de feed em si.
-// A tela de feed deverá conter uma sidebar com os botões Agenda, Minhas viagens. Para o organizador deverá ter um botão extra Criar viagem. Alem de um ícone de perfil que leva para a tela perfil
-// Também deverá conter posts que levam para os mesmos e uma seção de mais populares, além de um sistema de pesquisa
+import React from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBackground} from 'react-native';
-import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
-
-
-export default function historico({navigation}) {
-
-  const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
-  const[opac] = useState(new Animated.Value(0));
-
-  useEffect(()=> {
-    Animated.parallel([
-      Animated.spring(offset.y, {
-        toValue:0, 
-        speed:4,
-        bounciness:20
-      }),
-      Animated.timing(opac, {
-        toValue:1,
-        duration:2000,
-      })
-    ]).start();
-   
-  }, []);
-  
+export default function historico() {
   return (
-    <ImageBackground source={require('../../../assets/img/fundo.png')} style={styles.imgBg} >
-                
-    <KeyboardAvoidingView 
-    style={styles.background}>
-     <View style={styles.logo}>
-       <Image style={{width:320}} resizeMode = "contain" source={require('../../../assets/img/iconimg.png')}></Image>
-     </View>
-
-    <Animated.View 
-    style={[styles.formulario,
-      {
-        opacity: opac,
-        transform: [{translateY: offset.y}]
-      }
-    
-    ]}>
-      
-      <TextInput 
-      style={styles.input}
-      placeholder="Usuario"
-      type='email'
-      dataCorrect={false}
-      onChangeText={()=>{}}
-      ></TextInput>
-
-      <TextInput
-      style={styles.input}
-      placeholder="Senha"
-      secureTextEntry={true}
-      dataCorrect={false}
-      onChangeText={()=>{}}
-      ></TextInput>
-    
-      
-      <View style={styles.viewBotao}>
-      <TouchableOpacity 
-        style={styles.botao}
-       onPress={() => navigation.navigate('Cadastro')}>
-         <Text style={styles.textoBotao}>Entrar</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton}>
+          <Text style={styles.backText}>← Minhas viagens</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity 
-        style={styles.botaoRecuperar}
-       onPress={() => navigation.navigate('Cadastro')}>
-         <Text style={styles.textoRecuperar}>Ainda não possui uma conta? Registre-se</Text>
-      </TouchableOpacity>
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={18} color="gray" style={styles.searchIcon} />
+        <TextInput
+          placeholder="Buscar"
+          style={styles.searchInput}
+        />
+      </View>
 
-    </Animated.View>
-
-     
-    </KeyboardAvoidingView>
-    </ImageBackground>
+      <ScrollView style={styles.cardsContainer}>
+        <View style={styles.card} />
+        <View style={styles.card} />
+        <View style={styles.card} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  container: {
     flex: 1,
-    //backgroundColor: '#191919',
+    backgroundColor: '#fff',
+    paddingTop: 50,
+  },
+  header: {
+    backgroundColor: '#b0ff9b',
+    padding: 10,
+  },
+  backButton: {
+    flexDirection: 'row',
+  },
+  backText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  searchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    margin: 10,
+    backgroundColor: '#eee',
+    borderRadius: 10,
+    paddingHorizontal: 10,
   },
-
-  logo: {
+  searchIcon: {
+    marginRight: 5,
+  },
+  searchInput: {
     flex: 1,
-    
-    justifyContent: 'center',
+    height: 40,
   },
-
-  formulario: {
-    flex: 1,
-    paddingBottom:30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '90%',
-    marginTop:-50
+  cardsContainer: {
+    marginHorizontal: 10,
   },
-
-  input: {
-    backgroundColor: '#FFF',
-    marginBottom: 15,
-    color: '#222',
-    fontSize: 17,
-    borderRadius: 7,
-    padding:10,
-    width: '90%'
-  },
-
-  viewBotao:{
-    width: '90%',
-    borderRadius: 7,
-  },
-
-  botao: {
-    backgroundColor: '#1a7487',
-    height:45,
-    alignItems:'center',
-    justifyContent:'center',
-    borderRadius: 7,
-    padding:10,
-    
-    
-  },
-  textoBotao:{
-    color:'#FFF',
-    fontSize:18
-  },
-
-  botaoRecuperar:{
-    marginTop:15,
-  },
-
-  textoRecuperar:{
-    color:'#FFF',
-    
-  },
-
-  imgBg:{
-    flex:1,
-    width: null,
-    height: null,
-    opacity: 1,
-    justifyContent: "flex-start",
-    backgroundColor: '#000'
+  card: {
+    height: 50,
+    backgroundColor: '#ddd',
+    borderRadius: 6,
+    marginTop: 10,
   },
 });
