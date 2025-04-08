@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBackground} from 'react-native';
+import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBackground,ScrollView} from 'react-native';
 import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
 
 
@@ -25,6 +25,7 @@ export default function Cadastro({navigation}) {
   }, []);
   
   return (
+    <ScrollView>
     <ImageBackground source={require('../../../assets/img/fundo.png')} style={styles.imgBg} >
                 
     <KeyboardAvoidingView 
@@ -92,6 +93,7 @@ export default function Cadastro({navigation}) {
      
     </KeyboardAvoidingView>
     </ImageBackground>
+    </ScrollView>
   );
 }
 
