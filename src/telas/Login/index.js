@@ -62,7 +62,7 @@ export default function Login({navigation}) {
       <View style={styles.viewBotao}>
       <TouchableOpacity 
         style={styles.botao}
-       onPress={() => navigation.navigate('Cadastro')}>
+       onPress={() => navigation.navigate('Home')}>
          <Text style={styles.textoBotao}>Entrar</Text>
       </TouchableOpacity>
       </View>
