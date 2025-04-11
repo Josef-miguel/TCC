@@ -27,11 +27,11 @@ function Tabs(){
     screenOptions={({ route }) => ({
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
-        if (route.name === 'Produtos') {
+        if (route.name === 'Home') {
           iconName = focused
             ? 'home'
             : 'home';
-        } else if (route.name === 'Produtos') {
+        } else if (route.name === 'Home') {
           iconName = focused ? 'list' : 'list';
         }else if (route.name === 'Login') {
           iconName = focused ? 'people' : 'people';
@@ -40,6 +40,23 @@ function Tabs(){
         else if (route.name === 'Cadastro'){
           iconName = focused ? 'albums-outline' : 'albums-outline';
         }
+        else if (route.name === 'Post'){
+          iconName = focused ? 'albums-outline' : 'albums-outline';
+        }
+        else if (route.name === 'perfil'){
+          iconName = focused ? 'people-circle-outline' : 'people-circle-outline';
+        }
+        else if (route.name === 'historico'){
+          iconName = focused ? 'albums-outline' : 'albums-outline';
+        }
+        else if (route.name === 'formapagamento'){
+          iconName = focused ? 'wallet-outline' : 'wallet-outline';
+        }
+        else if (route.name === 'agenda'){
+          iconName = focused ? 'albums-outline' : 'albums-outline';
+        }
+        
+        
         
         //aqui define os ícones que irão aparecer nas Tabs
         return <Ionicons name={iconName} size={size} color={color} />;
