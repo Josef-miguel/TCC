@@ -60,7 +60,7 @@ export default function perfil({navigation}) {
           />
           
           <View style={styles.viewBotao}>
-            <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('Cadastro')}>
+            <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('formapagamento')}>
               <Text style={styles.textoBotao}>Formas de pagamento</Text>
             </TouchableOpacity>
           </View>
