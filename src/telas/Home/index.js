@@ -14,13 +14,21 @@ export default function Home({ navigation }) {
           style={styles.searchInput}
           placeholder="Quero ir para...."
         />
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Perfil")}
+        >
           <Ionicons name="person-circle-outline" size={24} color="black" />
         </TouchableOpacity>
       </View>
+      {/* FIM DA BARRA SUPERIOR */}
 
-      {/* Lista de posts */}
-      <ScrollView style={styles.scroll}>
+      {/* Lista de posts RECOMENDADOS */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+
         {[
           { color: 'red', fav: false },
           { color: 'lime', fav: true },
@@ -37,7 +45,9 @@ export default function Home({ navigation }) {
             </TouchableOpacity>
           </View>
         ))}
+        {/* FIM DA LISTA DE POSTS RECOMENDADOS */}
 
+        {/* POSTS POPULARES */}
         <Text style={styles.popularesTxt}>Populares recentemente</Text>
 
         {[
@@ -55,6 +65,8 @@ export default function Home({ navigation }) {
             </TouchableOpacity>
           </View>
         ))}
+
+        {/* FIM DA LISTA DE POSTS POPULARES */}
       </ScrollView>
     </View>
   );
@@ -81,6 +93,8 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 10,
+    paddingBottom: 30,
+    flexGrow: 1
   },
   post: {
     height: 80,
