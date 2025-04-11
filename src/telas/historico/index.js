@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function historico() {
+export default function Historico() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>

@@ -7,7 +7,7 @@ import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBac
 import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
 
 
-export default function formapagamento({navigation}) {
+export default function Formapagamento({navigation}) {
 
   const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
   const[opac] = useState(new Animated.Value(0));
