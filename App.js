@@ -9,13 +9,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 
 import Login from './src/telas/Login';
-import Cadastro from './src/telas/Cadastro'
-import Home from './src/telas/Home'
-import Agenda from './src/telas/Agenda'
-import Formapagamento from './src/telas/Formapagamento'
-import Historico from './src/telas/Historico'
-import Perfil from './src/telas/Perfil'
-import Post from './src/telas/Post'
+import Cadastro from './src/telas/Cadastro';
+import Home from './src/telas/Home';
+import Agenda from './src/telas/Agenda';
+import Formapagamento from './src/telas/Formapagamento';
+import Historico from './src/telas/Historico';
+import Perfil from './src/telas/Perfil';
+import Post from './src/telas/Post';
+
 import {Ionicons} from '@expo/vector-icons';
 
 const Tab= createBottomTabNavigator();
