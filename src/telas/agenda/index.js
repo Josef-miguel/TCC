@@ -8,7 +8,7 @@ const numCols = 6;
 // Define quais assentos estão com estrela (exemplo)
 const starSeats = ['1-2', '1-3', '3-3']; // formato: "linha-coluna"
 
-export default function agenda() {
+export default function Agenda() {
   const renderSeat = (row, col) => {
     const key = `${row}-${col}`;
     const isStar = starSeats.includes(key);
