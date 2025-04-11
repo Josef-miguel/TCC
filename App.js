@@ -43,16 +43,16 @@ function Tabs(){
         else if (route.name === 'Post'){
           iconName = focused ? 'albums-outline' : 'albums-outline';
         }
-        else if (route.name === 'perfil'){
+        else if (route.name === 'Perfil'){
           iconName = focused ? 'people-circle-outline' : 'people-circle-outline';
         }
-        else if (route.name === 'historico'){
+        else if (route.name === 'Historico'){
           iconName = focused ? 'albums-outline' : 'albums-outline';
         }
-        else if (route.name === 'formapagamento'){
+        else if (route.name === 'Formapagamento'){
           iconName = focused ? 'wallet-outline' : 'wallet-outline';
         }
-        else if (route.name === 'agenda'){
+        else if (route.name === 'Agenda'){
           iconName = focused ? 'albums-outline' : 'albums-outline';
         }
         
