@@ -91,14 +91,14 @@ const Stack= createStackNavigator();
 
     <Stack.Screen name="Login" component={Login} options={{headerShown: false}}></Stack.Screen>
       <Stack.Screen 
-          name="Produtos" 
+          name="Home" 
           component={Tabs}
           options={{headerShown: false}}
           >
 
       </Stack.Screen>
        <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> 
-        <Stack.Screen name ="Home" component={Home} options={{headerShown: false}}></Stack.Screen>  
+        {/* <Stack.Screen name ="Home" component={Home} options={{headerShown: false}}></Stack.Screen>   */}
         <Stack.Screen name ="Agenda" component={Agenda} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Formapagamento" component={Formapagamento} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Historico" component={Historico} options={{headerShown: false}}></Stack.Screen>  
