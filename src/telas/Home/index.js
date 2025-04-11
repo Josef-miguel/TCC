@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // menu, search, perfil, estrela
 
-export default function Feed({ navigation }) {
+export default function Home({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Barra superior */}
