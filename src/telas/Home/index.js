@@ -155,3 +155,113 @@ const styles = StyleSheet.create({
     backgroundColor: '#000'
   },
 });
+// Ideia para modal do chat 
+// import React, { useState, useCallback, useEffect } from 'react';
+// import { View, StyleSheet, Platform } from 'react-native';
+// import { GiftedChat, InputToolbar, Send, Bubble } from 'react-native-gifted-chat';
+// import { Ionicons } from '@expo/vector-icons';
+
+// export default function Login() {
+//   const [messages, setMessages] = useState([]);
+
+//   useEffect(() => {
+//     setMessages([
+//       {
+//         _id: 3,
+//         text: "No worries. Let me know if you need any help 😊",
+//         createdAt: new Date(),
+//         user: {
+//           _id: 2,
+//           name: 'Brooke',
+//         },
+//       },
+//       {
+//         _id: 2,
+//         text: "It's going well. Thanks for asking!",
+//         createdAt: new Date(),
+//         user: {
+//           _id: 1,
+//           name: 'Lucas',
+//         },
+//       },
+//       {
+//         _id: 1,
+//         text: 'How’s your project going?',
+//         createdAt: new Date(),
+//         user: {
+//           _id: 2,
+//           name: 'Brooke',
+//         },
+//       },
+//     ]);
+//   }, []);
+
+//   const onSend = useCallback((newMessages = []) => {
+//     setMessages((previousMessages) =>
+//       GiftedChat.append(previousMessages, newMessages)
+//     );
+//   }, []);
+
+//   const renderSend = (props) => (
+//     <Send {...props}>
+//       <View style={styles.sendButton}>
+//         <Ionicons name="send" size={24} color="#007AFF" />
+//       </View>
+//     </Send>
+//   );
+
+//   const renderBubble = (props) => (
+//     <Bubble
+//       {...props}
+//       wrapperStyle={{
+//         right: {
+//           backgroundColor: '#007AFF',
+//         },
+//         left: {
+//           backgroundColor: '#f0f0f0',
+//         },
+//       }}
+//       textStyle={{
+//         right: {
+//           color: '#fff',
+//         },
+//         left: {
+//           color: '#000',
+//         },
+//       }}
+//     />
+//   );
+
+//   const renderInputToolbar = (props) => (
+//     <InputToolbar
+//       {...props}
+//       containerStyle={{
+//         borderTopWidth: 1,
+//         borderTopColor: '#e8e8e8',
+//         padding: 4,
+//       }}
+//     />
+//   );
+
+//   return (
+//     <GiftedChat
+//       messages={messages}
+//       onSend={(messages) => onSend(messages)}
+//       user={{
+//         _id: 1,
+//       }}
+//       renderSend={renderSend}
+//       renderBubble={renderBubble}
+//       renderInputToolbar={renderInputToolbar}
+//       alwaysShowSend
+//       placeholder="You're the best"
+//     />
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   sendButton: {
+//     marginRight: 10,
+//     marginBottom: 5,
+//   },
+// });
