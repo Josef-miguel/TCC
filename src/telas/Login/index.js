@@ -25,7 +25,7 @@ export default function Login({navigation}) {
   }, []);
   
   return (
-    <ImageBackground source={require('../../../assets/img/fundo.png')} style={styles.imgBg} >
+    <ImageBackground source={require('../../../assets/img/bg2.png')} style={styles.imgBg}>
                 
     <KeyboardAvoidingView 
     style={styles.background}>
@@ -42,21 +42,27 @@ export default function Login({navigation}) {
     
     ]}>
       
-      <TextInput 
-      style={styles.input}
-      placeholder="Usuario"
-      type='email'
-      dataCorrect={false}
-      onChangeText={()=>{}}
-      ></TextInput>
+      <View style={styles.areaInput}>
+        <Image source={require('../../../assets/img/icons/profile-icon.png')} style={styles.icon}></Image>
+        <TextInput 
+          style={styles.input}
+          placeholder="Usuario"
+          type='email'
+          dataCorrect={false}
+          onChangeText={()=>{}}
+        ></TextInput>
+      </View>
 
-      <TextInput
-      style={styles.input}
-      placeholder="Senha"
-      secureTextEntry={true}
-      dataCorrect={false}
-      onChangeText={()=>{}}
-      ></TextInput>
+      <View style={styles.areaInput}>
+        <Image source={require('../../../assets/img/icons/lock-icon.png')} style={styles.icon}></Image>
+        <TextInput
+          style={styles.input}
+          placeholder="Senha"
+          secureTextEntry={true}
+          dataCorrect={false}
+          onChangeText={()=>{}}
+        ></TextInput>
+      </View>
     
       
       <View style={styles.viewBotao}>
@@ -84,14 +90,18 @@ export default function Login({navigation}) {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    //backgroundColor: '#191919',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
+  icon: {
+    width: 32,
+    height: 32,
+    marginVertical: 'auto'
+  },
+
   logo: {
     flex: 1,
-    
     justifyContent: 'center',
   },
 
@@ -104,14 +114,21 @@ const styles = StyleSheet.create({
     marginTop:-50
   },
 
-  input: {
-    backgroundColor: '#FFF',
-    marginBottom: 15,
+  areaInput: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF000',
     color: '#222',
-    fontSize: 17,
     borderRadius: 7,
-    padding:10,
-    width: '90%'
+    padding:5,
+    width: '90%',
+    backgroundColor: '#FFF',
+    marginBottom: 15
+  },
+
+  input: {
+    marginVertical: 'auto',
+    marginLeft: 5,
+    fontSize: 16
   },
 
   viewBotao:{
@@ -145,8 +162,8 @@ const styles = StyleSheet.create({
 
   imgBg:{
     flex:1,
-    width: null,
-    height: null,
+    width: '100%',
+    height: '100%',
     opacity: 1,
     justifyContent: "flex-start",
     backgroundColor: '#000'
