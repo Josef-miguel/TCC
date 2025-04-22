@@ -49,6 +49,14 @@ const TravelCalendarScreen = () => {
       setCurrentMonth(currentMonth - 1);
     }
   };
+  const goToNextMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
  
   return (
     <View style={styles.container}>
