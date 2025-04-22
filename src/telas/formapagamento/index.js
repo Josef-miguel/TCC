@@ -1,157 +1,231 @@
-// Modal de gostos ou algoritomo de recomendação antes da tela de feed em si.
-// A tela de feed deverá conter uma sidebar com os botões Agenda, Minhas viagens. Para o organizador deverá ter um botão extra Criar viagem. Alem de um ícone de perfil que leva para a tela perfil
-// Também deverá conter posts que levam para os mesmos e uma seção de mais populares, além de um sistema de pesquisa
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { MaskedTextInput } from "react-native-mask-text";
 
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBackground} from 'react-native';
-import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
+export default function formapagamento({ navigation }) {
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+  const [saveCard, setSaveCard] = useState(false);
 
+  const handlePayment = () => {
+    if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      return;
+    }
+    
+    if (cardNumber.replace(/\s/g, '').length < 16) {
+      Alert.alert('Erro', 'Número do cartão inválido');
+      return;
+    }
+    
+    if (cvv.length < 3) {
+      Alert.alert('Erro', 'CVV inválido');
+      return;
+    }
+    
+    Alert.alert(
+      'Sucesso', 
+      'Pagamento processado com sucesso!',
+      [{ text: 'OK', onPress: () => navigation.goBack() }]
+    );
+  };
 
-export default function Formapagamento({navigation}) {
-
-  const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
-  const[opac] = useState(new Animated.Value(0));
-
-  useEffect(()=> {
-    Animated.parallel([
-      Animated.spring(offset.y, {
-        toValue:0, 
-        speed:4,
-        bounciness:20
-      }),
-      Animated.timing(opac, {
-        toValue:1,
-        duration:2000,
-      })
-    ]).start();
-   
-  }, []);
-  
   return (
-    <ImageBackground source={require('../../../assets/img/fundo.png')} style={styles.imgBg} >
-                
-    <KeyboardAvoidingView 
-    style={styles.background}>
-     <View style={styles.logo}>
-       <Image style={{width:320}} resizeMode = "contain" source={require('../../../assets/img/iconimg.png')}></Image>
-     </View>
-
-    <Animated.View 
-    style={[styles.formulario,
-      {
-        opacity: opac,
-        transform: [{translateY: offset.y}]
-      }
-    
-    ]}>
-      
-      <TextInput 
-      style={styles.input}
-      placeholder="Usuario"
-      type='email'
-      dataCorrect={false}
-      onChangeText={()=>{}}
-      ></TextInput>
-
-      <TextInput
-      style={styles.input}
-      placeholder="Senha"
-      secureTextEntry={true}
-      dataCorrect={false}
-      onChangeText={()=>{}}
-      ></TextInput>
-    
-      
-      <View style={styles.viewBotao}>
-      <TouchableOpacity 
-        style={styles.botao}
-       onPress={() => navigation.navigate('Cadastro')}>
-         <Text style={styles.textoBotao}>Entrar</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backText}>← Finalizar pagamento</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity 
-        style={styles.botaoRecuperar}
-       onPress={() => navigation.navigate('Cadastro')}>
-         <Text style={styles.textoRecuperar}>Ainda não possui uma conta? Registre-se</Text>
-      </TouchableOpacity>
-
-    </Animated.View>
-
-     
-    </KeyboardAvoidingView>
-    </ImageBackground>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <View style={styles.paymentCard}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="card" size={24} color="#666" />
+            <Text style={styles.cardHeaderText}>Cartão de Crédito</Text>
+          </View>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Número do Cartão</Text>
+            <MaskedTextInput
+              style={styles.input}
+              placeholder="0000 0000 0000 0000"
+              keyboardType="numeric"
+              mask="9999 9999 9999 9999"
+              value={cardNumber}
+              onChangeText={setCardNumber}
+            />
+          </View>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome no Cartão</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nome como está no cartão"
+              value={cardHolder}
+              onChangeText={setCardHolder}
+              autoCapitalize="words"
+            />
+          </View>
+          
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+              <Text style={styles.label}>Validade</Text>
+              <MaskedTextInput
+                style={styles.input}
+                placeholder="MM/AA"
+                keyboardType="numeric"
+                mask="99/99"
+                value={expiryDate}
+                onChangeText={setExpiryDate}
+              />
+            </View>
+            
+            <View style={[styles.inputGroup, { flex: 1 }]}>
+              <Text style={styles.label}>CVV</Text>
+              <MaskedTextInput
+                style={styles.input}
+                placeholder="000"
+                keyboardType="numeric"
+                mask="999"
+                value={cvv}
+                onChangeText={setCvv}
+                secureTextEntry
+              />
+            </View>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.checkboxContainer}
+            onPress={() => setSaveCard(!saveCard)}
+          >
+            <View style={[styles.checkbox, saveCard && styles.checkedBox]}>
+              {saveCard && <Ionicons name="checkmark" size={16} color="#fff" />}
+            </View>
+            <Text style={styles.checkboxLabel}>Salvar informações do cartão</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
+          <Text style={styles.payButtonText}>Confirmar Pagamento</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.securityInfo}>
+          <Ionicons name="lock-closed" size={16} color="#4CAF50" />
+          <Text style={styles.securityText}>Pagamento seguro criptografado</Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  container: {
     flex: 1,
-    //backgroundColor: '#191919',
+    backgroundColor: '#fff',
+    paddingTop: 50,
+  },
+  header: {
+    backgroundColor: '#b0ff9b',
+    padding: 10,
+  },
+  backButton: {
+    flexDirection: 'row',
+  },
+  backText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  contentContainer: {
+    padding: 15,
+  },
+  paymentCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  cardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 20,
   },
-
-  logo: {
-    flex: 1,
-    
-    justifyContent: 'center',
+  cardHeaderText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 10,
+    color: '#666',
   },
-
-  formulario: {
-    flex: 1,
-    paddingBottom:30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '90%',
-    marginTop:-50
-  },
-
-  input: {
-    backgroundColor: '#FFF',
+  inputGroup: {
     marginBottom: 15,
-    color: '#222',
-    fontSize: 17,
-    borderRadius: 7,
-    padding:10,
-    width: '90%'
   },
-
-  viewBotao:{
-    width: '90%',
-    borderRadius: 7,
+  label: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
   },
-
-  botao: {
-    backgroundColor: '#1a7487',
-    height:45,
-    alignItems:'center',
-    justifyContent:'center',
-    borderRadius: 7,
-    padding:10,
-    
-    
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
   },
-  textoBotao:{
-    color:'#FFF',
-    fontSize:18
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-
-  botaoRecuperar:{
-    marginTop:15,
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
   },
-
-  textoRecuperar:{
-    color:'#FFF',
-    
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#6200ee',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
-
-  imgBg:{
-    flex:1,
-    width: null,
-    height: null,
-    opacity: 1,
-    justifyContent: "flex-start",
-    backgroundColor: '#000'
+  checkedBox: {
+    backgroundColor: '#6200ee',
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  payButton: {
+    backgroundColor: '#6200ee',
+    padding: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  payButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  securityInfo: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  securityText: {
+    marginLeft: 5,
+    color: '#4CAF50',
+    fontSize: 14,
   },
 });
