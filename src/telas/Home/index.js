@@ -1,26 +1,77 @@
-import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // menu, search, perfil, estrela
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Home({ navigation }) {
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const sidebarAnimation = useRef(new Animated.Value(-250)).current;
+
+  const toggleSidebar = () => {
+    if (sidebarVisible) {
+      Animated.timing(sidebarAnimation, {
+        toValue: -250,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(sidebarAnimation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+    setSidebarVisible(!sidebarVisible);
+  };
+
+  // Conteúdo da Sidebar
+  const renderSidebar = () => (
+    <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}>
+      <Text style={styles.sidebarTitle}>Menu</Text>
+      <TouchableOpacity style={styles.sidebarItem} onPress={() => {
+        navigation.navigate('Home');
+        toggleSidebar();
+      }}>
+        <Text>Home</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.sidebarItem} onPress={() => {
+        navigation.navigate('perfil');
+        toggleSidebar();
+      }}>
+        <Text>Perfil</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.sidebarItem} onPress={toggleSidebar}>
+        <Text>Fechar</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
   return (
     <View style={styles.container}>
       {/* Barra superior */}
       <View style={styles.topBar}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={toggleSidebar}>
           <Ionicons name="menu" size={24} color="black" />
         </TouchableOpacity>
         <TextInput
           style={styles.searchInput}
           placeholder="Quero ir para...."
         />
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Perfil")}
-        >
+        <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
           <Ionicons name="person-circle-outline" size={24} color="black" />
         </TouchableOpacity>
       </View>
       {/* FIM DA BARRA SUPERIOR */}
+
+      {/* Sidebar */}
+      {renderSidebar()}
+      {/* Overlay quando sidebar está visível */}
+      {sidebarVisible && (
+        <TouchableOpacity 
+          style={styles.overlay} 
+          onPress={toggleSidebar}
+          activeOpacity={1}
+        />
+      )}
 
       {/* Lista de posts RECOMENDADOS */}
       <ScrollView
@@ -28,7 +79,6 @@ export default function Home({ navigation }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-
         {[
           { color: 'red', fav: false },
           { color: 'lime', fav: true },
@@ -65,7 +115,6 @@ export default function Home({ navigation }) {
             </TouchableOpacity>
           </View>
         ))}
-
         {/* FIM DA LISTA DE POSTS POPULARES */}
       </ScrollView>
     </View>
@@ -94,7 +143,7 @@ const styles = StyleSheet.create({
   scroll: {
     padding: 10,
     paddingBottom: 30,
-    flexGrow: 1
+    flexGrow: 1,
   },
   post: {
     height: 80,
@@ -113,5 +162,32 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
     marginVertical: 10,
-  }
+  },
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 250,
+    height: '100%',
+    backgroundColor: '#f2f2f2',
+    padding: 20,
+    zIndex: 100,
+  },
+  sidebarTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  sidebarItem: {
+    paddingVertical: 10,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    zIndex: 99,
+  },
 });
