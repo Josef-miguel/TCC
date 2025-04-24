@@ -12,9 +12,9 @@ import Login from './src/telas/Login';
 import Cadastro from './src/telas/Cadastro';
 import Home from './src/telas/Home';
 import Agenda from './src/telas/Agenda';
-import formapagamento from './src/telas/formapagamento';
+import formapagamento from './src/telas/Formapagamento';
 import Historico  from './src/telas/Historico';
-import perfil from './src/telas/perfil';
+import perfil from './src/telas/Perfil';
 import Post from './src/telas/Post';
 
 import {Ionicons} from '@expo/vector-icons';
