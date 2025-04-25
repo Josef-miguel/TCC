@@ -1,5 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, Button, Modal, Image, StyleSheet } from "react-native";
+import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import ParticiparPost from "../ParticiparPost";
 
 const PostScreen = ({modalVisible, setModalVisible, selectedPost, setSelectedPost}) => {
     const closeModal = () => {
@@ -9,8 +11,11 @@ const PostScreen = ({modalVisible, setModalVisible, selectedPost, setSelectedPos
 
     
 
+    const [participationModalVisible, setParticipationModalVisible] = useState(false);
+
     if(selectedPost != null && modalVisible){
         return (
+          <View>
             <Modal visible={modalVisible} transparent animationType="slide">
             <View style={styles.modalContainer}>
               <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
@@ -31,14 +36,16 @@ const PostScreen = ({modalVisible, setModalVisible, selectedPost, setSelectedPos
                     <Text style={styles.sectionTitle}>Comentários</Text>
                     <View style={styles.commentsBox}>{selectedPost.comments.map((c, idx) => (<Text key={idx} style={styles.commentText}>"{c}"</Text>))}</View>
                     <TouchableOpacity style={styles.modalButton}><Text style={styles.buttonText}>Entrar em contato com o organizador</Text></TouchableOpacity>
-                    <TouchableOpacity style={[styles.modalButton, styles.joinButton]}><Text style={styles.buttonText}>Participar da viagem</Text></TouchableOpacity>
+                    <TouchableOpacity style={[styles.modalButton, styles.joinButton]} onPress={() => setParticipationModalVisible(true)}><Text style={styles.buttonText}>Participar da viagem</Text></TouchableOpacity>
                     <Button title="Fechar" onPress={closeModal} color="red" />
                   </>
                 )}
               </ScrollView>
             </View>
+          
           </Modal>
-    
+          <ParticiparPost participationModalVisible={participationModalVisible} setParticipationModalVisible={setParticipationModalVisible}></ParticiparPost>
+          </View>
         );
     }
 
