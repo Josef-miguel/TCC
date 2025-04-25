@@ -7,10 +7,7 @@ const PostScreen = ({modalVisible, setModalVisible, selectedPost, setSelectedPos
         setSelectedPost(null);
     };
 
-    const toggleFav = (id) => {
-        setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
-        setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
-    };
+    
 
     if(selectedPost != null && modalVisible){
         return (

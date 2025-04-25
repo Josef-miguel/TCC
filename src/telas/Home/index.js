@@ -11,6 +11,11 @@ export default function Home({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
 
+  const toggleFav = (id) => {
+    setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
+    setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
+};
+
   const [recommendedPosts, setRecommendedPosts] = useState([
     { id: 1, fav: false, images: ['https://placekitten.com/300/200'], route: 'São Paulo → Rio de Janeiro', excursionInfo: 'Visita guiada pelos principais pontos turísticos.', rating: 8, comments: ['Foi incrível!', 'Recomendo demais.'], type: 'Aventura', theme: 'Montanha' },
     { id: 2, fav: true, images: ['https://placekitten.com/310/200'], route: 'Rio de Janeiro → Búzios', excursionInfo: 'Dia de praia e relax.', rating: 9, comments: ['Perfeito!', 'Sol o dia todo.'], type: 'Relax', theme: 'Praia' },
