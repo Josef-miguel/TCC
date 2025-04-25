@@ -77,8 +77,8 @@ function Tabs(){
       inactiveTintColor: 'gray',      
     }}    
     >  
-      <Tab.Screen name= "Login" component={Login}></Tab.Screen>
-      <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen>
+      {/* <Tab.Screen name= "Login" component={Login}></Tab.Screen>
+      <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
        <Tab.Screen name= "Home"component={Home}></Tab.Screen> 
        <Tab.Screen name= "Agenda"  component={Agenda}></Tab.Screen> 
        <Tab.Screen
@@ -189,7 +189,7 @@ export default function App() {
 const Stack= createStackNavigator();
   return (
   <NavigationContainer>
-    <Stack.Navigator initialRouteName='Login'>
+    <Stack.Navigator initialRouteName='Cadastro'>
 
     <Stack.Screen name="Login" component={Login} options={{headerShown: false}}></Stack.Screen>
       <Stack.Screen 
