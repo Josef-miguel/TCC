@@ -12,9 +12,9 @@ import Login from './src/telas/Login';
 import Cadastro from './src/telas/Cadastro';
 import Home from './src/telas/Home';
 import Agenda from './src/telas/Agenda';
-import formapagamento from './src/telas/Formapagamento';
+import Formapagamento from './src/telas/Formapagamento';
 import Historico  from './src/telas/Historico';
-import perfil from './src/telas/Perfil';
+import Perfil from './src/telas/Perfil';
 import Post from './src/telas/Post';
 
 import CriarPost from './src/modal/CriarPost';
@@ -51,13 +51,13 @@ function Tabs(){
         else if (route.name === 'Post'){
           iconName = focused ? 'albums-outline' : 'albums-outline';
         }
-        else if (route.name === 'perfil'){
+        else if (route.name === 'Perfil'){
           iconName = focused ? 'people-circle-outline' : 'people-circle-outline';
         }
         else if (route.name === 'Historico'){
           iconName = focused ? 'albums-outline' : 'albums-outline';
         }
-        else if (route.name === 'formapagamento'){
+        else if (route.name === 'Formapagamento'){
           iconName = focused ? 'wallet-outline' : 'wallet-outline';
         }
         else if (route.name === 'Agenda'){
@@ -95,7 +95,7 @@ function Tabs(){
           }}
         /> 
 
-       <Tab.Screen name= "perfil" component={perfil}></Tab.Screen> 
+       <Tab.Screen name= "Perfil" component={Perfil}></Tab.Screen> 
 
 
       {/* <Tab.Screen name= "Produtos" component={Produtos}></Tab.Screen>
@@ -127,9 +127,9 @@ const Stack= createStackNavigator();
        <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> 
   
         <Stack.Screen name ="Agenda" component={Agenda} options={{headerShown: false}}></Stack.Screen>  
-        <Stack.Screen name ="Forma de pagamento" component={formapagamento} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="Forma de pagamento" component={Formapagamento} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Historico" component={Historico} options={{headerShown: false}}></Stack.Screen>  
-        <Stack.Screen name ="Perfil" component={perfil} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="Perfil" component={Perfil} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Post" component={Post} options={{headerShown: false}}></Stack.Screen>  
 
 
