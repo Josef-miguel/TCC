@@ -88,6 +88,7 @@ export default function Cadastro({ navigation }) {
               onChangeText={() => { }}
             />
 
+
       
       <View style={styles.viewBotao}>
       <TouchableOpacity 
@@ -102,7 +103,6 @@ export default function Cadastro({ navigation }) {
        onPress={() => navigation.navigate('Login')}>
          <Text style={styles.textoRecuperar}>Já possui conta?</Text>
       </TouchableOpacity>
-
 
             <View style={styles.viewBotao}>
               <TouchableOpacity
