@@ -80,7 +80,6 @@ function Tabs(){
       {/* <Tab.Screen name= "Login" component={Login}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
        <Tab.Screen name= "Home"component={Home}></Tab.Screen> 
-       <Tab.Screen name= "Agenda"  component={Agenda}></Tab.Screen> 
        <Tab.Screen
           name="Criar Post"
           component={() => null}
@@ -95,10 +94,9 @@ function Tabs(){
             ),
           }}
         /> 
-       <Tab.Screen name= "formapagamento" component={formapagamento}></Tab.Screen> 
-       <Tab.Screen name= "Historico" component={Historico}></Tab.Screen> 
+
        <Tab.Screen name= "perfil" component={perfil}></Tab.Screen> 
-       <Tab.Screen name= "Post" component={Post}></Tab.Screen> 
+
 
       {/* <Tab.Screen name= "Produtos" component={Produtos}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
@@ -149,6 +147,7 @@ const styles = StyleSheet.create({
   },
   createPostButton: {
     top: -20,
+    right: -30,
     justifyContent: 'center',
     alignItems: 'center',
     width: 70,
