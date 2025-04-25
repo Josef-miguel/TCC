@@ -62,12 +62,13 @@ export default function Home({ navigation }) {
       {sidebarVisible && <TouchableOpacity style={styles.overlay} onPress={toggleSidebar} activeOpacity={1} />}      
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}> 
         <Text style={styles.sidebarTitle}>Menu</Text>
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Home'); toggleSidebar(); }}>
-          <Text>Home</Text>
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
+          <Text>Agenda</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Perfil'); toggleSidebar(); }}>
-          <Text>Perfil</Text>
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Historico'); toggleSidebar(); }}>
+          <Text>Historico</Text>
         </TouchableOpacity>
+        
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
         </TouchableOpacity>
