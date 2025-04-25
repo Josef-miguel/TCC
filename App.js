@@ -17,6 +17,8 @@ import Historico  from './src/telas/Historico';
 import perfil from './src/telas/Perfil';
 import Post from './src/telas/Post';
 
+import CriarPost from './src/modal/CriarPost';
+
 
 import {Ionicons} from '@expo/vector-icons';
 
@@ -25,9 +27,7 @@ const Tab= createBottomTabNavigator();
 
 function Tabs(){
   const [modalVisible, setModalVisible] = useState(false);
-  const [postName, setPostName] = useState('');
-  const [tripType, setTripType] = useState('Viagem');
-  const [description, setDescription] = useState('');
+
   
   return (
     <>
@@ -83,7 +83,7 @@ function Tabs(){
        <Tab.Screen name= "Agenda"  component={Agenda}></Tab.Screen> 
        <Tab.Screen
           name="Criar Post"
-          component={View}
+          component={() => null}
           options={{
             tabBarButton: (props) => (
               <TouchableOpacity
@@ -94,7 +94,7 @@ function Tabs(){
               </TouchableOpacity>
             ),
           }}
-        />
+        /> 
        <Tab.Screen name= "formapagamento" component={formapagamento}></Tab.Screen> 
        <Tab.Screen name= "Historico" component={Historico}></Tab.Screen> 
        <Tab.Screen name= "perfil" component={perfil}></Tab.Screen> 
@@ -103,84 +103,11 @@ function Tabs(){
       {/* <Tab.Screen name= "Produtos" component={Produtos}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
     </Tab.Navigator>
-
-    {/* Modal para Criar Post */}
-    <Modal
-    animationType="slide"
-    transparent={true}
-    visible={modalVisible}
-    onRequestClose={() => setModalVisible(false)}
-  >
-    <View style={styles.modalOverlay}>
-      <ScrollView contentContainerStyle={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={() => setModalVisible(false)}>
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Criar post</Text>
-        </View>
-
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.placeholderText}>Imagens do destino</Text>
-        </View>
-
-        <Text style={styles.label}>Nome do post</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Viagem para Miracatu, SP..."
-          value={postName}
-          onChangeText={setPostName}
-        />
-
-        <Text style={styles.label}>Tipo de viagem</Text>
-        <View style={styles.tripTypeContainer}>
-          <TouchableOpacity
-            style={[styles.tripTypeButton, tripType === 'Viagem' && styles.tripTypeButtonActive]}
-            onPress={() => setTripType('Viagem')}
-          >
-            <Text style={[styles.tripTypeText, tripType === 'Viagem' && styles.tripTypeTextActive]}>VIAGEM</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tripTypeButton, tripType === 'Excursão' && styles.tripTypeButtonActive]}
-            onPress={() => setTripType('Excursão')}
-          >
-            <Text style={[styles.tripTypeText, tripType === 'Excursão' && styles.tripTypeTextActive]}>EXCURSÃO</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.label}>Quantidade de pessoas</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Quantidade de pessoas"
-        />
-
-        <Text style={styles.label}>Descrição da viagem</Text>
-        <TextInput
-          style={[styles.input, styles.descriptionInput]}
-          placeholder="Vamos nos divertir pela cidade!"
-          value={description}
-          onChangeText={setDescription}
-          multiline
-        />
-
-        <Text style={styles.label}>Trajeto da viagem</Text>
-        <View style={styles.mapPlaceholder}>
-          <Ionicons name="location" size={24} color="black" />
-        </View>
-
-        <Text style={styles.termsText}>
-          Ao criar uma publicação no aplicativo, você concorda com os{' '}
-          <Text style={styles.termsLink}>Termos de Uso e Política de Privacidade</Text> do JSG.
-        </Text>
-
-        <TouchableOpacity style={styles.submitButton}>
-          <Text style={styles.submitButtonText}>VIAJAR</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
-  </Modal>
-
+    <CriarPost modalVisible={modalVisible} setModalVisible={setModalVisible}></CriarPost>
   </>
+  
+        // aqui
+
   );
 }
 
@@ -202,9 +129,9 @@ const Stack= createStackNavigator();
        <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> 
   
         <Stack.Screen name ="Agenda" component={Agenda} options={{headerShown: false}}></Stack.Screen>  
-        <Stack.Screen name ="formapagamento" component={formapagamento} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="Forma de pagamento" component={formapagamento} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Historico" component={Historico} options={{headerShown: false}}></Stack.Screen>  
-        <Stack.Screen name ="perfil" component={perfil} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="Perfil" component={perfil} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Post" component={Post} options={{headerShown: false}}></Stack.Screen>  
 
 
