@@ -25,7 +25,7 @@ export default function Login({navigation}) {
   }, []);
   
   return (
-    <ImageBackground source={require('../../../assets/img/bg2.png')} style={styles.imgBg}>
+    // <ImageBackground source={require('../../../assets/img/bg2.png')} style={styles.imgBg}>
                 
     <KeyboardAvoidingView 
     style={styles.background}>
@@ -83,7 +83,7 @@ export default function Login({navigation}) {
 
      
     </KeyboardAvoidingView>
-    </ImageBackground>
+    // </ImageBackground>
   );
 }
 
