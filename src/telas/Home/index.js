@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Modal, Image, Button } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import TelaPost from '../../modal/TelaPost';
+
 export default function Home({ navigation }) {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-250)).current;
@@ -35,6 +37,7 @@ export default function Home({ navigation }) {
   const openModal = (post) => {
     setSelectedPost(post);
     setModalVisible(true);
+
   };
 
   const closeModal = () => {
@@ -50,6 +53,8 @@ export default function Home({ navigation }) {
     setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
   };
+
+  }; 
 
   const renderCard = (item) => (
     <TouchableOpacity key={item.id} onPress={() => openModal(item)} style={styles.card}>
@@ -95,6 +100,7 @@ export default function Home({ navigation }) {
         <Text style={styles.popularesTxt}>Populares recentemente</Text>
         {popularPosts.map(renderCard)}
       </ScrollView>
+
 
       {/* Detail Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
@@ -158,6 +164,10 @@ export default function Home({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      <TelaPost modalVisible={modalVisible} setModalVisible={setModalVisible} selectedPost={selectedPost} setSelectedPost={setSelectedPost}></TelaPost>
+      
+
     </View>
   );
 }
@@ -179,6 +189,7 @@ const styles = StyleSheet.create({
   sidebarTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
   sidebarItem: { paddingVertical: 10 },
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)' },
+
   modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalScroll: { margin: 20, backgroundColor: '#fff', borderRadius: 8 },
   modalInner: { padding: 16 },
@@ -203,4 +214,11 @@ const styles = StyleSheet.create({
   radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#666' },
   partOptionText: { marginLeft: 10 },
   partButton: { marginTop: 20, padding: 12, backgroundColor: '#4caf50', borderRadius: 6, alignItems: 'center' }
+
+  
+  
+  
+  
+  
+
 });
