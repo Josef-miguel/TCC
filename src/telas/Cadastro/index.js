@@ -69,7 +69,7 @@ export default function Cadastro({ navigation }) {
               onChangeText={() => { }}
             />
 
-<<<<<<< HEAD
+
             <TextInput
               style={styles.input}
               placeholder="CPF"
@@ -87,7 +87,7 @@ export default function Cadastro({ navigation }) {
               dataCorrect={false}
               onChangeText={() => { }}
             />
-=======
+
       
       <View style={styles.viewBotao}>
       <TouchableOpacity 
@@ -102,7 +102,7 @@ export default function Cadastro({ navigation }) {
        onPress={() => navigation.navigate('Login')}>
          <Text style={styles.textoRecuperar}>Já possui conta?</Text>
       </TouchableOpacity>
->>>>>>> 1b8bbdc831e30ad434a782100d691da7f349c6cd
+
 
             <View style={styles.viewBotao}>
               <TouchableOpacity
