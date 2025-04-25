@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animat
 import { Ionicons } from '@expo/vector-icons';
 
 import TelaPost from '../../modal/TelaPost';
+import ParticiparPost from '../../modal/ParticiparPost';
 
 export default function Home({ navigation }) {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -87,6 +88,7 @@ export default function Home({ navigation }) {
 
       <TelaPost modalVisible={modalVisible} setModalVisible={setModalVisible} selectedPost={selectedPost} setSelectedPost={setSelectedPost}></TelaPost>
       
+
     </View>
   );
 }

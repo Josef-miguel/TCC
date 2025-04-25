@@ -98,13 +98,10 @@ function Tabs(){
        <Tab.Screen name= "Perfil" component={Perfil}></Tab.Screen> 
 
 
-      {/* <Tab.Screen name= "Produtos" component={Produtos}></Tab.Screen>
-      <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
     </Tab.Navigator>
     <CriarPost modalVisible={modalVisible} setModalVisible={setModalVisible}></CriarPost>
   </>
-  
-        // aqui
+
 
   );
 }
