@@ -16,20 +16,14 @@ export default function Perfil() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
-        <Icon name="close" size={24} color="#000" />
-      </TouchableOpacity>
-
       <View style={styles.header}>
         <Avatar.Text label="R" size={48} style={{ backgroundColor: '#f57c00' }} />
         <Text style={styles.name}>Ferrete Rafael</Text>
         <Text style={styles.level}>Genius Nível 1</Text>
       </View>
 
-      <MenuItem icon="account-outline" label="Minha conta" />
-      <MenuItem icon="briefcase-outline" label="Reservas e Viagens" />
-      <MenuItem icon="google" label="Programa de fidelidade Genius" />
-      <MenuItem icon="wallet-outline" label="Recompensas e Wallet" />
+      <MenuItem icon="account-outline" label="Minha contas" />
+      <MenuItem icon="bell-outline" label="Preferências" />
       <MenuItem icon="account-search-outline" label="Avaliações" />
       <MenuItem icon="heart-outline" label="Favoritos" />
       <MenuItem icon="logout" label="Sair" onPress={() => navigation.navigate('Login')} />
@@ -72,6 +66,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-
-
