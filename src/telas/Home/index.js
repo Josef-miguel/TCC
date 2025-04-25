@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Modal, Image, Button } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import TelaPost from '../../modal/TelaPost';
+
 export default function Home({ navigation }) {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-250)).current;
@@ -30,17 +32,7 @@ export default function Home({ navigation }) {
   const openModal = (post) => {
     setSelectedPost(post);
     setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedPost(null);
-  };
-
-  const toggleFav = (id) => {
-    setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
-    setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
-  };
+  }; 
 
   const renderCard = (item) => (
     <TouchableOpacity key={item.id} onPress={() => openModal(item)} style={styles.card}>
@@ -87,33 +79,8 @@ export default function Home({ navigation }) {
         {popularPosts.map(renderCard)}
       </ScrollView>
 
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
-            {selectedPost && (
-              <>
-                <Text style={styles.sectionTitle}>Imagens do destino</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-                  {selectedPost.images.map((uri, i) => (
-                    <Image key={i} source={{ uri }} style={styles.destImage} />
-                  ))}
-                </ScrollView>
-                <Text style={styles.sectionTitle}>Trajeto da viagem</Text>
-                <View style={styles.routeBox}><Ionicons name="location-sharp" size={24}/><Text style={styles.routeText}>{selectedPost.route}</Text></View>
-                <Text style={styles.sectionTitle}>Informações da excursão</Text>
-                <View style={styles.infoBox}><Text>{selectedPost.excursionInfo}</Text></View>
-                <Text style={styles.sectionTitle}>Avaliação</Text>
-                <View style={styles.ratingBox}><Ionicons name="star" size={20}/><Text style={styles.ratingText}>{selectedPost.rating}/10</Text></View>
-                <Text style={styles.sectionTitle}>Comentários</Text>
-                <View style={styles.commentsBox}>{selectedPost.comments.map((c, idx) => (<Text key={idx} style={styles.commentText}>"{c}"</Text>))}</View>
-                <TouchableOpacity style={styles.modalButton}><Text style={styles.buttonText}>Entrar em contato com o organizador</Text></TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, styles.joinButton]}><Text style={styles.buttonText}>Participar da viagem</Text></TouchableOpacity>
-                <Button title="Fechar" onPress={closeModal} color="red" />
-              </>
-            )}
-          </ScrollView>
-        </View>
-      </Modal>
+      <TelaPost modalVisible={modalVisible} setModalVisible={setModalVisible} selectedPost={selectedPost} setSelectedPost={setSelectedPost}></TelaPost>
+      
     </View>
   );
 }
@@ -135,20 +102,9 @@ const styles = StyleSheet.create({
   sidebarTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
   sidebarItem: { paddingVertical: 10 },
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)' },
-  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalScroll: { margin: 20, backgroundColor: '#fff', borderRadius: 8 },
-  modalInner: { padding: 16 },
-  sectionTitle: { fontWeight: 'bold', marginTop: 12, marginBottom: 6 },
-  imageScroll: { marginBottom: 12 },
-  destImage: { width: 150, height: 100, borderRadius: 6, marginRight: 8 },
-  routeBox: { flexDirection: 'row', alignItems: 'center', padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  routeText: { marginLeft: 8 },
-  infoBox: { padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  ratingBox: { flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#ffeb3b', borderRadius: 6, marginBottom: 12 },
-  ratingText: { marginLeft: 6 },
-  commentsBox: { padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  commentText: { marginBottom: 4, fontStyle: 'italic' },
-  modalButton: { padding: 12, backgroundColor: '#2196f3', borderRadius: 6, marginBottom: 8, alignItems: 'center' },
-  joinButton: { backgroundColor: '#4caf50' },
-  buttonText: { color: '#fff', fontWeight: 'bold' }
+  
+  
+  
+  
+  
 });
