@@ -1,11 +1,31 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import { appContext } from '../../../App';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
+
 
 export default function Perfil() {
   const navigation = useNavigation();
+  const [isVisible, setIsVisible] = useState(false);
+
+
+  const {organizerMode} = useContext(appContext);
+  const {toggleOrganizer} = useContext(appContext);
+
+  const toggleVisible = () => {
+    if(isVisible){
+      setIsVisible(false);
+      alert("você num é mais organizador")
+    }else{
+      setIsVisible(true);
+      alert("você é um organizador")
+    }
+  }
+
+  
 
   const MenuItem = ({ icon, label, onPress }) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress}>
@@ -16,6 +36,20 @@ export default function Perfil() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Modal visible={isVisible} transparent animationType="slide">
+        <View style={{ flex:1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: "#FFF", padding: 20, borderRadius: 10 }}>
+            <Text style={{ marginBottom: 20 }}>Você realmente deseja sair?</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={{ color: 'red' }}>Sair</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={toggleVisible}>
+              <Text style={{ marginTop: 10 }}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <Avatar.Text label="R" size={48} style={{ backgroundColor: '#f57c00' }} />
         <Text style={styles.name}>Ferrete Rafael</Text>
@@ -23,10 +57,10 @@ export default function Perfil() {
       </View>
 
       <MenuItem icon="account-outline" label="Minha contas" />
-      <MenuItem icon="bell-outline" label="Preferências" />
+      <MenuItem icon="bell-outline" label="Preferências" onPress={() => {toggleOrganizer(), organizerMode()}}/>
       <MenuItem icon="account-search-outline" label="Avaliações" />
       <MenuItem icon="heart-outline" label="Favoritos" />
-      <MenuItem icon="logout" label="Sair" onPress={() => navigation.navigate('Login')} />
+      <MenuItem icon="logout" label="Sair" onPress={toggleVisible} />
     </ScrollView>
   );
 }
@@ -65,4 +99,5 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
   },
+
 });

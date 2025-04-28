@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { StyleSheet, Text, View, Modal, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { NavigationContainer} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -19,26 +19,58 @@ import Post from './src/telas/Post';
 
 import CriarPost from './src/modal/CriarPost';
 
+export const appContext = createContext();
 
 import {Ionicons} from '@expo/vector-icons';
 
 
 const Tab= createBottomTabNavigator();
+const organizerMode = () => {
+  alert("olá, organizador!");
+}
+
 
 function Tabs(){
   const [modalVisible, setModalVisible] = useState(false);
-
+  const [isOrganizer, setIsOrganizer] = useState(false);
+  
+  const toggleOrganizer = () => {
+    setIsOrganizer(prev => !prev);
+  }
+  
+  const activeOrganizerPost = () => {
+    if (isOrganizer){
+      return(
+          <Tab.Screen
+          name="Criar Post"
+          component={() => null}
+          options={{
+            tabBarButton: (props) => (
+              <TouchableOpacity
+              style={styles.createPostButton}
+              onPress={() => setModalVisible(true)} // Open the modal
+              >
+              <Ionicons name="add-circle" size={50} color="#3f64c7" />
+              </TouchableOpacity>
+              ),
+              }}
+              />
+      )
+    }
+  }
+  
   
   return (
     <>
+  <appContext.Provider value={{organizerMode, toggleOrganizer}}>
     <Tab.Navigator
     screenOptions={({ route }) => ({
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
         if (route.name === 'Home') {
           iconName = focused
-            ? 'home'
-            : 'home';
+          ? 'home'
+          : 'home';
         } else if (route.name === 'Home') {
           iconName = focused ? 'list' : 'list';
         }else if (route.name === 'Login') {
@@ -80,26 +112,29 @@ function Tabs(){
       {/* <Tab.Screen name= "Login" component={Login}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
        <Tab.Screen name= "Home"component={Home}></Tab.Screen> 
-       <Tab.Screen
+        
+
+       {/* <Tab.Screen
           name="Criar Post"
           component={() => null}
           options={{
             tabBarButton: (props) => (
               <TouchableOpacity
-                style={styles.createPostButton}
-                onPress={() => setModalVisible(true)} // Open the modal
+              style={styles.createPostButton}
+              onPress={() => setModalVisible(true)} // Open the modal
               >
-                <Ionicons name="add-circle" size={50} color="#3f64c7" />
+              <Ionicons name="add-circle" size={50} color="#3f64c7" />
               </TouchableOpacity>
-            ),
-          }}
-        /> 
+              ),
+              }}
+              />  */}
 
        <Tab.Screen name= "Perfil" component={Perfil}></Tab.Screen> 
 
 
     </Tab.Navigator>
     <CriarPost modalVisible={modalVisible} setModalVisible={setModalVisible}></CriarPost>
+    </appContext.Provider>
   </>
 
 
