@@ -1,3 +1,5 @@
+// miguel isack mexendo na agenda
+
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
  
@@ -54,7 +56,7 @@ const TravelCalendarScreen = () => {
       setCurrentMonth(11);
       setCurrentYear(currentYear - 1);
     } else {
-      setCurrentMonth(currentMonth - 1);
+      setCurrentMonth(currentMonth + 1);
     }
   };
  
@@ -65,6 +67,9 @@ const TravelCalendarScreen = () => {
           <Text style={styles.arrow}>{'<'}</Text>
         </TouchableOpacity>
         <Text style={styles.monthYear}>{`${monthNames[currentMonth]} ${currentYear}`}</Text>
+        <TouchableOpacity onPress={goToNextMonth}>
+          <Text style={styles.arrow}>{'>'}</Text>
+        </TouchableOpacity>
       </View>
       <FlatList
         data={calendarData}
@@ -109,6 +114,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    marginVertical: 30,
   },
   header: {
     flexDirection: 'row',
