@@ -103,22 +103,6 @@ export default function Cadastro({ navigation }) {
        onPress={() => navigation.navigate('Login')}>
          <Text style={styles.textoRecuperar}>Já possui conta?</Text>
       </TouchableOpacity>
-
-            <View style={styles.viewBotao}>
-              <TouchableOpacity
-                style={styles.botao}
-                onPress={() => navigation.navigate('Home')}
-              >
-                <Text style={styles.textoBotao}>Entrar</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.botaoRecuperar}
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={styles.textoRecuperar}>Já possui conta?</Text>
-            </TouchableOpacity>
           </Animated.View>
         </KeyboardAvoidingView>
       </ScrollView>
