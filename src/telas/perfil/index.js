@@ -4,12 +4,14 @@ import { Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { appContext } from '../../../App';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import CustomizarPerfil from '../../modal/CustomizarPerfil';
 
 
 
 export default function Perfil() {
   const navigation = useNavigation();
   const [isVisible, setIsVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
 
   const {organizerMode} = useContext(appContext);
@@ -33,6 +35,7 @@ export default function Perfil() {
   );
 
   return (
+    <View>
     <ScrollView contentContainerStyle={styles.container}>
       <Modal visible={isVisible} transparent animationType="slide">
         <View style={{ flex:1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -54,12 +57,14 @@ export default function Perfil() {
         <Text style={styles.level}>Genius Nível 1</Text>
       </View>
 
-      <MenuItem icon="account-outline" label="Minha contas" />
+      <MenuItem icon="account-outline" label="Minha contas" onPress={() => {setModalVisible(modalVisible)}}/>
       <MenuItem icon="bell-outline" label="Preferências" onPress={() => {toggleOrganizer(), organizerMode()}}/>
       <MenuItem icon="account-search-outline" label="Avaliações" />
       <MenuItem icon="heart-outline" label="Favoritos" />
       <MenuItem icon="logout" label="Sair" onPress={toggleVisible} />
     </ScrollView>
+    <CustomizarPerfil modalVisible={modalVisible} setModalVisible={setModalVisible}></CustomizarPerfil>
+</View>
   );
 }
 

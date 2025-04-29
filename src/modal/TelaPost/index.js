@@ -1,13 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, Button, Modal, Image, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Modal, Image, StyleSheet } from "react-native";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import ParticiparPost from "../ParticiparPost";
 
 const PostScreen = ({modalVisible, setModalVisible, selectedPost, setSelectedPost}) => {
-    const closeModal = () => {
-        setModalVisible(false);
-        setSelectedPost(null);
-    };
 
     
 
@@ -21,7 +17,12 @@ const PostScreen = ({modalVisible, setModalVisible, selectedPost, setSelectedPos
               <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
                 {selectedPost && (
                   <>
+                    <View style={styles.modalHeader}>
+                    <TouchableOpacity onPress={() => {setModalVisible(false), setSelectedPost(null)}}>
+                          <Ionicons name="arrow-back" size={24} color="black" />
+                      </TouchableOpacity>
                     <Text style={styles.sectionTitle}>Imagens do destino</Text>
+                    </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
                       {selectedPost.images.map((uri, i) => (
                         <Image key={i} source={{ uri }} style={styles.destImage} />
@@ -37,7 +38,7 @@ const PostScreen = ({modalVisible, setModalVisible, selectedPost, setSelectedPos
                     <View style={styles.commentsBox}>{selectedPost.comments.map((c, idx) => (<Text key={idx} style={styles.commentText}>"{c}"</Text>))}</View>
                     <TouchableOpacity style={styles.modalButton}><Text style={styles.buttonText}>Entrar em contato com o organizador</Text></TouchableOpacity>
                     <TouchableOpacity style={[styles.modalButton, styles.joinButton]} onPress={() => setParticipationModalVisible(true)}><Text style={styles.buttonText}>Participar da viagem</Text></TouchableOpacity>
-                    <Button title="Fechar" onPress={closeModal} color="red" />
+                    
                   </>
                 )}
               </ScrollView>
@@ -57,6 +58,7 @@ const styles = StyleSheet.create({
     modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
     modalScroll: { margin: 20, backgroundColor: '#fff', borderRadius: 8 },
     modalInner: { padding: 16 },
+    modalHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 10, paddingVertical: 'auto' },
     infoBox: { padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
     ratingBox: { flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#ffeb3b', borderRadius: 6, marginBottom: 12 },
     ratingText: { marginLeft: 6 },
