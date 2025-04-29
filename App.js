@@ -26,13 +26,13 @@ import {Ionicons} from '@expo/vector-icons';
 
 const Tab= createBottomTabNavigator();
 const organizerMode = () => {
-  alert("olá, organizador!");
+  // tudo o que vai ser exclusivo do organizador. Ex: tema diferenciado e os caraio
 }
 
 
 function Tabs(){
   const [modalVisible, setModalVisible] = useState(false);
-  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(true);
   
   const toggleOrganizer = () => {
     setIsOrganizer(prev => !prev);
@@ -40,22 +40,17 @@ function Tabs(){
   
   const activeOrganizerPost = () => {
     if (isOrganizer){
-      return(
-          <Tab.Screen
-          name="Criar Post"
-          component={() => null}
-          options={{
-            tabBarButton: (props) => (
-              <TouchableOpacity
-              style={styles.createPostButton}
-              onPress={() => setModalVisible(true)} // Open the modal
-              >
-              <Ionicons name="add-circle" size={50} color="#3f64c7" />
-              </TouchableOpacity>
-              ),
-              }}
-              />
-      )
+      return(      
+          <TouchableOpacity
+            style={styles.createPostButton}
+            onPress={() => setModalVisible(true)} // Open the modal
+          >
+          <Ionicons name="add-circle" size={50} color="#3f64c7" />
+          </TouchableOpacity>
+              
+      );
+    } else if (!isOrganizer){
+      return (null);
     }
   }
   
@@ -114,20 +109,22 @@ function Tabs(){
        <Tab.Screen name= "Home"component={Home}></Tab.Screen> 
         
 
-       {/* <Tab.Screen
+       <Tab.Screen
           name="Criar Post"
           component={() => null}
+          enabled={false}
           options={{
-            tabBarButton: (props) => (
-              <TouchableOpacity
-              style={styles.createPostButton}
-              onPress={() => setModalVisible(true)} // Open the modal
-              >
-              <Ionicons name="add-circle" size={50} color="#3f64c7" />
-              </TouchableOpacity>
-              ),
+            tabBarButton: (props) => activeOrganizerPost()
+              // (
+              // <TouchableOpacity
+              // style={styles.createPostButton}
+              // onPress={() => setModalVisible(true)} // Open the modal
+              // >
+              // <Ionicons name="add-circle" size={50} color="#3f64c7" />
+              // </TouchableOpacity>
+              // ),
               }}
-              />  */}
+          />  
 
        <Tab.Screen name= "Perfil" component={Perfil}></Tab.Screen> 
 
