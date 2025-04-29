@@ -18,10 +18,8 @@ export default function Perfil() {
   const toggleVisible = () => {
     if(isVisible){
       setIsVisible(false);
-      alert("você num é mais organizador")
     }else{
       setIsVisible(true);
-      alert("você é um organizador")
     }
   }
 
