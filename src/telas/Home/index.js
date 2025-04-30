@@ -48,7 +48,7 @@ export default function Home({ navigation }) {
         <Text style={styles.cardSubtitle}>{item.type}</Text>
       </View>
       <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} />
+        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
