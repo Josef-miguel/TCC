@@ -12,82 +12,84 @@ const CustomizeProfile = ({ modalVisible, setModalVisible }) => {
   if(modalVisible){
       
       return (
-        <View style={styles.container}>
-            <Modal visible={modalVisible} transparent animationType='slide'>
-
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => {setModalVisible(false)}}>
-              <Ionicons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Customizar perfil</Text>
-          </View>
-    
-          {/* Profile Picture Upload */}
-          <View style={styles.profilePicContainer}>
-            <TouchableOpacity style={styles.uploadButton}>
-              <Ionicons name="cloud-upload-outline" size={30} color="#888" />
-            </TouchableOpacity>
-          </View>
-    
-          {/* Nome (Name) */}
-          <Text style={styles.label}>Nome</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Digite seu nome"
-          />
-    
-          {/* Sobrenome (Surname) */}
-          <Text style={styles.label}>Sobrenome</Text>
-          <TextInput
-            style={styles.input}
-            value={surname}
-            onChangeText={setSurname}
-            placeholder="Digite seu sobrenome"
-          />
-    
-          {/* Descrição (Description) */}
-          <Text style={styles.label}>Descrição</Text>
-          <TextInput
-            style={[styles.input, styles.descriptionInput]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Fale um pouco sobre você..."
-            multiline
-            />
-    
-          {/* Modo Organizador (Organizer Mode) */}
-          <View style={styles.switchContainer}>
-            <Switch
-              value={isOrganizerMode}
-              onValueChange={setIsOrganizerMode}
-              thumbColor={isOrganizerMode ? '#3f64c7' : '#f4f3f4'}
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
+        <Modal visible={modalVisible} transparent animationType='slide'>
+          <View style={styles.modalOverlay}>
+            <View style={styles.background}>
+              {/* Header */}
+              <View style={styles.header}>
+                <TouchableOpacity onPress={() => {setModalVisible(false)}}>
+                  <Ionicons name="arrow-back" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Customizar perfil</Text>
+              </View>
+        
+              {/* Profile Picture Upload */}
+              <View style={styles.profilePicContainer}>
+                <TouchableOpacity style={styles.uploadButton}>
+                  <Ionicons name="cloud-upload-outline" size={30} color="#888" />
+                </TouchableOpacity>
+              </View>
+        
+              {/* Nome (Name) */}
+              <Text style={styles.label}>Nome</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Digite seu nome"
               />
-            <Text style={styles.switchLabel}>modo organizador</Text>
+        
+              {/* Sobrenome (Surname) */}
+              <Text style={styles.label}>Sobrenome</Text>
+              <TextInput
+                style={styles.input}
+                value={surname}
+                onChangeText={setSurname}
+                placeholder="Digite seu sobrenome"
+              />
+        
+              {/* Descrição (Description) */}
+              <Text style={styles.label}>Descrição</Text>
+              <TextInput
+                style={[styles.input, styles.descriptionInput]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Fale um pouco sobre você..."
+                multiline
+                />
+        
+              {/* Modo Organizador (Organizer Mode) */}
+              <View style={styles.switchContainer}>
+                <Switch
+                  value={isOrganizerMode}
+                  onValueChange={setIsOrganizerMode}
+                  thumbColor={isOrganizerMode ? '#3f64c7' : '#f4f3f4'}
+                  trackColor={{ false: '#767577', true: '#81b0ff' }}
+                  />
+                <Text style={styles.switchLabel}>modo organizador</Text>
+              </View>
+        
+              {/* Formas de Pagamento (Payment Methods) Button */}
+              <TouchableOpacity
+                style={[styles.button, styles.paymentButton]}
+                onPress={() => navigation.navigate('formapagamento')}
+                >
+                <Text style={styles.buttonText}>Formas de pagamento</Text>
+              </TouchableOpacity>
+        
+              {/* Verificação de Identidade (Identity Verification) Button */}
+              <TouchableOpacity
+                style={[styles.button, styles.verificationButton]}
+                onPress={() => {
+                  // Add navigation or logic for identity verification if needed
+                }}
+                >
+                <Text style={styles.buttonText}>Verificação de identidade</Text>
+              </TouchableOpacity>
+            </View>
+          
           </View>
-    
-          {/* Formas de Pagamento (Payment Methods) Button */}
-          <TouchableOpacity
-            style={[styles.button, styles.paymentButton]}
-            onPress={() => navigation.navigate('formapagamento')}
-            >
-            <Text style={styles.buttonText}>Formas de pagamento</Text>
-          </TouchableOpacity>
-    
-          {/* Verificação de Identidade (Identity Verification) Button */}
-          <TouchableOpacity
-            style={[styles.button, styles.verificationButton]}
-            onPress={() => {
-              // Add navigation or logic for identity verification if needed
-            }}
-            >
-            <Text style={styles.buttonText}>Verificação de identidade</Text>
-          </TouchableOpacity>
-            </Modal>
-        </View>
+        </Modal>
       );
   }
 }
@@ -97,6 +99,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  background: {
+    minHeight: '90%',
+    width: '90%',
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    margin: 'auto',
+    padding: 10
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    
   },
   header: {
       flexDirection: 'row',
