@@ -69,7 +69,7 @@ export default function Home({ navigation }) {
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}> 
         <Text style={styles.sidebarTitle}>Menu</Text>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text>Agenda</Text>
+          <Text>Agendaa</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Historico'); toggleSidebar(); }}>
           <Text>Historico</Text>
