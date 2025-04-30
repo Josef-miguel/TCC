@@ -48,7 +48,7 @@ export default function Home({ navigation }) {
         <Text style={styles.cardSubtitle}>{item.type}</Text>
       </View>
       <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} />
+        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -69,7 +69,7 @@ export default function Home({ navigation }) {
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}> 
         <Text style={styles.sidebarTitle}>Menu</Text>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text>Agenda</Text>
+          <Text>Agendaa</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Historico'); toggleSidebar(); }}>
           <Text>Historico</Text>
