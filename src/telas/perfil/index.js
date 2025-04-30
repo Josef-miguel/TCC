@@ -57,7 +57,7 @@ export default function Perfil() {
         <Text style={styles.level}>Genius Nível 1</Text>
       </View>
 
-      <MenuItem icon="account-outline" label="Minha contas" onPress={() => {setModalVisible(modalVisible)}}/>
+      <MenuItem icon="account-outline" label="Minha contas" onPress={() => {setModalVisible(true)}}/>
       <MenuItem icon="bell-outline" label="Preferências" onPress={() => {toggleOrganizer(), organizerMode()}}/>
       <MenuItem icon="account-search-outline" label="Avaliações" />
       <MenuItem icon="heart-outline" label="Favoritos" />
