@@ -60,7 +60,7 @@ export default function Perfil() {
       <MenuItem icon="account-outline" label="Minha contas" onPress={() => {setModalVisible(true)}}/>
       <MenuItem icon="bell-outline" label="Preferências" onPress={() => {toggleOrganizer(), organizerMode()}}/>
       <MenuItem icon="account-search-outline" label="Avaliações" />
-      <MenuItem icon="heart-outline" label="Favoritos" />
+      <MenuItem icon="heart-outline" label="Favoritos" onPress={() => navigation.navigate('Favoritos')} />
       <MenuItem icon="logout" label="Sair" onPress={toggleVisible} />
     </ScrollView>
     <CustomizarPerfil modalVisible={modalVisible} setModalVisible={setModalVisible}></CustomizarPerfil>
