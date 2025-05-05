@@ -16,6 +16,7 @@ import Formapagamento from './src/telas/Formapagamento';
 import Historico  from './src/telas/Historico';
 import Perfil from './src/telas/Perfil';
 import Post from './src/telas/Post';
+import Favoritos from './src/telas/Favoritos';
 
 import CriarPost from './src/modal/CriarPost';
 
@@ -160,6 +161,7 @@ const Stack= createStackNavigator();
         <Stack.Screen name ="Historico" component={Historico} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Perfil" component={Perfil} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Post" component={Post} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name="Favoritos" component={Favoritos} options={{headerShown: false}} />
 
 
     </Stack.Navigator>
