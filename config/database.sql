@@ -39,6 +39,8 @@ CREATE TABLE Evento (
     local_saida VARCHAR(255) NOT NULL,
     n_vagas INT NOT NULL,
     preco DECIMAL(10, 2) NOT NULL,
+    n_favoritos INT,
+    n_acessos INT,
     idOrganizador INT,
     FOREIGN KEY (idOrganizador) REFERENCES Organizador(id_organizador)
 );
