@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Image, Button, FlatList } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import TelaPost from '../../modal/TelaPost';
@@ -38,6 +38,9 @@ export default function Home({ navigation }) {
     item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Combina e filtra favoritos para "Minhas Viagens"
+  const favoritePosts = [...recommendedPosts, ...popularPosts].filter(post => post.fav);
 
   const toggleFav = (id) => {
     setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
@@ -90,9 +93,17 @@ export default function Home({ navigation }) {
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
           <Text>Agenda</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Historico'); toggleSidebar(); }}>
-          <Text>Histórico</Text>
-        </TouchableOpacity>
+        <TouchableOpacity
+  style={styles.sidebarItem}
+  onPress={() => {
+    const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
+    navigation.navigate('Historico', { favoritos });
+    toggleSidebar();
+  }}
+>
+  <Text>Minhas Viagens</Text>
+</TouchableOpacity>
+
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
         </TouchableOpacity>
@@ -113,6 +124,8 @@ export default function Home({ navigation }) {
         contentContainerStyle={styles.scrollContent}
       />
 
+     
+
       <TelaPost modalVisible={modalVisible} setModalVisible={setModalVisible} selectedPost={selectedPost} setSelectedPost={setSelectedPost} />
     </View>
   );
@@ -131,6 +144,8 @@ const styles = StyleSheet.create({
   cardSubtitle: { fontSize: 14, color: '#666' },
   cardIcon: { padding: 4 },
   popularesTxt: { fontWeight: 'bold', fontSize: 14, marginVertical: 10, marginLeft: 10 },
+  minhasViagensButton: { margin: 10, padding: 12, backgroundColor: '#ffdddd', borderRadius: 8, alignItems: 'center' },
+  minhasViagensText: { color: 'red', fontWeight: 'bold' },
   sidebar: { position: 'absolute', top: 0, left: 0, width: 250, height: '100%', backgroundColor: '#f2f2f2', padding: 20, zIndex: 100 },
   sidebarTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
   sidebarItem: { paddingVertical: 10 },
