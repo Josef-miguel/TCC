@@ -8,6 +8,8 @@ export default function Login({navigation}) {
 
   const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
   const[opac] = useState(new Animated.Value(0));
+  const [user, setUser] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(()=> {
     Animated.parallel([
@@ -24,6 +26,28 @@ export default function Login({navigation}) {
    
   }, []);
   
+  
+  const userLogin = async (user, password) => {
+    await fetch("http://localhost/api/login.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user: user,
+        password: password
+      })
+      
+    });
+    const data = await response.json();
+
+    if (data.status === "success") {
+      alert("Usuário cadastrado com sucesso!");
+      return "sucess"
+    } else {
+      alert("Erro ao cadastrar: " + data.message);
+      return "error"
+    }
+  };
+
   return (
     // <ImageBackground source={require('../../../assets/img/bg2.png')} style={styles.imgBg}>
                 
@@ -49,7 +73,7 @@ export default function Login({navigation}) {
           placeholder="Usuario"
           type='email'
           dataCorrect={false}
-          onChangeText={()=>{}}
+          onChangeText={user => setUser(user)}
         ></TextInput>
       </View>
 
@@ -60,7 +84,7 @@ export default function Login({navigation}) {
           placeholder="Senha"
           secureTextEntry={true}
           dataCorrect={false}
-          onChangeText={()=>{}}
+          onChangeText={password => setPassword(password)}
         ></TextInput>
       </View>
     
@@ -75,7 +99,14 @@ export default function Login({navigation}) {
 
       <TouchableOpacity 
         style={styles.botaoRecuperar}
-       onPress={() => navigation.navigate('Cadastro')}>
+        onPress={() => {
+          if(userLogin(user,password) == "success"){
+            navigation.navigate("Home");
+          }else{
+            alert("um erro ocorreu");
+          }
+
+        }}>
          <Text style={styles.textoRecuperar}>Ainda não possui uma conta? Registre-se</Text>
       </TouchableOpacity>
 
