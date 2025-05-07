@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Modal, Image, Button } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Image, Button, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import TelaPost from '../../modal/TelaPost';
@@ -12,10 +12,7 @@ export default function Home({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
 
-  const toggleFav = (id) => {
-    setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
-    setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
-};
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [recommendedPosts, setRecommendedPosts] = useState([
     { id: 1, fav: false, images: ['https://placekitten.com/300/200'], route: 'São Paulo → Rio de Janeiro', excursionInfo: 'Visita guiada pelos principais pontos turísticos.', rating: 8, comments: ['Foi incrível!', 'Recomendo demais.'], type: 'Aventura', theme: 'Montanha' },
@@ -30,6 +27,23 @@ export default function Home({ navigation }) {
     { id: 7, fav: false, images: ['https://placekitten.com/350/200'], route: 'Recife → Olinda', excursionInfo: 'Circuito cultural histórico.', rating: 7, comments: ['Colorido!', 'Rico em arte.'], type: 'Cultural', theme: 'Museus e arte' }
   ]);
 
+  // Filtrar posts com base no searchQuery
+  const filteredRecommended = recommendedPosts.filter(item =>
+    item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredPopular = popularPosts.filter(item =>
+    item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleFav = (id) => {
+    setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
+    setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
+  };
+
   const toggleSidebar = () => {
     Animated.timing(sidebarAnimation, { toValue: sidebarVisible ? -250 : 0, duration: 300, useNativeDriver: true }).start();
     setSidebarVisible(!sidebarVisible);
@@ -38,10 +52,10 @@ export default function Home({ navigation }) {
   const openModal = (post) => {
     setSelectedPost(post);
     setModalVisible(true);
-  }; 
+  };
 
-  const renderCard = (item) => (
-    <TouchableOpacity key={item.id} onPress={() => openModal(item)} style={styles.card}>
+  const renderCard = ({ item }) => (
+    <TouchableOpacity onPress={() => openModal(item)} style={styles.card}>
       <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.theme}</Text>
@@ -59,36 +73,47 @@ export default function Home({ navigation }) {
         <TouchableOpacity onPress={toggleSidebar}>
           <Ionicons name="menu" size={24} color="black" />
         </TouchableOpacity>
-        <TextInput style={styles.searchInput} placeholder="Quero ir para...." />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Quero ir para...."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
         <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
           <Ionicons name="person-circle-outline" size={24} color="black" />
         </TouchableOpacity>
       </View>
 
-      {sidebarVisible && <TouchableOpacity style={styles.overlay} onPress={toggleSidebar} activeOpacity={1} />}      
+      {sidebarVisible && <TouchableOpacity style={styles.overlay} onPress={toggleSidebar} activeOpacity={1} />}
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}> 
         <Text style={styles.sidebarTitle}>Menu</Text>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text>Agendaa</Text>
+          <Text>Agenda</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Historico'); toggleSidebar(); }}>
-          <Text>Historico</Text>
+          <Text>Histórico</Text>
         </TouchableOpacity>
-        
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
         </TouchableOpacity>
       </Animated.View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {recommendedPosts.map(renderCard)}
-        <Text style={styles.popularesTxt}>Populares recentemente</Text>
-        {popularPosts.map(renderCard)}
-      </ScrollView>
+      <FlatList
+        data={filteredRecommended}
+        keyExtractor={item => item.id.toString()}
+        renderItem={renderCard}
+        contentContainerStyle={styles.scrollContent}
+        ListHeaderComponent={<Text style={styles.sectionTitle}>Recomendados</Text>}
+      />
+      <Text style={styles.popularesTxt}>Populares recentemente</Text>
+      <FlatList
+        data={filteredPopular}
+        keyExtractor={item => item.id.toString()}
+        renderItem={renderCard}
+        contentContainerStyle={styles.scrollContent}
+      />
 
-      <TelaPost modalVisible={modalVisible} setModalVisible={setModalVisible} selectedPost={selectedPost} setSelectedPost={setSelectedPost}></TelaPost>
-      
-
+      <TelaPost modalVisible={modalVisible} setModalVisible={setModalVisible} selectedPost={selectedPost} setSelectedPost={setSelectedPost} />
     </View>
   );
 }
@@ -97,22 +122,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   topBar: { flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#f2f2f2' },
   searchInput: { flex: 1, height: 35, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10, marginHorizontal: 8 },
-  scroll: { flex: 1 },
   scrollContent: { padding: 10, paddingBottom: 30 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginVertical: 8 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, elevation: 3, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, marginBottom: 12, padding: 10 },
   cardImage: { width: 60, height: 60, borderRadius: 6 },
   cardContent: { flex: 1, marginLeft: 10 },
   cardTitle: { fontSize: 16, fontWeight: 'bold' },
   cardSubtitle: { fontSize: 14, color: '#666' },
   cardIcon: { padding: 4 },
-  popularesTxt: { fontWeight: 'bold', fontSize: 14, marginVertical: 10 },
+  popularesTxt: { fontWeight: 'bold', fontSize: 14, marginVertical: 10, marginLeft: 10 },
   sidebar: { position: 'absolute', top: 0, left: 0, width: 250, height: '100%', backgroundColor: '#f2f2f2', padding: 20, zIndex: 100 },
   sidebarTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
   sidebarItem: { paddingVertical: 10 },
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)' },
-  
-  
-  
-  
-  
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)' }
 });
