@@ -15,6 +15,7 @@ import Agenda from './src/telas/Agenda';
 import Formapagamento from './src/telas/Formapagamento';
 import Historico  from './src/telas/Historico';
 import Perfil from './src/telas/Perfil';
+import chat from './src/telas/chat';
 import Post from './src/telas/Post';
 import Favoritos from './src/telas/Favoritos';
 
