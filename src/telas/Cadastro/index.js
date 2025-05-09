@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ScrollView, ImageBackground } from 'react-native';
-import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
+import {
+  StyleSheet,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Image,
+  Animated,
+  ScrollView,
+  Platform,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 
 export default function Cadastro({ navigation }) {
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
@@ -8,183 +20,80 @@ export default function Cadastro({ navigation }) {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(offset.y, {
-        toValue: 0,
-        speed: 4,
-        bounciness: 20
-      }),
-      Animated.timing(opac, {
-        toValue: 1,
-        duration: 2000,
-      })
+      Animated.spring(offset.y, { toValue: 0, speed: 4, bounciness: 20, useNativeDriver: true }),
+      Animated.timing(opac, { toValue: 1, duration: 1500, useNativeDriver: true }),
     ]).start();
   }, []);
 
-  // Gradiente simulado com uma View com cores sobrepostas
-  const GradientBackground = ({ children }) => (
-    <View style={styles.gradientContainer}>
-      <View style={[styles.gradientLayer, styles.gradientLayer1]} />
-      <View style={[styles.gradientLayer, styles.gradientLayer2]} />
-      <View style={[styles.gradientLayer, styles.gradientLayer3]} />
-      {children}
-    </View>
-  );
-
   return (
-    <GradientBackground>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <KeyboardAvoidingView style={styles.container}>
-          <View style={styles.logo}>
+    <LinearGradient
+      colors={[ '#1a2a6c', '#b21f1f', '#fdbb2d' ]}
+      style={styles.gradient}
+    >
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
+          <Animated.View style={[styles.logoContainer, { opacity: opac, transform: [{ translateY: offset.y }] }] }>
             <Image
-              style={{ width: 320 }}
-              resizeMode="contain"
               source={require('../../../assets/img/iconimg.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
-          </View>
+          </Animated.View>
 
-          <Animated.View
-            style={[
-              styles.formulario,
-              {
-                opacity: opac,
-                transform: [{ translateY: offset.y }]
-              }
-            ]}
-          >
-            <TextInput
-              style={styles.input}
-              placeholder="Usuario"
-              placeholderTextColor="#999"
-              type="email"
-              dataCorrect={false}
-              onChangeText={() => { }}
-            />
+          <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }] }>
+            {['Usuário', 'Senha', 'CPF', 'Data de nascimento'].map((placeholder, idx) => (
+              <View key={idx} style={styles.inputWrapper}>
+                <Feather
+                  name={placeholder === 'Senha' ? 'lock' : 'user'}
+                  size={20}
+                  style={styles.icon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder={placeholder}
+                  placeholderTextColor="#666"
+                  secureTextEntry={placeholder === 'Senha'}
+                  keyboardType={placeholder === 'CPF' || placeholder === 'Data de nascimento' ? 'numeric' : 'default'}
+                />
+              </View>
+            ))}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Senha"
-              placeholderTextColor="#999"
-              secureTextEntry={true}
-              dataCorrect={false}
-              onChangeText={() => { }}
-            />
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
+              <Text style={styles.buttonText}>Registrar</Text>
+            </TouchableOpacity>
 
-
-            <TextInput
-              style={styles.input}
-              placeholder="CPF"
-              placeholderTextColor="#999"
-              type="numeric"
-              dataCorrect={false}
-              onChangeText={() => { }}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Data de nascimento"
-              placeholderTextColor="#999"
-              type="numeric"
-              dataCorrect={false}
-              onChangeText={() => { }}
-            />
-
-
-      
-      <View style={styles.viewBotao}>
-      <TouchableOpacity 
-        style={styles.botao}
-       onPress={() => navigation.navigate('Home')}>
-         <Text style={styles.textoBotao}>Entrar</Text>
-      </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity 
-        style={styles.botaoRecuperar}
-       onPress={() => navigation.navigate('Login')}>
-         <Text style={styles.textoRecuperar}>Já possui conta?</Text>
-      </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.linkText}>Já possui conta? Faça login</Text>
+            </TouchableOpacity>
           </Animated.View>
         </KeyboardAvoidingView>
       </ScrollView>
-    </GradientBackground>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientContainer: {
-    flex: 1,
-    position: 'relative',
+  gradient: { flex: 1 },
+  scroll: { flexGrow: 1 },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  logoContainer: { marginBottom: 30, alignItems: 'center' },
+  logo: { width: 180, height: 60 },
+  form: { width: '100%' },
+  inputWrapper: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 25,
+    paddingHorizontal: 15, marginBottom: 15, height: 50, shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3,
   },
-  gradientLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  icon: { color: '#fdbb2d', marginRight: 10 },
+  input: { flex: 1, fontSize: 16, color: '#333' },
+  button: {
+    backgroundColor: '#b21f1f', borderRadius: 25, height: 50, alignItems: 'center', justifyContent: 'center',
+    marginVertical: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3,
+    shadowRadius: 5, elevation: 4,
   },
-  gradientLayer1: {
-    backgroundColor: '#191919',
-    opacity: 0.4,
-  },
-  gradientLayer2: {
-    backgroundColor: '#0d2d3a',
-    opacity: 0.3,
-  },
-  gradientLayer3: {
-    backgroundColor: '#1a7487',
-    opacity: 0.3,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  logo: {
-    flex: 1,
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  formulario: {
-    flex: 1,
-    paddingBottom: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '90%',
-    marginTop: -50,
-  },
-  input: {
-    backgroundColor: '#FFF',
-    marginBottom: 15,
-    color: '#222',
-    fontSize: 17,
-    borderRadius: 7,
-    padding: 10,
-    width: '90%',
-  },
-  viewBotao: {
-    width: '90%',
-    borderRadius: 7,
-  },
-  botao: {
-    backgroundColor: '#1a7487',
-    height: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 7,
-    padding: 10,
-  },
-  textoBotao: {
-    color: '#FFF',
-    fontSize: 18,
-  },
-  botaoRecuperar: {
-    marginTop: 15,
-  },
-  textoRecuperar: {
-    color: '#FFF',
-  },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  linkText: { color: '#fff', textAlign: 'center', marginTop: 10, textDecorationLine: 'underline' },
 });

@@ -72,7 +72,7 @@ const CustomizeProfile = ({ modalVisible, setModalVisible }) => {
               {/* Formas de Pagamento (Payment Methods) Button */}
               <TouchableOpacity
                 style={[styles.button, styles.paymentButton]}
-                onPress={() => navigation.navigate('formapagamento')}
+                onPress={() => navigation.navigate('Formapagamento')}
                 >
                 <Text style={styles.buttonText}>Formas de pagamento</Text>
               </TouchableOpacity>
