@@ -15,16 +15,16 @@ export default function Home({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [recommendedPosts, setRecommendedPosts] = useState([
-    { id: 1, fav: false, images: ['https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.wallpaperflare.com%2Fsearch%3Fwallpaper%3Drio%2Bde%2Bjaneiro&psig=AOvVaw3izAMiSIBa_QDcoZ3Vgz6L&ust=1746888380462000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCJCpmb3Qlo0DFQAAAAAdAAAAABAJ'], route: 'São Paulo → Rio de Janeiro', excursionInfo: 'Visita guiada pelos principais pontos turísticos.', rating: 8, comments: ['Foi incrível!', 'Recomendo demais.'], type: 'Aventura', theme: 'Montanha' },
-    { id: 2, fav: true, images: ['https://placekitten.com/310/200'], route: 'Rio de Janeiro → Búzios', excursionInfo: 'Dia de praia e relax.', rating: 9, comments: ['Perfeito!', 'Sol o dia todo.'], type: 'Relax', theme: 'Praia' },
-    { id: 3, fav: false, images: ['https://placekitten.com/320/200'], route: 'Salvador → Praia do Forte', excursionInfo: 'História e cultura local.', rating: 7, comments: ['Interessante.', 'Boa gastronomia.'], type: 'Cultural', theme: 'História' },
-    { id: 4, fav: false, images: ['https://placekitten.com/330/200'], route: 'Curitiba → Blumenau', excursionInfo: 'Gastronomia típica alemã.', rating: 8, comments: ['Delicioso!', 'Ótima cerveja.'], type: 'Gastronomia', theme: 'Culinária local' }
+    { id: 1, fav: false, images: ['https://c4.wallpaperflare.com/wallpaper/929/494/437/rio-de-janeiro-4k-pc-desktop-hd-wallpaper-preview.jpg'], route: 'São Paulo → Rio de Janeiro', excursionInfo: 'Visita guiada pelos principais pontos turísticos.', rating: 8, comments: ['Foi incrível!', 'Recomendo demais.'], type: 'Aventura', theme: 'Montanha' },
+    { id: 2, fav: true, images: ['https://cdn.blablacar.com/wp-content/uploads/br/2024/03/05100620/azeda-buzios-rj.webp'], route: 'Rio de Janeiro → Búzios', excursionInfo: 'Dia de praia e relax.', rating: 9, comments: ['Perfeito!', 'Sol o dia todo.'], type: 'Relax', theme: 'Praia' },
+    { id: 3, fav: false, images: ['https://cdn.vaidepromo.com.br/blog/2024/03/Praia-do-Forte-scaled.jpg'], route: 'Salvador → Praia do Forte', excursionInfo: 'História e cultura local.', rating: 7, comments: ['Interessante.', 'Boa gastronomia.'], type: 'Cultural', theme: 'História' },
+    { id: 4, fav: false, images: ['https://cdn.blablacar.com/wp-content/uploads/br/2023/11/05100605/blumenau-sc-4.jpg'], route: 'Curitiba → Blumenau', excursionInfo: 'Gastronomia típica alemã.', rating: 8, comments: ['Delicioso!', 'Ótima cerveja.'], type: 'Gastronomia', theme: 'Culinária local' }
   ]);
 
   const [popularPosts, setPopularPosts] = useState([
-    { id: 5, fav: true, images: ['https://placekitten.com/302/200'], route: 'Curitiba → Foz do Iguaçu', excursionInfo: 'Tour de 3 dias com hotel e ingressos.', rating: 9, comments: ['Maravilhoso!', 'Ótimo custo-benefício.'], type: 'Romântico', theme: 'Praia ao pôr do sol' },
-    { id: 6, fav: true, images: ['https://placekitten.com/340/200'], route: 'Manaus → Amazônia', excursionInfo: 'Aventura na floresta.', rating: 8, comments: ['Inesquecível!', 'Muita natureza.'], type: 'Aventura', theme: 'Trilha na floresta' },
-    { id: 7, fav: false, images: ['https://placekitten.com/350/200'], route: 'Recife → Olinda', excursionInfo: 'Circuito cultural histórico.', rating: 7, comments: ['Colorido!', 'Rico em arte.'], type: 'Cultural', theme: 'Museus e arte' }
+    { id: 5, fav: true, images: ['https://www.melhoresdestinos.com.br/wp-content/uploads/2019/07/passagens-aereas-foz-do-iguacu-capa2019-05.jpg'], route: 'Curitiba → Foz do Iguaçu', excursionInfo: 'Tour de 3 dias com hotel e ingressos.', rating: 9, comments: ['Maravilhoso!', 'Ótimo custo-benefício.'], type: 'Romântico', theme: 'Praia ao pôr do sol' },
+    { id: 6, fav: true, images: ['https://amazonasatual.com.br/wp-content/uploads/2017/10/TRILHA-AQU%C3%81TICA-DA-MIRATINGA.jpg'], route: 'Manaus → Amazônia', excursionInfo: 'Aventura na floresta.', rating: 8, comments: ['Inesquecível!', 'Muita natureza.'], type: 'Aventura', theme: 'Trilha na floresta' },
+    { id: 7, fav: false, images: ['https://emalgumlugardomundo.com.br/wp-content/uploads/2023/01/o-que-fazer-em-olinda-centro-historico.jpg'], route: 'Recife → Olinda', excursionInfo: 'Circuito cultural histórico.', rating: 7, comments: ['Colorido!', 'Rico em arte.'], type: 'Cultural', theme: 'Museus e arte' }
   ]);
 
   // Filtrar posts com base no searchQuery
