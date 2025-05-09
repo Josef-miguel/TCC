@@ -1,171 +1,156 @@
-
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBackground} from 'react-native';
-import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
+import {
+  StyleSheet,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Image,
+  Animated,
+  ImageBackground,
+  Platform,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 
+export default function Login({ navigation }) {
+  const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
+  const [opac] = useState(new Animated.Value(0));
 
-export default function Login({navigation}) {
-
-  const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
-  const[opac] = useState(new Animated.Value(0));
-
-  useEffect(()=> {
+  useEffect(() => {
     Animated.parallel([
       Animated.spring(offset.y, {
-        toValue:0, 
-        speed:4,
-        bounciness:20
+        toValue: 0,
+        speed: 4,
+        bounciness: 20,
+        useNativeDriver: true,
       }),
       Animated.timing(opac, {
-        toValue:1,
-        duration:2000,
-      })
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
     ]).start();
-   
   }, []);
-  
+
   return (
-    // <ImageBackground source={require('../../../assets/img/bg2.png')} style={styles.imgBg}>
-                
-    <KeyboardAvoidingView 
-    style={styles.background}>
-     <View style={styles.logo}>
-       <Image style={{width:320}} resizeMode = "contain" source={require('../../../assets/img/iconimg.png')}></Image>
-     </View>
+    <LinearGradient
+      colors={[ '#4c669f', '#3b5998', '#192f6a' ]}
+      style={styles.background}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <Animated.View style={[styles.logoContainer, { opacity: opac, transform: [{ translateY: offset.y }] }]}>
+          <Image
+            source={require('../../../assets/img/iconimg.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </Animated.View>
 
-    <Animated.View 
-    style={[styles.formulario,
-      {
-        opacity: opac,
-        transform: [{translateY: offset.y}]
-      }
-    
-    ]}>
-      
-      <View style={styles.areaInput}>
-        <Image source={require('../../../assets/img/icons/profile-icon.png')} style={styles.icon}></Image>
-        <TextInput 
-          style={styles.input}
-          placeholder="Usuario"
-          type='email'
-          dataCorrect={false}
-          onChangeText={()=>{}}
-        ></TextInput>
-      </View>
+        <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }]}>
+          <View style={styles.inputWrapper}>
+            <Feather name="user" size={20} style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Usuário"
+              placeholderTextColor="#666"
+              keyboardType="email-address"
+            />
+          </View>
 
-      <View style={styles.areaInput}>
-        <Image source={require('../../../assets/img/icons/lock-icon.png')} style={styles.icon}></Image>
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          secureTextEntry={true}
-          dataCorrect={false}
-          onChangeText={()=>{}}
-        ></TextInput>
-      </View>
-    
-      
-      <View style={styles.viewBotao}>
-      <TouchableOpacity 
-        style={styles.botao}
-       onPress={() => navigation.navigate('Home')}>
-         <Text style={styles.textoBotao}>Entrar</Text>
-      </TouchableOpacity>
-      </View>
+          <View style={styles.inputWrapper}>
+            <Feather name="lock" size={20} style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Senha"
+              placeholderTextColor="#666"
+              secureTextEntry
+            />
+          </View>
 
-      <TouchableOpacity 
-        style={styles.botaoRecuperar}
-       onPress={() => navigation.navigate('Cadastro')}>
-         <Text style={styles.textoRecuperar}>Ainda não possui uma conta? Registre-se</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
+            <Text style={styles.buttonText}>Entrar</Text>
+          </TouchableOpacity>
 
-    </Animated.View>
-
-     
-    </KeyboardAvoidingView>
-    // </ImageBackground>
+          <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
+            <Text style={styles.linkText}>Ainda não possui uma conta? Registre-se</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   background: {
     flex: 1,
+  },
+  container: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
-
-  icon: {
-    width: 32,
-    height: 32,
-    marginVertical: 'auto'
+  logoContainer: {
+    marginBottom: 40,
+    alignItems: 'center',
   },
-
   logo: {
-    flex: 1,
-    justifyContent: 'center',
+    width: 200,
+    height: 80,
   },
-
-  formulario: {
-    flex: 1,
-    paddingBottom:30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '90%',
-    marginTop:-50
-  },
-
-  areaInput: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF000',
-    color: '#222',
-    borderRadius: 7,
-    padding:5,
-    width: '90%',
-    backgroundColor: '#FFF',
-    marginBottom: 15
-  },
-
-  input: {
-    marginVertical: 'auto',
-    marginLeft: 5,
-    fontSize: 16
-  },
-
-  viewBotao:{
-    width: '90%',
-    borderRadius: 7,
-  },
-
-  botao: {
-    backgroundColor: '#1a7487',
-    height:45,
-    alignItems:'center',
-    justifyContent:'center',
-    borderRadius: 7,
-    padding:10,
-    
-    
-  },
-  textoBotao:{
-    color:'#FFF',
-    fontSize:18
-  },
-
-  botaoRecuperar:{
-    marginTop:15,
-  },
-
-  textoRecuperar:{
-    color:'#FFF',
-    
-  },
-
-  imgBg:{
-    flex:1,
+  form: {
     width: '100%',
-    height: '100%',
-    opacity: 1,
-    justifyContent: "flex-start",
-    backgroundColor: '#000'
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    height: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  icon: {
+    color: '#3b5998',
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#3b5998',
+    borderRadius: 25,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  linkText: {
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 10,
+    textDecorationLine: 'underline',
   },
 });

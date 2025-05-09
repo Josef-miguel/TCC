@@ -1,89 +1,75 @@
-// src/telas/Favoritos/index.js
-
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useLayoutEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const favoritos = [
-  {
-    id: '1',
-    titulo: 'Excursão para o Rock in Rio',
-    local: 'Rio de Janeiro, RJ',
-    data: '21/09/2025',
-    imagem: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '2',
-    titulo: 'Show do Coldplay',
-    local: 'São Paulo, SP',
-    data: '15/10/2025',
-    imagem: 'https://via.placeholder.com/150',
-  },
-  // Adicione mais exemplos conforme necessário
-];
+export default function Favoritos({ navigation, route }) {
+  // Recebe lista de favoritos via params
+  const initialFavs = route.params?.favoritos || [];
+  const [favorites, setFavorites] = useState(initialFavs);
 
-export default function Favoritos() {
+  // Configura header com botão de voltar
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: 'Favoritos',
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
+          <Ionicons name="arrow-back" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
+  // Toggle favorito localmente
+  const toggleFav = (id) => {
+    const updated = favorites.map(item =>
+      item.id === id ? { ...item, fav: !item.fav } : item
+    ).filter(item => item.fav);
+    setFavorites(updated);
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
+      <View style={styles.cardContent}>
+        <Text style={styles.cardTitle}>{item.theme}</Text>
+        <Text style={styles.cardSubtitle}>{item.type}</Text>
+        <Text style={styles.cardRoute}>{item.route}</Text>
+      </View>
+      <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
+        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Meus Favoritos</Text>
-      <FlatList
-        data={favoritos}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.imagem }} style={styles.imagem} />
-            <View style={styles.info}>
-              <Text style={styles.nome}>{item.titulo}</Text>
-              <Text style={styles.local}>{item.local}</Text>
-              <Text style={styles.data}>{item.data}</Text>
-            </View>
-            <TouchableOpacity>
-              <Ionicons name="heart" size={24} color="#e63946" />
-            </TouchableOpacity>
-          </View>
-        )}
-      />
+      {favorites.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Nenhum favorito.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={favorites}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  titulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    padding: 10,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 10,
-    elevation: 2,
-  },
-  imagem: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  info: {
-    flex: 1,
-  },
-  nome: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  local: {
-    color: '#555',
-  },
-  data: {
-    color: '#888',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  listContent: { padding: 10 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, elevation: 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, marginBottom: 12, padding: 10 },
+  cardImage: { width: 60, height: 60, borderRadius: 6 },
+  cardContent: { flex: 1, marginLeft: 10 },
+  cardTitle: { fontSize: 16, fontWeight: 'bold' },
+  cardSubtitle: { fontSize: 14, color: '#666' },
+  cardRoute: { fontSize: 12, color: '#999', marginTop: 4 },
+  cardIcon: { padding: 4 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyText: { fontSize: 16, color: '#666' },
+  headerBack: { marginLeft: 10 }
 });
