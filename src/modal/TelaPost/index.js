@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ParticiparPost from '../ParticiparPost';
-import Chat from './../../telas/chat';
+// import Chat from './../../telas/chat';
 
 const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPost }) => {
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
@@ -47,9 +47,9 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
                 <Text key={idx} style={styles.commentText}>"{c}"</Text>
               ))}
             </View>
-            <TouchableOpacity style={styles.modalButton} onPress={() => setChatModalVisible(true)}>
+            {/* <TouchableOpacity style={styles.modalButton} onPress={() => setChatModalVisible(true)}>
               <Text style={styles.buttonText}>Entrar em contato com o organizador</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity style={[styles.modalButton, styles.joinButton]} onPress={() => setParticipationModalVisible(true)}>
               <Text style={styles.buttonText}>Participar da viagem</Text>
             </TouchableOpacity>
@@ -65,10 +65,10 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
 
       {/* Chat Modal */}
       <Modal visible={chatModalVisible} animationType="slide">
-        <Chat
+        {/* <Chat
           organizer={selectedPost.organizer}
           onClose={() => setChatModalVisible(false)}
-        />
+        /> */}
       </Modal>
     </View>
   );
