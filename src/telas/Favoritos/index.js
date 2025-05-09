@@ -7,23 +7,18 @@ export default function Favoritos({ navigation, route }) {
   const initialFavs = route.params?.favoritos || [];
   const [favorites, setFavorites] = useState(initialFavs);
 
-  // Configura header com botão de voltar
+  // Configura header nativo (opcional)
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Favoritos',
-      headerLeft: () => (
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-      ),
+      headerShown: false, // esconder header padrão para usarmos o nosso
     });
   }, [navigation]);
 
   // Toggle favorito localmente
   const toggleFav = (id) => {
-    const updated = favorites.map(item =>
-      item.id === id ? { ...item, fav: !item.fav } : item
-    ).filter(item => item.fav);
+    const updated = favorites
+      .map(item => (item.id === id ? { ...item, fav: !item.fav } : item))
+      .filter(item => item.fav);
     setFavorites(updated);
   };
 
@@ -43,6 +38,12 @@ export default function Favoritos({ navigation, route }) {
 
   return (
     <View style={styles.container}>
+      {/* Seta de voltar customizada */}
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#000" />
+        <Text style={styles.backText}>Minhas viagens</Text>
+      </TouchableOpacity>
+
       {favorites.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Nenhum favorito.</Text>
@@ -61,8 +62,21 @@ export default function Favoritos({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  backButton: { flexDirection: 'row', alignItems: 'center', padding: 10 },
+  backText: { fontSize: 16, color: '#000', marginLeft: 6 },
   listContent: { padding: 10 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, elevation: 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, marginBottom: 12, padding: 10 },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    marginBottom: 12,
+    padding: 10,
+  },
   cardImage: { width: 60, height: 60, borderRadius: 6 },
   cardContent: { flex: 1, marginLeft: 10 },
   cardTitle: { fontSize: 16, fontWeight: 'bold' },
@@ -71,5 +85,4 @@ const styles = StyleSheet.create({
   cardIcon: { padding: 4 },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: 16, color: '#666' },
-  headerBack: { marginLeft: 10 }
 });
