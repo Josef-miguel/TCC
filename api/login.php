@@ -1,23 +1,33 @@
-<?php 
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
-header("Access-Control-Allow-Methods: POST");
+<?php
 
-require_once("config.php");
+include_once("connection.php");
 
-// Pega os dados do POST (formato JSON vindo do React)
-$data = json_decode(file_get_contents("php://input"));
+$postjson = json_decode(file_get_contents('php://input'), true);
 
-$user = $data->user;
-$pass = $data->password;
+$user = $postjson['user'] ?? "";
+$password = $postjson['password'] ?? "";
 
-$sql = "select * from usuario where nome LIKE 'ADMIN' and senha LIKE '123'";
+$res = $pdo->prepare("SELECT * FROM usuario WHERE nome=:user");
+$res->bindValue(":user", $user);
+$res->execute();
 
-$stmt = $link->prepare($sql);
-$stmt->bind_param("ss", $user, $pass);
+$data = $res->fetch(PDO::FETCH_ASSOC);
 
-if($stmt->execute()) {
-    echo json_encode(["status" => "success"]);
+if ($data && $password) {
+    $result = json_encode(array(
+        'message' => 'Conexão bem-sucedida!',
+        'success' => true,
+        'data' => array(
+            'id' => $data['id_usuario'],
+            'user' => $data['nome']
+        )
+    ));
 } else {
-    echo json_encode(["status" => "error", "message" => $link->error]);
+    $result = json_encode(array(
+        'message' => 'Usuario ou senha invzlidos!',
+        'success' => false
+    ));
 }
+
+
+echo $result;
