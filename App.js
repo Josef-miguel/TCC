@@ -4,7 +4,7 @@ import { NavigationContainer} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-
+import FlashMessage from "react-native-flash-message";
 
 
 
@@ -144,6 +144,7 @@ export default function App() {
 
 const Stack= createStackNavigator();
   return (
+    <>
   <NavigationContainer>
     <Stack.Navigator initialRouteName='Cadastro'>
 
@@ -167,6 +168,8 @@ const Stack= createStackNavigator();
 
     </Stack.Navigator>
   </NavigationContainer>
+  <FlashMessage position="top"/>
+</>
   );
 }
 
