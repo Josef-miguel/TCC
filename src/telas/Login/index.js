@@ -1,252 +1,172 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, KeyboardAvoidingView, Image, Animated, ImageBackground, Alert} from 'react-native';
-import { TouchableOpacity, TextInput } from 'react-native-gesture-handler';
-import { showMessage } from "react-native-flash-message";
+import {
+  StyleSheet,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Image,
+  Animated,
+  ScrollView,
+  Platform,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
+import api from '../../../services/api';
+import { showMessage } from 'react-native-flash-message';
 
+export default function Login({ navigation }) {
+  const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
+  const [opac] = useState(new Animated.Value(0));
+  const [user, setUser] = useState('');
+  const [password, setPassword] = useState('');
 
-import api from "../../../services/api";
-
-
-export default function Login({navigation}) {
-  
-  const[offset] = useState(new Animated.ValueXY({x:0, y:90}));
-  const[opac] = useState(new Animated.Value(0));
-  const [user, setUser] = useState("");
-  const [password, setPassword] = useState("");
-  const [success, setSuccess] = useState("");
-  
-  useEffect(()=> {
+  useEffect(() => {
     Animated.parallel([
-      Animated.spring(offset.y, {
-        toValue:0, 
-        speed:4,
-        bounciness:20,  
-        useNativeDriver: true
-      }),
-      Animated.timing(opac, {
-        toValue:1,
-        duration:2000,
-        useNativeDriver: true
-      })
+      Animated.spring(offset.y, { toValue: 0, speed: 4, bounciness: 20, useNativeDriver: true }),
+      Animated.timing(opac, { toValue: 1, duration: 1500, useNativeDriver: true }),
     ]).start();
-    
   }, []);
-  const limparCampos=()=>{
-    setUser("");
-    setPassword("");
-  }
-  
-  async function saveData(){
+
+  const limparCampos = () => {
+    setUser('');
+    setPassword('');
+  };
+
+  async function saveData() {
     if (!user || !password) {
       showMessage({
-        message: "Erro ao Salvar",
+        message: 'Erro ao Salvar',
         description: 'Preencha os Campos Obrigatórios!',
-        type: "warning",
+        type: 'warning',
       });
       return;
     }
-    
-    try{
-      const obj = {
-        user : user || '',
-        password : password || ''
-      }
-      
-      const res = await api.post('TCC/login.php', obj);
-      if (res.status !== 200) {
-        throw new Error('Erro na comunicação com o servidor');
-      }
-      if (res.data.success == false) {
+
+    try {
+      const res = await api.post('TCC/login.php', { user, password });
+      if (res.status !== 200) throw new Error('Erro na comunicação com o servidor');
+
+      if (!res.data.success) {
         showMessage({
-          message: "Erro ao Logar",
+          message: 'Erro ao Logar',
           description: res.data.message || 'Usuário ou senha inválidos!',
-          type: "warning",
-          duration: 3000,
+          type: 'warning',
         });
         limparCampos();
-      }
-      else if (res.data.success == true){
+      } else {
         showMessage({
-          message: "Login Bem-Sucedido",
-          description: "Bem-vindo!",
-          type: "success",
-          duration: 1800,
+          message: 'Login Bem-Sucedido',
+          description: 'Bem-vindo!',
+          type: 'success',
         });
-        setSuccess(true);
         navigation.navigate('Home');
       }
-      else{
-        showMessage({
-          message: "Ocorreu algum erro",
-          description: "erro",
-          type: 'warning',
-          duration: 2000
-        });
-      }
-      
-      console.log(res.data.success);
-    
-  } catch (error) {
-    console.log(error);
-    showMessage({
-          message: "Ocorreu algum erro: " + error,
-          description: "erro",
-          type: 'warning',
-          duration: 2000
-        });
-    setSuccess(false);
+    } catch (error) {
+      showMessage({
+        message: 'Ocorreu algum erro',
+        description: error.message,
+        type: 'danger',
+      });
+    }
   }
-  }
-  
-  
-  
+
   return (
-    // <ImageBackground source={require('../../../assets/img/bg2.png')} style={styles.imgBg}>
-    
-    <KeyboardAvoidingView 
-    style={styles.background}>
-     <View style={styles.logo}>
-       <Image style={{width:320}} resizeMode = "contain" source={require('../../../assets/img/iconimg.png')}></Image>
-     </View>
+    <LinearGradient
+      colors={['#1e3c72', '#0377fc']} //Alterem a cor
+      style={styles.gradient}
+    >
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
+          <Animated.View
+            style={[styles.logoContainer, { opacity: opac, transform: [{ translateY: offset.y }] }]}
+          >
+            <Image
+              source={require('../../../assets/img/iconimg.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </Animated.View>
 
-    <Animated.View 
-    style={[styles.formulario,
-      {
-        opacity: opac,
-        transform: [{translateY: offset.y}]
-      }
-    
-    ]}>
-      
-      <View style={styles.areaInput}>
-        <Image source={require('../../../assets/img/icons/profile-icon.png')} style={styles.icon}></Image>
-        <TextInput 
-          style={styles.input}
-          placeholder="Usuario"
-          type='email'
-          dataCorrect={false}
-          value={user}
-          onChangeText={user => setUser(user)}
-        ></TextInput>
-      </View>
+          <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }]}>            
+            <View style={styles.inputWrapper}>
+              <Feather name="user" size={20} style={styles.icon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Usuário"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                value={user}
+                onChangeText={setUser}
+              />
+            </View>
 
-      <View style={styles.areaInput}>
-        <Image source={require('../../../assets/img/icons/lock-icon.png')} style={styles.icon}></Image>
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          secureTextEntry={true}
-          dataCorrect={false}
-          value={password}
-          onChangeText={password => setPassword(password)}
-        ></TextInput>
-      </View>
-    
-      
-      <View style={styles.viewBotao}>
-      <TouchableOpacity 
-        style={styles.botao}
-       onPress={() => {
-        saveData();
-       }}>
-         <Text style={styles.textoBotao}>Entrar</Text>
-      </TouchableOpacity>
-      </View>
+            <View style={styles.inputWrapper}>
+              <Feather name="lock" size={20} style={styles.icon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Senha"
+                placeholderTextColor="#666"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
 
-      <TouchableOpacity 
-        style={styles.botaoRecuperar}
-        onPress={() => navigation.navigate('Cadastro')}>
-         <Text style={styles.textoRecuperar}>Ainda não possui uma conta? Registre-se</Text>
-      </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={saveData}>
+              <Text style={styles.buttonText}>Entrar</Text>
+            </TouchableOpacity>
 
-    </Animated.View>
-
-     
-    </KeyboardAvoidingView>
-    // </ImageBackground>
+            <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
+              <Text style={styles.linkText}>Ainda não possui conta? Registre-se</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    backgroundColor: "#000",
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  icon: {
-    width: 32,
-    height: 32,
-    marginVertical: 'auto'
-  },
-
-  logo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-
-  formulario: {
-    flex: 1,
-    paddingBottom:30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '90%',
-    marginTop:-50
-  },
-
-  areaInput: {
+  gradient: { flex: 1 },
+  scroll: { flexGrow: 1 },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  logoContainer: { marginBottom: 30, alignItems: 'center' },
+  logo: { width: 180, height: 60 },
+  form: { width: '100%' },
+  inputWrapper: {
     flexDirection: 'row',
-    backgroundColor: '#FFF000',
-    color: '#222',
-    borderRadius: 7,
-    padding:5,
-    width: '90%',
-    backgroundColor: '#FFF',
-    marginBottom: 15
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    height: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-
-  input: {
-    marginVertical: 'auto',
-    marginLeft: 5,
-    fontSize: 16
+  icon: { color: '#1e3c72', marginRight: 10 },
+  input: { flex: 1, fontSize: 16, color: '#333' },
+  button: {
+    backgroundColor: '#1e3c72',
+    borderRadius: 25,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
-
-  viewBotao:{
-    width: '90%',
-    borderRadius: 7,
-  },
-
-  botao: {
-    backgroundColor: '#1a7487',
-    height:45,
-    alignItems:'center',
-    justifyContent:'center',
-    borderRadius: 7,
-    padding:10,
-    
-    
-  },
-  textoBotao:{
-    color:'#FFF',
-    fontSize:18
-  },
-
-  botaoRecuperar:{
-    marginTop:15,
-  },
-
-  textoRecuperar:{
-    color:'#FFF',
-    
-  },
-
-  imgBg:{
-    flex:1,
-    width: '100%',
-    height: '100%',
-    opacity: 1,
-    justifyContent: "flex-start",
-    backgroundColor: '#000'
-  },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  linkText: { color: '#fff', textAlign: 'center', marginTop: 10, textDecorationLine: 'underline' },
 });
