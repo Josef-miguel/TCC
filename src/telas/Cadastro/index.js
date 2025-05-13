@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import { showMessage } from 'react-native-flash-message';
+
+import api from '../../../services/api'
 
 export default function Cadastro({ navigation }) {
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
@@ -20,8 +23,8 @@ export default function Cadastro({ navigation }) {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [cpf , setCpf] = useState();
-  const [dataNasc, setDataNasc ] = useState(new Date);
+  const [cpf , setCpf] = useState("");
+  const [dataNasc, setDataNasc ] = useState(new Date());
   const [success, setSuccess ] = useState("");
 
   const values = {
@@ -42,76 +45,80 @@ const setters = {
 function limparCampos(){
   setUser("");
   setEmail("");
-  setCpf();
+  setCpf("");
   setPassword("");
   setDataNasc("");
 }
 
-async function saveData(){
+async function saveData() {
   if (!user || !password || !email || !cpf || !dataNasc) {
-        showMessage({
-          message: "Erro ao Salvar",
-          description: 'Preencha os Campos Obrigatórios!',
-          type: "warning",
-        });
-        return;
-      }
-
-    try{
-      const obj = {
-        user : user || '',
-        email : email || '',
-        password : password || '',
-        cpf : cpf || '',
-        dataNasc : dataNasc || ''
-      }
-
-      const res = await api.post('TCC/register.php', obj);
-      if (res.status !== 200) {
-        throw new Error('Erro na comunicação com o servidor');
-      }
-      if (res.data.success == false) {
-        showMessage({
-          message: "Erro ao cadastrar",
-          description: res.data.message || 'CAMPO INVÁLIDO!',
-          type: "warning",
-          duration: 3000,
-        });
-        limparCampos();
-    }
-    else if (res.data.success == true){
-            showMessage({
-              message: "Cadastro Bem-Sucedido",
-              description: "Bem-vindo!",
-              type: "success",
-              duration: 1800,
-            });
-            setSuccess(true);
-            navigation.navigate('Home');
-          }
-          else{
-            showMessage({
-              message: "Ocorreu algum erro",
-              description: "erro",
-              type: 'warning',
-              duration: 2000
-            });
-          }
-          
-          console.log(res.data.success);
+    showMessage({
+      message: "Erro ao Salvar",
+      description: 'Preencha os Campos Obrigatórios!',
+      type: "warning",
+    });
+    return;
   }
 
-    catch(e){
-      console.log(error);
-          showMessage({
-                message: "Ocorreu algum erro: " + error,
-                description: "erro",
-                type: 'warning',
-                duration: 2000
-              });
-          setSuccess(false);
+  try {
+    // Formatar a data para o padrão 'YYYY-MM-DD'
+    const formattedDate = dataNasc instanceof Date && !isNaN(dataNasc.getTime()) 
+      ? dataNasc.toISOString().split('T')[0] 
+      : '';
+
+
+    const obj = {
+      user: user || '',
+      email: email || '',
+      password: password || '',
+      cpf: cpf || '',
+      dataNasc: formattedDate || ''
+    };
+
+    const res = await api.post('TCC/register.php', obj);
+    
+    if (res.status !== 200) {
+      throw new Error('Erro na comunicação com o servidor');
     }
-} 
+
+    if (res.data.success === false) {
+      showMessage({
+        message: "Erro ao cadastrar",
+        description: res.data.message || 'CAMPO INVÁLIDO!',
+        type: "warning",
+        duration: 3000,
+      });
+      limparCampos();
+    } else if (res.data.success === true) {
+      showMessage({
+        message: "Cadastro Bem-Sucedido",
+        description: "Bem-vindo!",
+        type: "success",
+        duration: 1800,
+      });
+      setSuccess(true);
+      navigation.navigate('Home');
+    } else {
+      showMessage({
+        message: "Ocorreu algum erro",
+        description: "erro",
+        type: 'warning',
+        duration: 2000
+      });
+    }
+
+    console.log(res.data.success);
+  } catch (error) {
+    console.log(error);
+    showMessage({
+      message: "Ocorreu algum erro: " + error,
+      description: "erro",
+      type: 'warning',
+      duration: 2000
+    });
+    setSuccess(false);
+  }
+}
 
   useEffect(() => {
     Animated.parallel([
@@ -158,7 +165,7 @@ async function saveData(){
               </View>
             ))}
 
-            <TouchableOpacity style={styles.button} onPress={() => {saveData()}}>
+            <TouchableOpacity style={styles.button} onPress={() => {saveData();}}>
               <Text style={styles.buttonText}>Registrar</Text>
             </TouchableOpacity>
 
