@@ -8,8 +8,8 @@ require_once("config.php");
 // Pega os dados do POST (formato JSON vindo do React)
 $data = json_decode(file_get_contents("php://input"));
 
-$user = data->user;
-$pass = data->password;
+$user = $data->user;
+$pass = $data->password;
 
 $sql = "select * from usuario where nome LIKE 'ADMIN' and senha LIKE '123'";
 

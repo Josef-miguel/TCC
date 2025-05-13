@@ -20,7 +20,7 @@ export default function Login({navigation}) {
       Animated.spring(offset.y, {
         toValue:0, 
         speed:4,
-        bounciness:20,
+        bounciness:20,  
         useNativeDriver: true
       }),
       Animated.timing(opac, {
@@ -31,10 +31,9 @@ export default function Login({navigation}) {
     ]).start();
     
   }, []);
-  function limparCampos(){
-    setUser('');
-    setPassword('');
-    
+  const limparCampos=()=>{
+    setUser("");
+    setPassword("");
   }
   
   async function saveData(){
@@ -54,7 +53,6 @@ export default function Login({navigation}) {
       }
       
       const res = await api.post('TCC/login.php', obj);
-      console.log(res.data);
       if (res.status !== 200) {
         throw new Error('Erro na comunicação com o servidor');
       }
@@ -66,26 +64,36 @@ export default function Login({navigation}) {
           duration: 3000,
         });
         limparCampos();
-        return;
       }
       else if (res.data.success == true){
-        setSuccess(true);
         showMessage({
           message: "Login Bem-Sucedido",
           description: "Bem-vindo!",
           type: "success",
-          duration: 800,
+          duration: 1800,
         });
+        setSuccess(true);
         navigation.navigate('Home');
       }
       else{
-        Alert.alert("ta tudo errado");
+        showMessage({
+          message: "Ocorreu algum erro",
+          description: "erro",
+          type: 'warning',
+          duration: 2000
+        });
       }
       
+      console.log(res.data.success);
     
   } catch (error) {
-    console.log(error)
-    Alert.alert("Ops", "Alguma coisa deu errado, tente novamente. " + error);
+    console.log(error);
+    showMessage({
+          message: "Ocorreu algum erro: " + error,
+          description: "erro",
+          type: 'warning',
+          duration: 2000
+        });
     setSuccess(false);
   }
   }
@@ -117,6 +125,7 @@ export default function Login({navigation}) {
           placeholder="Usuario"
           type='email'
           dataCorrect={false}
+          value={user}
           onChangeText={user => setUser(user)}
         ></TextInput>
       </View>
@@ -128,6 +137,7 @@ export default function Login({navigation}) {
           placeholder="Senha"
           secureTextEntry={true}
           dataCorrect={false}
+          value={password}
           onChangeText={password => setPassword(password)}
         ></TextInput>
       </View>
