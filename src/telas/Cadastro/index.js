@@ -17,6 +17,101 @@ import { Feather } from '@expo/vector-icons';
 export default function Cadastro({ navigation }) {
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
   const [opac] = useState(new Animated.Value(0));
+  const [user, setUser] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [cpf , setCpf] = useState();
+  const [dataNasc, setDataNasc ] = useState(new Date);
+  const [success, setSuccess ] = useState("");
+
+  const values = {
+  'Usuário': user,
+  'E-mail': email,
+  'Senha': password,
+  'CPF': cpf,
+  'Data de nascimento': dataNasc,
+};
+const setters = {
+  'Usuário': setUser,
+  'E-mail': setEmail,
+  'Senha': setPassword,
+  'CPF': setCpf,
+  'Data de nascimento': setDataNasc,
+};
+
+function limparCampos(){
+  setUser("");
+  setEmail("");
+  setCpf();
+  setPassword("");
+  setDataNasc("");
+}
+
+async function saveData(){
+  if (!user || !password || !email || !cpf || !dataNasc) {
+        showMessage({
+          message: "Erro ao Salvar",
+          description: 'Preencha os Campos Obrigatórios!',
+          type: "warning",
+        });
+        return;
+      }
+
+    try{
+      const obj = {
+        user : user || '',
+        email : email || '',
+        password : password || '',
+        cpf : cpf || '',
+        dataNasc : dataNasc || ''
+      }
+
+      const res = await api.post('TCC/register.php', obj);
+      if (res.status !== 200) {
+        throw new Error('Erro na comunicação com o servidor');
+      }
+      if (res.data.success == false) {
+        showMessage({
+          message: "Erro ao cadastrar",
+          description: res.data.message || 'CAMPO INVÁLIDO!',
+          type: "warning",
+          duration: 3000,
+        });
+        limparCampos();
+    }
+    else if (res.data.success == true){
+            showMessage({
+              message: "Cadastro Bem-Sucedido",
+              description: "Bem-vindo!",
+              type: "success",
+              duration: 1800,
+            });
+            setSuccess(true);
+            navigation.navigate('Home');
+          }
+          else{
+            showMessage({
+              message: "Ocorreu algum erro",
+              description: "erro",
+              type: 'warning',
+              duration: 2000
+            });
+          }
+          
+          console.log(res.data.success);
+  }
+
+    catch(e){
+      console.log(error);
+          showMessage({
+                message: "Ocorreu algum erro: " + error,
+                description: "erro",
+                type: 'warning',
+                duration: 2000
+              });
+          setSuccess(false);
+    }
+} 
 
   useEffect(() => {
     Animated.parallel([
@@ -27,7 +122,7 @@ export default function Cadastro({ navigation }) {
 
   return (
     <LinearGradient
-      colors={[ '#1a2a6c', '#b21f1f', '#fdbb2d' ]}
+      colors={[ '#1a2a6c', '#b21f1f', '#ff55aa' ]}
       style={styles.gradient}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -44,7 +139,7 @@ export default function Cadastro({ navigation }) {
           </Animated.View>
 
           <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }] }>
-            {['Usuário', 'Senha', 'CPF', 'Data de nascimento'].map((placeholder, idx) => (
+            {['Usuário', 'E-mail', 'Senha', 'CPF', 'Data de nascimento'].map((placeholder, idx) => (
               <View key={idx} style={styles.inputWrapper}>
                 <Feather
                   name={placeholder === 'Senha' ? 'lock' : 'user'}
@@ -55,13 +150,15 @@ export default function Cadastro({ navigation }) {
                   style={styles.input}
                   placeholder={placeholder}
                   placeholderTextColor="#666"
+                  value={values[placeholder]}
                   secureTextEntry={placeholder === 'Senha'}
                   keyboardType={placeholder === 'CPF' || placeholder === 'Data de nascimento' ? 'numeric' : 'default'}
+                  onChangeText={text => setters[placeholder](text)}
                 />
               </View>
             ))}
 
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
+            <TouchableOpacity style={styles.button} onPress={() => {saveData()}}>
               <Text style={styles.buttonText}>Registrar</Text>
             </TouchableOpacity>
 
