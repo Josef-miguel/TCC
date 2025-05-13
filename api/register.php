@@ -5,8 +5,7 @@ header("Access-Control-Allow-Methods: POST");
 
 require_once("connection.php");
 
-// Pega os dados do POST (formato JSON vindo do React)
-$postjson = json_decode(file_get_contents("php://input"));
+$postjson = json_decode(file_get_contents('php://input'), true);
 
 $user = $postjson->user ?? "";
 $email = $postjson->email ?? "";
@@ -14,27 +13,24 @@ $password = $postjson->password ?? "";
 $cpf = $postjson->cpf ?? "";
 $dataNasc = isset($postjson->datanasc) ? (new DateTime($postjson->datanasc))->format('Y-m-d') : "";
 
-// Prepara a query
 $res = $pdo->prepare("INSERT INTO usuario(nome, email, senha, cpf, datanasc) VALUES (:user, :email, :password, :cpf, :datanasc)");
-
-// Vincula os parâmetros corretamente
 $res->bindValue(":user", $user);
 $res->bindValue(":email", $email);
 $res->bindValue(":password", $password);
 $res->bindValue(":cpf", $cpf);
 $res->bindValue(":datanasc", $dataNasc);
 
-// Executa a query
-if ($res->execute()) {
+$success = $res->execute(); // Executa a query de inserção
+
+if ($success) {
     $result = json_encode(array(
-        'message' => 'Usuário cadastrado com sucesso!',
+        'message' => 'Cadastro bem-sucedido!',
         'success' => true,
     ));
 } else {
     $result = json_encode(array(
-        'message' => 'Erro ao cadastrar usuário.',
+        'message' => 'Erro ao cadastrar o usuário!',
         'success' => false
     ));
 }
-
-echo $result;
+echo $result; // Retorna o resultado para o frontend
