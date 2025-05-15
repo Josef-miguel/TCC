@@ -7,11 +7,12 @@ require_once("connection.php");
 
 $postjson = json_decode(file_get_contents('php://input'), true);
 
-$user = $postjson->user ?? "";
-$email = $postjson->email ?? "";
-$password = $postjson->password ?? "";
-$cpf = $postjson->cpf ?? "";
-$dataNasc = isset($postjson->datanasc) ? (new DateTime($postjson->datanasc))->format('Y-m-d') : "";
+$user = $postjson['user'] ?? "";
+$email = $postjson['email'] ?? "";
+$password = $postjson['password'] ?? "";
+$cpf = $postjson['cpf'] ?? "";
+$dataNasc = isset($postjson['datanasc']) ? (new DateTime($postjson['datanasc']))->format('Y-m-d') : "";
+
 
 $res = $pdo->prepare("INSERT INTO usuario(nome, email, senha, cpf, datanasc) VALUES (:user, :email, :password, :cpf, :datanasc)");
 $res->bindValue(":user", $user);
