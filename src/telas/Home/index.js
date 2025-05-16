@@ -97,7 +97,7 @@ export default function Home({ navigation }) {
   style={styles.sidebarItem}
   onPress={() => {
     const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
-    navigation.navigate('Historico', { favoritos });
+    navigation.navigate('Favoritos', { favoritos });
     toggleSidebar();
   }}
 >
