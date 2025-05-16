@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  Switch, Modal, Image, Alert
+  Switch, Modal, Image, Alert, Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,34 +20,48 @@ const CustomizeProfile = ({
   const [isOrganizerMode, setIsOrganizerMode] = useState(false);
   const [imageUri, setImageUri] = useState(null);
 
-  
-  // Abre a galeria e captura URI
-  const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.5,
-      });
-      if (!result.canceled) {
-        setImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.log('Error picking image: ', error);
+
+
+const pickImage = async () => {
+  const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+  if (status !== 'granted') {
+    if (!canAskAgain) {
+      // Usuário marcou "não perguntar novamente"
+      Alert.alert(
+        'Permissão necessária',
+        'Você precisa permitir o acesso às fotos nas configurações do app.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Abrir configurações',
+            onPress: () => Linking.openSettings(),
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Permissão negada',
+        'Precisamos de permissão para acessar suas fotos.'
+      );
     }
-    // Permissões para galeria
-    useEffect(() => {
-      (async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert(
-            'Permissão negada',
-            'Precisamos de permissão para acessar suas fotos.'
-          );
-        }
-      })();
-    }, []);
-  };
-  
+    return;
+  }
+
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.5,
+    });
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  } catch (error) {
+    console.log('Error picking image: ', error);
+  }
+};
+
+
   // Reúne os dados e fecha o modal
   const handleSave = () => {
     const profileData = {
