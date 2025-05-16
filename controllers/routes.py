@@ -1,8 +1,15 @@
-from flask import render_template
-from app import app
-from app.models.excursion import Excursion
+from flask import render_template, request, redirect, url_for
 
-@app.route('/')
-def home():
-    excursions = Excursion.query.all()
-    return render_template('home.html', excursions=excursions)
+
+
+def init_app(app):
+    # Criando a primeira rota do site
+    @app.route('/')
+    # Criando função no Python
+    def home():
+        return render_template('home.html')
+    
+    @app.route('/login')
+    # Criando função no Python
+    def login():
+        return render_template('login.html')
