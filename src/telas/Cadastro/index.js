@@ -156,7 +156,7 @@ async function saveData() {
                 <TextInput
                   style={styles.input}
                   placeholder={placeholder}
-                  placeholderTextColor="#666"
+                  placeholderTextColor="#667"
                   value={values[placeholder]}
                   secureTextEntry={placeholder === 'Senha'}
                   keyboardType={placeholder === 'CPF' || placeholder === 'Data de nascimento' ? 'numeric' : 'default'}
