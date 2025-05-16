@@ -1,20 +1,28 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Favoritos({ navigation, route }) {
-  // Recebe lista de favoritos via params
-  const initialFavs = route.params?.favoritos || [];
-  const [favorites, setFavorites] = useState(initialFavs);
+  // Estado interno de favoritos
+  const [favorites, setFavorites] = useState([]);
 
-  // Configura header nativo (opcional)
+  // Atualiza sempre que a tela é focada e recebe novos params
+  useFocusEffect(
+    React.useCallback(() => {
+      const favs = route.params?.favoritos || [];
+      setFavorites(favs);
+    }, [route.params?.favoritos])
+  );
+
+  // Configura header customizado
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false, // esconder header padrão para usarmos o nosso
+      headerShown: false,
     });
   }, [navigation]);
 
-  // Toggle favorito localmente
+  // Toggle favorito e remove se desfavoritado
   const toggleFav = (id) => {
     const updated = favorites
       .map(item => (item.id === id ? { ...item, fav: !item.fav } : item))
@@ -38,10 +46,9 @@ export default function Favoritos({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      {/* Seta de voltar customizada */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Ionicons name="arrow-back" size={24} color="#000" />
-        <Text style={styles.backText}>Minhas viagens</Text>
+        <Text style={styles.backText}>Minhas Viagens</Text>
       </TouchableOpacity>
 
       {favorites.length === 0 ? (
@@ -62,7 +69,7 @@ export default function Favoritos({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  backButton: { flexDirection: 'row', alignItems: 'center', padding: 10 },
+  backButton: { flexDirection: 'row', alignItems: 'center', padding: 10, backgroundColor: '#f2f2f2' },
   backText: { fontSize: 16, color: '#000', marginLeft: 6 },
   listContent: { padding: 10 },
   card: {
