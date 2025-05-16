@@ -20,19 +20,7 @@ const CustomizeProfile = ({
   const [isOrganizerMode, setIsOrganizerMode] = useState(false);
   const [imageUri, setImageUri] = useState(null);
 
-  // Permissões para galeria
-  useEffect(() => {
-    (async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permissão negada',
-          'Precisamos de permissão para acessar suas fotos.'
-        );
-      }
-    })();
-  }, []);
-
+  
   // Abre a galeria e captura URI
   const pickImage = async () => {
     try {
@@ -46,8 +34,20 @@ const CustomizeProfile = ({
     } catch (error) {
       console.log('Error picking image: ', error);
     }
+    // Permissões para galeria
+    useEffect(() => {
+      (async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permissão negada',
+            'Precisamos de permissão para acessar suas fotos.'
+          );
+        }
+      })();
+    }, []);
   };
-
+  
   // Reúne os dados e fecha o modal
   const handleSave = () => {
     const profileData = {
