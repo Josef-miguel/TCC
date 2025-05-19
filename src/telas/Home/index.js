@@ -53,36 +53,37 @@ export default function Home({ navigation }) {
     item.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  useEffect(() => {
-    renderPosts();
-  }, []);
+ useEffect(() => {
+  renderPosts();
+}, []);
 
-  async function renderPosts() {
-    try {
-      const res = await api.post('TCC/posts.php');
-      console.log('Resposta da API:', res.data);
+async function renderPosts() {
+  try {
+    const res = await api.post('TCC/posts.php');
+    console.log('Resposta da API:', res.data);
 
-      if (res.status === 200 && res.data.success) {
-        setRecommendedPosts(res.data.data.map(item => ({
-          id: item.id,
-          title: item.title,
-          images: item.images,
-          route: item.route,
-          route_exit: item.route_exit,
-          desc: item.description,
-          numSlots: item.numSlots,
-          exit_date: item.exit_date,
-          return_date: item.return_date,
-          review: item.review,
-          fav: item.fav || false,
-          type: item.type || 'Tipo não definido',
-          theme: item.theme || 'Tema não definido'
-        })));
-      }
-    } catch (error) {
-      console.error(error.message);
+    if (res.status === 200 && res.data.success) {
+      setRecommendedPosts(res.data.result.map(item => ({
+        id: item.id_evento,
+        images: item.images,
+        route: item.route,
+        route_exit: item.route_exit,
+        price: item.price,
+        numSlots: item.numSlots,
+        exit_date: item.exit_date,
+        return_date: item.return_date,
+        review: item.review,
+        fav: item.fav || false,
+        theme: item.theme || 'Sem tema',
+        type: item.type || 'Sem tipo',
+        title: item.route, // usando a rota como "título" por enquanto
+      })));
     }
+  } catch (error) {
+    console.error('Erro ao buscar posts:', error.message);
   }
+}
+
 
   const toggleFav = (id) => {
     setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
@@ -139,6 +140,7 @@ export default function Home({ navigation }) {
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
           <Text>Agenda</Text>
         </TouchableOpacity>
+
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
           const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
           navigation.navigate('Historico', { favoritos });
@@ -146,6 +148,19 @@ export default function Home({ navigation }) {
         }}>
           <Text>Minhas Viagens</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+  style={styles.sidebarItem}
+  onPress={() => {
+    const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
+    navigation.navigate('Favoritos', { favoritos });
+    toggleSidebar();
+  }}
+>
+  <Text>Minhas Viagens</Text>
+</TouchableOpacity>
+
+
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
         </TouchableOpacity>
