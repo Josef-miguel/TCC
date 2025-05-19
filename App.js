@@ -159,7 +159,7 @@ const Stack= createStackNavigator();
        <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> 
   
         <Stack.Screen name ="Agenda" component={Agenda} options={{headerShown: false}}></Stack.Screen>  
-        <Stack.Screen name ="Forma de pagamento" component={Formapagamento} options={{headerShown: false}}></Stack.Screen>  
+        <Stack.Screen name ="Formapagamento" component={Formapagamento} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Historico" component={Historico} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Perfil" component={Perfil} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Post" component={Post} options={{headerShown: false}}></Stack.Screen>  

@@ -63,7 +63,7 @@ export default function Perfil() {
       <MenuItem icon="heart-outline" label="Favoritos" onPress={() => navigation.navigate('Favoritos')} />
       <MenuItem icon="logout" label="Sair" onPress={toggleVisible} />
     </ScrollView>
-    <CustomizarPerfil modalVisible={modalVisible} setModalVisible={setModalVisible}></CustomizarPerfil>
+    <CustomizarPerfil modalVisible={modalVisible} setModalVisible={setModalVisible} navigation={navigation} ></CustomizarPerfil>
 </View>
   );
 }

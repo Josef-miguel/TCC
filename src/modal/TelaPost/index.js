@@ -2,13 +2,21 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ParticiparPost from '../ParticiparPost';
-// import Chat from './../../telas/chat';
 
 const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPost }) => {
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
+  // Estado para avaliação de estrelas (1 a 5)
+  const [starRating, setStarRating] = useState(selectedPost?.ratingStars || 0);
 
   if (selectedPost == null || !modalVisible) return null;
+
+  // Função que atualiza a avaliação de estrelas
+  const handleStarPress = (rating) => {
+    setStarRating(rating);
+    // Aqui você pode chamar callback para atualizar no backend ou localmente em selectedPost
+    // ex: updatePostRating(selectedPost.id, rating);
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -27,29 +35,39 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
                 <Image key={i} source={{ uri }} style={styles.destImage} />
               ))}
             </ScrollView>
+
             <Text style={styles.sectionTitle}>Trajeto da viagem</Text>
             <View style={styles.routeBox}>
               <Ionicons name="location-sharp" size={24} />
               <Text style={styles.routeText}>{selectedPost.route}</Text>
             </View>
+
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
               <Text>{selectedPost.excursionInfo}</Text>
             </View>
+
             <Text style={styles.sectionTitle}>Avaliação</Text>
-            <View style={styles.ratingBox}>
-              <Ionicons name="star" size={20} />
-              <Text style={styles.ratingText}>{selectedPost.rating}/10</Text>
+            <View style={styles.starContainer}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <TouchableOpacity key={i} onPress={() => handleStarPress(i)} style={styles.starButton}>
+                  <Ionicons
+                    name={i <= starRating ? 'star' : 'star-outline'}
+                    size={30}
+                    color="#FFD700"
+                  />
+                </TouchableOpacity>
+              ))}
+              <Text style={styles.starText}>{starRating} de 5</Text>
             </View>
+
             <Text style={styles.sectionTitle}>Comentários</Text>
             <View style={styles.commentsBox}>
               {selectedPost.comments.map((c, idx) => (
                 <Text key={idx} style={styles.commentText}>"{c}"</Text>
               ))}
             </View>
-            {/* <TouchableOpacity style={styles.modalButton} onPress={() => setChatModalVisible(true)}>
-              <Text style={styles.buttonText}>Entrar em contato com o organizador</Text>
-            </TouchableOpacity> */}
+
             <TouchableOpacity style={[styles.modalButton, styles.joinButton]} onPress={() => setParticipationModalVisible(true)}>
               <Text style={styles.buttonText}>Participar da viagem</Text>
             </TouchableOpacity>
@@ -65,10 +83,7 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
 
       {/* Chat Modal */}
       <Modal visible={chatModalVisible} animationType="slide">
-        {/* <Chat
-          organizer={selectedPost.organizer}
-          onClose={() => setChatModalVisible(false)}
-        /> */}
+        {/* Chat component aqui */}
       </Modal>
     </View>
   );
@@ -81,15 +96,16 @@ const styles = StyleSheet.create({
   modalInner: { padding: 16 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 10 },
   infoBox: { padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  ratingBox: { flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#ffeb3b', borderRadius: 6, marginBottom: 12 },
-  ratingText: { marginLeft: 6 },
-  commentsBox: { padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  commentText: { marginBottom: 4, fontStyle: 'italic' },
   routeBox: { flexDirection: 'row', alignItems: 'center', padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  sectionTitle: { fontWeight: 'bold', marginTop: 12, marginBottom: 6 },
+  sectionTitle: { fontWeight: 'bold', marginTop: 12, marginBottom: 6, fontSize: 16 },
   imageScroll: { marginBottom: 12 },
   destImage: { width: 150, height: 100, borderRadius: 6, marginRight: 8 },
   routeText: { marginLeft: 8 },
+  commentsBox: { padding: 8, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
+  commentText: { marginBottom: 4, fontStyle: 'italic' },
+  starContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  starButton: { marginHorizontal: 4 },
+  starText: { marginLeft: 8, fontSize: 16 },
   joinButton: { backgroundColor: '#4caf50' },
   buttonText: { color: '#fff', fontWeight: 'bold' }
 });
