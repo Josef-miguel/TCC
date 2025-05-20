@@ -1,188 +1,148 @@
-// miguel isack mexendo na agenda
+import React, { useState, useLayoutEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
- 
-const { width } = Dimensions.get('window');
-const cellSize = width / 7; // Ajusta o tamanho das células com base na largura da tela
- 
-const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-const daysAbbr = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
- 
-const TravelCalendarScreen = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
- 
-  // Dados mock de viagens (substitua com dados reais conforme necessário)
-  const trips = [
-    { name: 'Viagem à Praia', date: new Date(2023, 5, 12), time: '10:00' },
-    { name: 'Reunião', date: new Date(2023, 5, 13), time: '14:00' },
-    { name: 'Passeio', date: new Date(2023, 5, 20), time: '09:00' },
-  ];
- 
-  const tripDates = new Set(trips.map(trip => trip.date.toISOString().split('T')[0]));
- 
-  const generateCalendarData = (month, year) => {
-    const firstDay = new Date(year, month, 1).getDay(); // 0 = Domingo
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const calendar = [];
-    for (let i = 0; i < 35; i++) {
-      if (i < firstDay || i >= firstDay + daysInMonth) {
-        calendar.push(null);
-      } else {
-        const day = i - firstDay + 1;
-        calendar.push(new Date(year, month, day));
-      }
-    }
-    return calendar;
+// Tela de favoritos do usuário
+export default function Favoritos({ navigation, route }) {
+  // Estado local para armazenar a lista de favoritos
+  const [favorites, setFavorites] = useState([]);
+
+  // Hook que executa sempre que a tela ganha foco na navegação
+  useFocusEffect(
+    React.useCallback(() => {
+      // Obtém a lista de favoritos passada via parâmetros da rota ou um array vazio
+      const favs = route.params?.favoritos || [];
+      // Atualiza o estado com os favoritos atuais
+      setFavorites(favs);
+    }, [route.params?.favoritos]) // Executa quando route.params?.favoritos muda
+  );
+
+  // Hook para configurar o layout do header antes da renderização
+  useLayoutEffect(() => {
+    // Remove o header padrão da navegação
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
+  // Função que alterna o estado de favorito de um item e filtra itens não-favoritados
+  const toggleFav = (id) => {
+    const updated = favorites
+      // Se o ID corresponder, inverte a flag "fav"; caso contrário, mantém o item
+      .map(item => (item.id === id ? { ...item, fav: !item.fav } : item))
+      // Remove itens cuja flag "fav" seja false (desfavoritados)
+      .filter(item => item.fav);
+    // Atualiza o estado com a lista filtrada
+    setFavorites(updated);
   };
- 
-  const calendarData = generateCalendarData(currentMonth, currentYear);
- 
-  const filteredTrips = trips
-    .filter(trip => trip.date.getMonth() === currentMonth && trip.date.getFullYear() === currentYear)
-    .sort((a, b) => a.date - b.date);
- 
-  const goToPreviousMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(currentYear - 1);
-    } else {
-      setCurrentMonth(currentMonth - 1);
-    }
-  };
-  const goToNextMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(currentYear - 1);
-    } else {
-      setCurrentMonth(currentMonth + 1);
-    }
-  };
- 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goToPreviousMonth}>
-          <Text style={styles.arrow}>{'<'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.monthYear}>{`${monthNames[currentMonth]} ${currentYear}`}</Text>
-        <TouchableOpacity onPress={goToNextMonth}>
-          <Text style={styles.arrow}>{'>'}</Text>
-        </TouchableOpacity>
+
+  // Renderiza cada item da lista de favoritos
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      {/* Imagem de destaque da viagem */}
+      <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
+      {/* Informações do item: tema, tipo e rota */}
+      <View style={styles.cardContent}>
+        <Text style={styles.cardTitle}>{item.theme}</Text>
+        <Text style={styles.cardSubtitle}>{item.type}</Text>
+        <Text style={styles.cardRoute}>{item.route}</Text>
       </View>
-      <FlatList
-        data={calendarData}
-        numColumns={7}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.cell,
-              { width: cellSize, height: cellSize },
-              tripDates.has(item?.toISOString().split('T')[0]) && styles.highlightedCell,
-            ]}
-          >
-            {item && (
-              <>
-                <Text style={styles.dateText}>{item.getDate()}</Text>
-                {tripDates.has(item.toISOString().split('T')[0]) && (
-                  <Text style={styles.star}>*</Text> // Substitua por um ícone se desejar
-                )}
-              </>
-            )}
-          </View>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-      />
-      <FlatList
-        data={filteredTrips}
-        renderItem={({ item }) => (
-          <View style={styles.tripItem}>
-            <Text style={styles.tripName}>{item.name}</Text>
-            <Text style={styles.tripDay}>{daysAbbr[item.date.getDay()]}</Text>
-            <Text style={styles.tripTime}>{item.time}</Text>
-          </View>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma viagem neste mês</Text>}
-      />
+      {/* Botão para desfavoritar item */}
+      <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
+        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
+      </TouchableOpacity>
     </View>
   );
-};
- 
+
+  return (
+    <View style={styles.container}>
+      {/* Botão de navegação para voltar */}
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#000" />
+        <Text style={styles.backText}>Minhas Viagens</Text>
+      </TouchableOpacity>
+
+      {/* Se não houver itens na lista, exibe mensagem vazia */}
+      {favorites.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Nenhum favorito.</Text>
+        </View>
+      ) : (
+        // Caso haja favoritos, renderiza a lista com FlatList
+        <FlatList
+          data={favorites}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
+    </View>
+  );
+}
+
+// Estilos para a tela Favoritos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    marginVertical: 30,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  backButton: {
+    flexDirection: 'row',       
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f2f2f2',
   },
-  arrow: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  monthYear: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  cell: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  highlightedCell: {
-    backgroundColor: '#e6e6fa', // Cor leve para destacar dias com viagens
-  },
-  dateText: {
+  backText: {
     fontSize: 16,
-    color: '#333',
+    color: '#000',
+    marginLeft: 6,
   },
-  star: {
-    color: 'purple',
-    fontSize: 20,
-    position: 'absolute',
-    top: 2,
-    right: 2,
-  },
-  tripItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  listContent: {
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
-  tripName: {
+  card: {
+    flexDirection: 'row',       
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 2,               
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    marginBottom: 12,
+    padding: 10,
+  },
+  cardImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+  },
+  cardContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  cardTitle: {
     fontSize: 16,
-    flex: 2,
-    color: '#333',
+    fontWeight: 'bold',
   },
-  tripDay: {
+  cardSubtitle: {
     fontSize: 14,
-    flex: 1,
     color: '#666',
-    textAlign: 'center',
   },
-  tripTime: {
-    fontSize: 14,
+  cardRoute: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  cardIcon: {
+    padding: 4,
+  },
+  emptyContainer: {
     flex: 1,
-    color: '#666',
-    textAlign: 'right',
+    justifyContent: 'center', 
+    alignItems: 'center',       
   },
   emptyText: {
     fontSize: 16,
     color: '#666',
-    textAlign: 'center',
-    padding: 20,
   },
 });
- 
-export default TravelCalendarScreen;
