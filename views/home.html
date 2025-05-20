@@ -1,167 +1,444 @@
-
-{% extends 'base.html' %}
-
-{% block title %}Página Inicial - Excursões e Shows{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
 <style>
-  /* Estilos internos só para inspiração - depois pode migrar para CSS externo */
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f7fa;
-    margin: 0; padding: 0;
-  }
-  header nav ul {
-    display: flex;
-    gap: 20px;
-    background-color: #2c3e50;
-    padding: 15px 30px;
-    list-style: none;
-    margin: 0;
-  }
-  header nav ul li a {
-    color: #ecf0f1;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s ease;
-  }
-  header nav ul li a:hover {
-    color: #e74c3c;
-  }
-  .banner {
-    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80') no-repeat center center/cover;
-    height: 300px;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding-left: 50px;
-    box-shadow: inset 0 0 0 2000px rgba(44, 62, 80, 0.6);
-  }
-  .banner h1 {
-    font-size: 3.5rem;
-    margin: 0;
-    font-weight: 700;
-  }
-  .banner p {
-    font-size: 1.3rem;
-    margin-top: 10px;
-    max-width: 500px;
-  }
-  .excursion-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    padding: 40px 50px;
-    max-width: 1200px;
-    margin: auto;
-  }
-  .card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 6px 12px rgb(0 0 0 / 0.1);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease;
-  }
-  .card:hover {
-    transform: translateY(-8px);
-  }
-  .card img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-  }
-  .card-content {
-    padding: 20px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  .card-content h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.5rem;
-    color: #34495e;
-  }
-  .card-content p {
-    flex-grow: 1;
-    color: #7f8c8d;
-    font-size: 0.95rem;
-  }
-  .card-footer {
-    margin-top: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-    color: #e74c3c;
-    font-size: 1.1rem;
-  }
-  footer {
-    background-color: #2c3e50;
-    color: #ecf0f1;
-    text-align: center;
-    padding: 18px 0;
-    margin-top: 60px;
-  }
+    /* Estilos específicos para a página home */
+    .hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+        background-size: cover;
+        background-position: center;
+        height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: white;
+        margin-bottom: 50px;
+    }
+
+    .hero-content {
+        max-width: 800px;
+        padding: 20px;
+    }
+
+    .hero h1 {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero p {
+        font-size: 1.5rem;
+        margin-bottom: 30px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-explore {
+        background-color: #e74c3c;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 30px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .btn-explore:hover {
+        background-color: #c0392b;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .section-title {
+        text-align: center;
+        margin-bottom: 50px;
+        font-size: 2.5rem;
+        color: #2c3e50;
+        position: relative;
+    }
+
+    .section-title:after {
+        content: "";
+        display: block;
+        width: 100px;
+        height: 4px;
+        background: #e74c3c;
+        margin: 15px auto;
+    }
+
+    .tours-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+        padding: 0 50px;
+        margin-bottom: 80px;
+    }
+
+    .tour-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .tour-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .tour-image {
+        height: 200px;
+        width: 100%;
+        object-fit: cover;
+    }
+
+    .tour-info {
+        padding: 20px;
+    }
+
+    .tour-title {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #2c3e50;
+    }
+
+    .tour-description {
+        color: #7f8c8d;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+
+    .tour-price {
+        font-size: 1.3rem;
+        color: #e74c3c;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    .tour-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .btn-book {
+        display: inline-block;
+        width: 100%;
+        padding: 12px;
+        background-color: #2c3e50;
+        color: white;
+        text-align: center;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .btn-book:hover {
+        background-color: #1a252f;
+    }
+
+    .testimonials {
+        background-color: #f8f9fa;
+        padding: 80px 50px;
+        margin-bottom: 80px;
+    }
+
+    .testimonial-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+    }
+
+    .testimonial-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .testimonial-text {
+        font-style: italic;
+        margin-bottom: 20px;
+        line-height: 1.6;
+        color: #34495e;
+    }
+
+    .testimonial-author {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .newsletter {
+        background: linear-gradient(rgba(44, 62, 80, 0.9), rgba(44, 62, 80, 0.9)), url('https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+        background-size: cover;
+        background-position: center;
+        padding: 80px 20px;
+        text-align: center;
+        color: white;
+        margin-bottom: 80px;
+    }
+
+    .newsletter h3 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    .newsletter p {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .newsletter-form {
+        display: flex;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .newsletter-input {
+        flex-grow: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 30px 0 0 30px;
+        font-size: 1rem;
+    }
+
+    .newsletter-btn {
+        padding: 15px 30px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 0 30px 30px 0;
+        cursor: pointer;
+        font-size: 1rem;
+        text-transform: uppercase;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+    .newsletter-btn:hover {
+        background-color: #c0392b;
+    }
+
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        padding: 0 50px;
+        margin-bottom: 80px;
+    }
+
+    .feature-card {
+        text-align: center;
+        padding: 30px 20px;
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+        color: #e74c3c;
+        margin-bottom: 20px;
+    }
+
+    .feature-title {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+
+    .feature-description {
+        color: #7f8c8d;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+        }
+        
+        .tours-container, .testimonial-grid {
+            grid-template-columns: 1fr;
+            padding: 0 20px;
+        }
+        
+        .newsletter-form {
+            flex-direction: column;
+        }
+        
+        .newsletter-input {
+            border-radius: 30px;
+            margin-bottom: 10px;
+        }
+        
+        .newsletter-btn {
+            border-radius: 30px;
+            width: 100%;
+        }
+    }
 </style>
 
-<div class="banner">
-  <h1>Explore o mundo dos shows e excursões</h1>
-  <p>Junte-se a viagens inesquecíveis para os seus eventos favoritos!</p>
-</div>
-
-<section class="excursion-list">
-  <!-- Cards de excursões - imagens são exemplos -->
-  <article class="card">
-    <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80" alt="Show de Rock" />
-    <div class="card-content">
-      <h3>Rock Festival 2025</h3>
-      <p>Participe da maior festa de rock com bandas nacionais e internacionais. Saída de São Paulo.</p>
-      <div class="card-footer">
-        <span>R$ 350,00</span>
-        <span>12/07/2025</span>
-      </div>
+<!-- Seção Hero -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Descubra o Mundo com a SetJustGo</h1>
+        <p>Experiências únicas, memórias inesquecíveis. Sua próxima aventura começa aqui.</p>
+        <button class="btn-explore">Explorar Destinos</button>
     </div>
-  </article>
-
-  <article class="card">
-    <img src="https://images.unsplash.com/photo-1518976024611-7ed9d5a33d03?auto=format&fit=crop&w=800&q=80" alt="Festival Eletrônico" />
-    <div class="card-content">
-      <h3>Festival Eletrônico Sunset</h3>
-      <p>Curta um dia inteiro de música eletrônica na praia. Transporte incluso, saída de Rio de Janeiro.</p>
-      <div class="card-footer">
-        <span>R$ 280,00</span>
-        <span>20/08/2025</span>
-      </div>
-    </div>
-  </article>
-
-  <article class="card">
-    <img src="https://images.unsplash.com/photo-1488376739359-5b6c6be032db?auto=format&fit=crop&w=800&q=80" alt="Show Jazz" />
-    <div class="card-content">
-      <h3>Jazz & Blues Night</h3>
-      <p>Excursão para show intimista com artistas renomados. Transporte confortável e seguro.</p>
-      <div class="card-footer">
-        <span>R$ 420,00</span>
-        <span>05/09/2025</span>
-      </div>
-    </div>
-  </article>
-
-  <article class="card">
-    <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=800&q=80" alt="Show Pop" />
-    <div class="card-content">
-      <h3>Pop Music Tour</h3>
-      <p>Viagem para assistir shows de artistas pop no interior de São Paulo. Excelente infraestrutura.</p>
-      <div class="card-footer">
-        <span>R$ 390,00</span>
-        <span>15/10/2025</span>
-      </div>
-    </div>
-  </article>
 </section>
 
+<!-- Destaques -->
+<section>
+    <h2 class="section-title">Nossos Pacotes em Destaque</h2>
+    <div class="tours-container">
+        <div class="tour-card">
+            <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Fernando de Noronha" class="tour-image">
+            <div class="tour-info">
+                <h3 class="tour-title">Fernando de Noronha</h3>
+                <p class="tour-description">5 dias no paraíso com hospedagem premium, passeios de barco e mergulho com tartarugas marinhas.</p>
+                <div class="tour-meta">
+                    <span>⏱️ 5 dias</span>
+                    <span>⭐ 4.9 (128 avaliações)</span>
+                </div>
+                <p class="tour-price">R$ 2.499,00</p>
+                <button class="btn-book">Reservar Agora</button>
+            </div>
+        </div>
+        
+        <div class="tour-card">
+            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Chapada Diamantina" class="tour-image">
+            <div class="tour-info">
+                <h3 class="tour-title">Chapada Diamantina</h3>
+                <p class="tour-description">4 dias de aventura com trilhas, cachoeiras e grutas, acompanhado por guias especializados.</p>
+                <div class="tour-meta">
+                    <span>⏱️ 4 dias</span>
+                    <span>⭐ 4.8 (95 avaliações)</span>
+                </div>
+                <p class="tour-price">R$ 1.799,00</p>
+                <button class="btn-book">Reservar Agora</button>
+            </div>
+        </div>
+        
+        <div class="tour-card">
+            <img src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Rio de Janeiro" class="tour-image">
+            <div class="tour-info">
+                <h3 class="tour-title">Rock in Rio 2025</h3>
+                <p class="tour-description">Pacote completo com ingresso para os 3 dias de festival, hospedagem e traslados.</p>
+                <div class="tour-meta">
+                    <span>⏱️ 3 dias</span>
+                    <span>⭐ 4.7 (210 avaliações)</span>
+                </div>
+                <p class="tour-price">R$ 1.999,00</p>
+                <button class="btn-book">Reservar Agora</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Nossas Vantagens -->
+<section>
+    <h2 class="section-title">Por Que Escolher a SetJustGo?</h2>
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">✈️</div>
+            <h3 class="feature-title">Viagens Exclusivas</h3>
+            <p class="feature-description">Pacotes cuidadosamente elaborados para oferecer experiências únicas e memoráveis.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">🛌</div>
+            <h3 class="feature-title">Hospedagem Selecionada</h3>
+            <p class="feature-description">Parcerias com os melhores hotéis e pousadas para garantir seu conforto.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">👨‍✈️</div>
+            <h3 class="feature-title">Guias Especializados</h3>
+            <p class="feature-description">Profissionais locais que tornam sua experiência mais rica e segura.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">💯</div>
+            <h3 class="feature-title">Satisfação Garantida</h3>
+            <p class="feature-description">Mais de 10.000 clientes satisfeitos em nossas excursões nos últimos 5 anos.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Depoimentos -->
+<section class="testimonials">
+    <h2 class="section-title">O Que Nossos Clientes Dizem</h2>
+    <div class="testimonial-grid">
+        <div class="testimonial-card">
+            <p class="testimonial-text">"A excursão para Fernando de Noronha superou todas as minhas expectativas. Tudo foi perfeito, desde a organização até os passeios incríveis que fizemos."</p>
+            <p class="testimonial-author">- Ana Clara Silva</p>
+        </div>
+        
+        <div class="testimonial-card">
+            <p class="testimonial-text">"Já viajei com várias agências, mas a SetJustGo foi a melhor experiência que tive. Atendimento personalizado e roteiros fantásticos!"</p>
+            <p class="testimonial-author">- Carlos Eduardo Oliveira</p>
+        </div>
+        
+        <div class="testimonial-card">
+            <p class="testimonial-text">"Fiz a excursão para a Chapada Diamantina e foi transformadora. Os guias eram muito conhecedores e a equipe da SetJustGo estava sempre disponível."</p>
+            <p class="testimonial-author">- Mariana Costa Santos</p>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter -->
+<section class="newsletter">
+    <h3>Prepare-se para Sua Próxima Aventura</h3>
+    <p>Cadastre-se para receber nossas ofertas exclusivas e dicas de viagem diretamente no seu e-mail.</p>
+    <form class="newsletter-form">
+        <input type="email" placeholder="Seu melhor e-mail" class="newsletter-input" required>
+        <button type="submit" class="newsletter-btn">Assinar</button>
+    </form>
+</section>
 {% endblock %}
 
+{% block scripts %}
+<script>
+    // Efeito de rolagem suave para links internos
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+    // Animação dos cards ao aparecer na tela
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = 1;
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.tour-card, .feature-card, .testimonial-card').forEach(card => {
+        card.style.opacity = 0;
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(card);
+    });
+</script>
+{% endblock %}
