@@ -13,3 +13,12 @@ def init_app(app):
     # Criando função no Python
     def login():
         return render_template('login.html')
+    
+    @app.route('/evento')
+    # Criando função no Python
+    def evento():
+        return render_template('evento.html')
+    
+    @app.route('/perfil')
+    def perfil():
+        return render_template('perfil.html')
