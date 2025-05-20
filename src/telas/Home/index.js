@@ -14,32 +14,7 @@ export default function Home({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [recommendedPosts, setRecommendedPosts] = useState([]);
-  const [popularPosts, setPopularPosts] = useState([
-    {
-      id: 5, fav: true,
-      images: ['https://www.melhoresdestinos.com.br/wp-content/uploads/2019/07/passagens-aereas-foz-do-iguacu-capa2019-05.jpg'],
-      route: 'Curitiba → Foz do Iguaçu',
-      excursionInfo: 'Tour de 3 dias com hotel e ingressos.',
-      rating: 9, comments: ['Maravilhoso!', 'Ótimo custo-benefício.'],
-      type: 'Romântico', theme: 'Praia ao pôr do sol'
-    },
-    {
-      id: 6, fav: true,
-      images: ['https://amazonasatual.com.br/wp-content/uploads/2017/10/TRILHA-AQU%C3%81TICA-DA-MIRATINGA.jpg'],
-      route: 'Manaus → Amazônia',
-      excursionInfo: 'Aventura na floresta.',
-      rating: 8, comments: ['Inesquecível!', 'Muita natureza.'],
-      type: 'Aventura', theme: 'Trilha na floresta'
-    },
-    {
-      id: 7, fav: false,
-      images: ['https://emalgumlugardomundo.com.br/wp-content/uploads/2023/01/o-que-fazer-em-olinda-centro-historico.jpg'],
-      route: 'Recife → Olinda',
-      excursionInfo: 'Circuito cultural histórico.',
-      rating: 7, comments: ['Colorido!', 'Rico em arte.'],
-      type: 'Cultural', theme: 'Museus e arte'
-    }
-  ]);
+  const [popularPosts, setPopularPosts] = useState([]);
 
   const filteredRecommended = recommendedPosts.filter(item =>
     item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,30 +29,60 @@ export default function Home({ navigation }) {
   );
 
  useEffect(() => {
-  renderPosts();
+  renderPosts("rec");
+  renderPosts("pop");
 }, []);
 
-async function renderPosts() {
+async function renderPosts(id) {
   try {
     const res = await api.post('TCC/posts.php');
-    console.log('Resposta da API:', res.data);
+    // console.log('Resposta da API:', res.data);
 
     if (res.status === 200 && res.data.success) {
-      setRecommendedPosts(res.data.result.map(item => ({
-        id: item.id_evento,
-        images: item.images,
-        route: item.route,
-        route_exit: item.route_exit,
-        price: item.price,
-        numSlots: item.numSlots,
-        exit_date: item.exit_date,
-        return_date: item.return_date,
-        review: item.review,
-        fav: item.fav || false,
-        theme: item.theme || 'Sem tema',
-        type: item.type || 'Sem tipo',
-        title: item.route, // usando a rota como "título" por enquanto
-      })));
+      if(id === "rec"){
+        setRecommendedPosts(res.data.result.map(item => ({
+          id: item.id_evento,
+          images: item.images,
+          desc : item.description,
+          route: item.route,
+          route_exit: item.route_exit,
+          price: item.price,
+          numSlots: item.numSlots,
+          exit_date: item.exit_date,
+          return_date: item.return_date,
+          review: item.review,
+          fav: item.fav || false,
+          theme: item.theme || 'Sem tema',
+          type: item.type || 'Sem tipo',
+          title: item.title
+        })));
+      }
+
+      else if (id === "pop") {
+        const top3 = res.data.result
+          .sort((a, b) => b.review - a.review) // ordena do maior pro menor review
+          .slice(0, 3); // pega só os 3 primeiros
+
+        setPopularPosts(top3.map(item => ({
+          id: item.id_evento,
+          images: Array.isArray(item.images) ? item.images : [],
+          desc: item.description,
+          route: item.route,
+          route_exit: item.route_exit,
+          price: item.price,
+          numSlots: item.numSlots,
+          exit_date: item.exit_date,
+          return_date: item.return_date,
+          review: item.review,
+          fav: item.fav || false,
+          theme: item.theme || 'Sem tema',
+          type: item.type || 'Sem tipo',
+          title: item.title
+        })));
+      }
+
+      
+      
     }
   } catch (error) {
     console.error('Erro ao buscar posts:', error.message);
@@ -106,10 +111,19 @@ async function renderPosts() {
 
   const renderCard = ({ item }) => (
     <TouchableOpacity onPress={() => openModal(item)} style={styles.card}>
-      <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
+      <Image
+        source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/60' }}
+        style={styles.cardImage}
+      />
+
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardSubtitle}>{item.type}</Text>
+        <Text style={styles.cardSubtitle}>
+          {typeof item.desc === 'string'
+            ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
+            : 'Sem descrição disponível'}
+        </Text>
+
       </View>
       <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
         <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
@@ -173,6 +187,7 @@ async function renderPosts() {
         contentContainerStyle={styles.scrollContent}
         ListHeaderComponent={<Text style={styles.sectionTitle}>Recomendados</Text>}
       />
+
       <Text style={styles.popularesTxt}>Populares recentemente</Text>
       <FlatList
         data={filteredPopular}
@@ -201,7 +216,7 @@ const styles = StyleSheet.create({
   cardImage: { width: 60, height: 60, borderRadius: 6 },
   cardContent: { flex: 1, marginLeft: 10 },
   cardTitle: { fontSize: 16, fontWeight: 'bold' },
-  cardSubtitle: { fontSize: 14, color: '#666' },
+  cardSubtitle: { fontSize: 14, color: '#666', overflow: 'hidden', flexWrap: 'nowrap' },
   cardIcon: { padding: 4 },
   popularesTxt: { fontWeight: 'bold', fontSize: 14, marginVertical: 10, marginLeft: 10 },
   sidebar: { position: 'absolute', top: 0, left: 0, width: 250, height: '100%', backgroundColor: '#f2f2f2', padding: 20, zIndex: 100 },
