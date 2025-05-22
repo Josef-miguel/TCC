@@ -61,7 +61,7 @@ async function renderPosts(id) {
       else if (id === "pop") {
         const top3 = res.data.result
           .sort((a, b) => b.review - a.review) // ordena do maior pro menor review
-          .slice(0, 3); // pega só os 3 primeiros
+          .slice(0, 3).reverse(); // pega só os 3 primeiros mais populares
 
         setPopularPosts(top3.map(item => ({
           id: item.id_evento,
