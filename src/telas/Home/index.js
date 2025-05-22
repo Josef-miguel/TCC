@@ -6,95 +6,102 @@ import TelaPost from '../../modal/TelaPost';
 import api from '../../../services/api';
 
 export default function Home({ navigation }) {
+  // Controle de visibilidade e animação da sidebar
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-250)).current;
 
+  // Controle do modal e post selecionado
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
+
+  // Controle do campo de busca
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Estado para armazenar os posts recomendados e populares
   const [recommendedPosts, setRecommendedPosts] = useState([]);
   const [popularPosts, setPopularPosts] = useState([]);
 
+  // Filtra os posts recomendados com base na busca
   const filteredRecommended = recommendedPosts.filter(item =>
     item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Filtra os posts populares com base na busca
   const filteredPopular = popularPosts.filter(item =>
     item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
- useEffect(() => {
-  renderPosts("rec");
-  renderPosts("pop");
-}, []);
+  // Carrega os posts ao montar o componente
+  useEffect(() => {
+    renderPosts("rec");
+    renderPosts("pop");
+  }, []);
 
-async function renderPosts(id) {
-  try {
-    const res = await api.post('TCC/posts.php');
-    // console.log('Resposta da API:', res.data);
+  // Função para buscar e processar os posts da API
+  async function renderPosts(id) {
+    try {
+      const res = await api.post('TCC/posts.php');
 
-    if (res.status === 200 && res.data.success) {
-      if(id === "rec"){
-        setRecommendedPosts(res.data.result.map(item => ({
-          id: item.id_evento,
-          images: item.images,
-          desc : item.description,
-          route: item.route,
-          route_exit: item.route_exit,
-          price: item.price,
-          numSlots: item.numSlots,
-          exit_date: item.exit_date,
-          return_date: item.return_date,
-          review: item.review,
-          fav: item.fav || false,
-          theme: item.theme || 'Sem tema',
-          type: item.type || 'Sem tipo',
-          title: item.title
-        })));
+      if (res.status === 200 && res.data.success) {
+        if (id === "rec") {
+          // Preenche os posts recomendados
+          setRecommendedPosts(res.data.result.map(item => ({
+            id: item.id_evento,
+            images: item.images,
+            desc: item.description,
+            route: item.route,
+            route_exit: item.route_exit,
+            price: item.price,
+            numSlots: item.numSlots,
+            exit_date: item.exit_date,
+            return_date: item.return_date,
+            review: item.review,
+            fav: item.fav || false,
+            theme: item.theme || 'Sem tema',
+            type: item.type || 'Sem tipo',
+            title: item.title
+          })));
+        } else if (id === "pop") {
+          // Ordena e pega os 3 posts mais populares
+          const top3 = res.data.result
+            .sort((a, b) => b.review - a.review)
+            .slice(0, 3)
+            .reverse();
+
+          setPopularPosts(top3.map(item => ({
+            id: item.id_evento,
+            images: Array.isArray(item.images) ? item.images : [],
+            desc: item.description,
+            route: item.route,
+            route_exit: item.route_exit,
+            price: item.price,
+            numSlots: item.numSlots,
+            exit_date: item.exit_date,
+            return_date: item.return_date,
+            review: item.review,
+            fav: item.fav || false,
+            theme: item.theme || 'Sem tema',
+            type: item.type || 'Sem tipo',
+            title: item.title
+          })));
+        }
       }
-
-      else if (id === "pop") {
-        const top3 = res.data.result
-          .sort((a, b) => b.review - a.review) // ordena do maior pro menor review
-          .slice(0, 3).reverse(); // pega só os 3 primeiros mais populares
-
-        setPopularPosts(top3.map(item => ({
-          id: item.id_evento,
-          images: Array.isArray(item.images) ? item.images : [],
-          desc: item.description,
-          route: item.route,
-          route_exit: item.route_exit,
-          price: item.price,
-          numSlots: item.numSlots,
-          exit_date: item.exit_date,
-          return_date: item.return_date,
-          review: item.review,
-          fav: item.fav || false,
-          theme: item.theme || 'Sem tema',
-          type: item.type || 'Sem tipo',
-          title: item.title
-        })));
-      }
-
-      
-      
+    } catch (error) {
+      console.error('Erro ao buscar posts:', error.message);
     }
-  } catch (error) {
-    console.error('Erro ao buscar posts:', error.message);
   }
-}
 
-
+  // Alterna o estado de favorito de um post
   const toggleFav = (id) => {
     setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
   };
 
+  // Alterna a exibição da sidebar com animação
   const toggleSidebar = () => {
     Animated.timing(sidebarAnimation, {
       toValue: sidebarVisible ? -250 : 0,
@@ -104,18 +111,19 @@ async function renderPosts(id) {
     setSidebarVisible(!sidebarVisible);
   };
 
+  // Abre o modal com os detalhes de um post
   const openModal = (post) => {
     setSelectedPost(post);
     setModalVisible(true);
   };
 
+  // Renderiza cada card de post
   const renderCard = ({ item }) => (
     <TouchableOpacity onPress={() => openModal(item)} style={styles.card}>
       <Image
         source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/60' }}
         style={styles.cardImage}
       />
-
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.title}</Text>
         <Text style={styles.cardSubtitle}>
@@ -123,7 +131,6 @@ async function renderPosts(id) {
             ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
             : 'Sem descrição disponível'}
         </Text>
-
       </View>
       <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
         <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
@@ -133,6 +140,7 @@ async function renderPosts(id) {
 
   return (
     <View style={styles.container}>
+      {/* Barra superior com menu, busca e perfil */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={toggleSidebar}>
           <Ionicons name="menu" size={24} color="black" />
@@ -148,9 +156,13 @@ async function renderPosts(id) {
         </TouchableOpacity>
       </View>
 
+      {/* Overlay para fechar a sidebar */}
       {sidebarVisible && <TouchableOpacity style={styles.overlay} onPress={toggleSidebar} activeOpacity={1} />}
+
+      {/* Sidebar com navegação */}
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}>
         <Text style={styles.sidebarTitle}>Menu</Text>
+
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
           <Text>Agenda</Text>
         </TouchableOpacity>
@@ -163,23 +175,20 @@ async function renderPosts(id) {
           <Text>Minhas Viagens</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-  style={styles.sidebarItem}
-  onPress={() => {
-    const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
-    navigation.navigate('Favoritos', { favoritos });
-    toggleSidebar();
-  }}
->
-  <Text>Minhas Viagens</Text>
-</TouchableOpacity>
-
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => {
+          const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
+          navigation.navigate('Favoritos', { favoritos });
+          toggleSidebar();
+        }}>
+          <Text>Minhas Viagens</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
         </TouchableOpacity>
       </Animated.View>
 
+      {/* Lista de posts recomendados */}
       <FlatList
         data={filteredRecommended}
         keyExtractor={item => item.id.toString()}
@@ -188,6 +197,7 @@ async function renderPosts(id) {
         ListHeaderComponent={<Text style={styles.sectionTitle}>Recomendados</Text>}
       />
 
+      {/* Lista de posts populares */}
       <Text style={styles.popularesTxt}>Populares recentemente</Text>
       <FlatList
         data={filteredPopular}
@@ -196,6 +206,7 @@ async function renderPosts(id) {
         contentContainerStyle={styles.scrollContent}
       />
 
+      {/* Modal de detalhes do post */}
       <TelaPost
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
@@ -206,6 +217,7 @@ async function renderPosts(id) {
   );
 }
 
+// Estilos do componente
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   topBar: { flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#f2f2f2' },
