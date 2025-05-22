@@ -1,96 +1,127 @@
 import { useState } from "react";
 import { Text, TextInput, Modal, View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
-import {Ionicons} from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
-const createPost = ({modalVisible, setModalVisible}) => {
+// Componente para criar um novo post de viagem
+const createPost = ({ modalVisible, setModalVisible }) => {
+  // Estados locais para armazenar informações do post
+  const [postName, setPostName] = useState('');       // Nome/título do post
+  const [tripType, setTripType] = useState('Viagem');  // Tipo da viagem: 'Viagem' ou 'Excursão'
+  const [description, setDescription] = useState('');  // Descrição detalhada da viagem
 
-    const [postName, setPostName] = useState('');
-    const [tripType, setTripType] = useState('Viagem');
-    const [description, setDescription] = useState('');
+  return (
+    <>
+      {/* Modal que aparece ao acionar a criação de post */}
+      <Modal
+        animationType="slide"           // Animação de slide ao abrir/fechar
+        transparent={true}               // Fundo semitransparente
+        visible={modalVisible}           // Controla visibilidade via prop
+        onRequestClose={() => setModalVisible(false)} // Fecha modal ao solicitar
+      >
+        <View style={styles.modalOverlay}>
+          {/* ScrollView permite rolagem quando o conteúdo ultrapassa a tela */}
+          <ScrollView contentContainerStyle={styles.modalContent}>
 
-    return(
-        <>
-            {/* Modal para Criar Post */}
-            <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={() => setModalVisible(false)}
-        >
-            <View style={styles.modalOverlay}>
-            <ScrollView contentContainerStyle={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-                <Text style={styles.modalTitle}>Criar post</Text>
-                </View>
-
-                <View style={styles.imagePlaceholder}>
-                <Text style={styles.placeholderText}>Imagens do destino</Text>
-                </View>
-
-                <Text style={styles.label}>Nome do post</Text>
-                <TextInput
-                style={styles.input}
-                placeholder="Viagem para Miracatu, SP..."
-                value={postName}
-                onChangeText={setPostName}
-                />
-
-                <Text style={styles.label}>Tipo de viagem</Text>
-                <View style={styles.tripTypeContainer}>
-                <TouchableOpacity
-                    style={[styles.tripTypeButton, tripType === 'Viagem' && styles.tripTypeButtonActive]}
-                    onPress={() => setTripType('Viagem')}
-                >
-                    <Text style={[styles.tripTypeText, tripType === 'Viagem' && styles.tripTypeTextActive]}>VIAGEM</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tripTypeButton, tripType === 'Excursão' && styles.tripTypeButtonActive]}
-                    onPress={() => setTripType('Excursão')}
-                >
-                    <Text style={[styles.tripTypeText, tripType === 'Excursão' && styles.tripTypeTextActive]}>EXCURSÃO</Text>
-                </TouchableOpacity>
-                </View>
-
-                <Text style={styles.label}>Quantidade de pessoas</Text>
-                <TextInput
-                style={styles.input}
-                placeholder="Quantidade de pessoas"
-                />
-
-                <Text style={styles.label}>Descrição da viagem</Text>
-                <TextInput
-                style={[styles.input, styles.descriptionInput]}
-                placeholder="Vamos nos divertir pela cidade!"
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                />
-
-                <Text style={styles.label}>Trajeto da viagem</Text>
-                <View style={styles.mapPlaceholder}>
-                <Ionicons name="location" size={24} color="black" />
-                </View>
-
-                <Text style={styles.termsText}>
-                Ao criar uma publicação no aplicativo, você concorda com os{' '}
-                <Text style={styles.termsLink}>Termos de Uso e Política de Privacidade</Text> do JSG.
-                </Text>
-
-                <TouchableOpacity style={styles.submitButton}>
-                <Text style={styles.submitButtonText}>VIAJAR</Text>
-                </TouchableOpacity>
-            </ScrollView>
+            {/* Cabeçalho do modal com botão de voltar e título */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="arrow-back" size={24} color="black" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Criar post</Text>
             </View>
-        </Modal>
-        </>
-    );
 
-    
+            {/* Placeholder para imagens do destino */}
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.placeholderText}>Imagens do destino</Text>
+            </View>
+
+            {/* Input para nome do post */}
+            <Text style={styles.label}>Nome do post</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Viagem para Miracatu, SP..."
+              value={postName}
+              onChangeText={setPostName}    // Atualiza estado postName
+            />
+
+            {/* Seleção de tipo de viagem */}
+            <Text style={styles.label}>Tipo de viagem</Text>
+            <View style={styles.tripTypeContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.tripTypeButton,
+                  tripType === 'Viagem' && styles.tripTypeButtonActive
+                ]}
+                onPress={() => setTripType('Viagem')}  // Marca 'Viagem'
+              >
+                <Text style={[
+                  styles.tripTypeText,
+                  tripType === 'Viagem' && styles.tripTypeTextActive
+                ]}>
+                  VIAGEM
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.tripTypeButton,
+                  tripType === 'Excursão' && styles.tripTypeButtonActive
+                ]}
+                onPress={() => setTripType('Excursão')} // Marca 'Excursão'
+              >
+                <Text style={[
+                  styles.tripTypeText,
+                  tripType === 'Excursão' && styles.tripTypeTextActive
+                ]}>
+                  EXCURSÃO
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Input para quantidade de pessoas */}
+            <Text style={styles.label}>Quantidade de pessoas</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Quantidade de pessoas"
+              keyboardType="numeric"          // Tipo numérico
+            />
+
+            {/* Input de descrição da viagem */}
+            <Text style={styles.label}>Descrição da viagem</Text>
+            <TextInput
+              style={[styles.input, styles.descriptionInput]}
+              placeholder="Vamos nos divertir pela cidade!"
+              value={description}
+              onChangeText={setDescription}    // Atualiza estado description
+              multiline                         // Permite múltiplas linhas
+            />
+
+            {/* Placeholder para mapa/trajeto da viagem */}
+            <Text style={styles.label}>Trajeto da viagem</Text>
+            <View style={styles.mapPlaceholder}>
+              <Ionicons name="location" size={24} color="black" />
+            </View>
+
+            {/* Texto de termos de uso com link */}
+            <Text style={styles.termsText}>
+              Ao criar uma publicação no aplicativo, você concorda com os{' '}
+              <Text style={styles.termsLink}>Termos de Uso e Política de Privacidade</Text>
+              {' '}do JSG.
+            </Text>
+
+            {/* Botão para submeter/criar o post */}
+            <TouchableOpacity style={styles.submitButton}>
+              <Text style={styles.submitButtonText}>VIAJAR</Text>
+            </TouchableOpacity>
+
+          </ScrollView>
+        </View>
+      </Modal>
+    </>
+  );
 }
 
+// Estilos do componente
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -109,7 +140,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     justifyContent: 'center',
   },
   modalContent: {
@@ -117,10 +148,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 10,
     padding: 15,
-    minHeight: '90%',
+    minHeight: '90%',                
   },
   modalHeader: {
-    flexDirection: 'row',
+    flexDirection: 'row',           
     alignItems: 'center',
     marginBottom: 15,
   },
@@ -155,7 +186,7 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     height: 80,
-    textAlignVertical: 'top',
+    textAlignVertical: 'top',     
   },
   tripTypeContainer: {
     flexDirection: 'row',
@@ -171,8 +202,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tripTypeButtonActive: {
-    backgroundColor: '#e0f7fa',
-    borderColor: '#00bcd4',
+    backgroundColor: '#e0f7fa',     
+    borderColor: '#00bcd4',         
   },
   tripTypeText: {
     fontSize: 12,
@@ -214,4 +245,3 @@ const styles = StyleSheet.create({
 });
 
 export default createPost;
-
