@@ -18,6 +18,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../../../services/api';
 
 export default function Cadastro({ navigation }) {
+  // Controle de animações: deslocamento vertical e opacidade
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
   const [opac] = useState(new Animated.Value(0));
   const [user, setUser] = useState("");
@@ -116,6 +117,7 @@ export default function Cadastro({ navigation }) {
     }
   }
 
+  // Dispara animações ao montar componente
   useEffect(() => {
     Animated.parallel([
       Animated.spring(offset.y, {
@@ -201,6 +203,7 @@ export default function Cadastro({ navigation }) {
               <Text style={styles.buttonText}>Registrar</Text>
             </TouchableOpacity>
 
+            {/* Link para ir ao login */}
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.linkText}>Já possui conta? Faça login</Text>
             </TouchableOpacity>
@@ -211,6 +214,7 @@ export default function Cadastro({ navigation }) {
   );
 }
 
+// Definição de estilos para a tela de cadastro
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   scroll: { flexGrow: 1 },
@@ -219,16 +223,33 @@ const styles = StyleSheet.create({
   logo: { width: 180, height: 60 },
   form: { width: '100%' },
   inputWrapper: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 25,
-    paddingHorizontal: 15, marginBottom: 15, height: 50, shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3,
+    flexDirection: 'row', 
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    height: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   icon: { color: '#fdbb2d', marginRight: 10 },
   input: { flex: 1, fontSize: 16, color: '#333' },
   button: {
-    backgroundColor: '#b21f1f', borderRadius: 25, height: 50, alignItems: 'center', justifyContent: 'center',
-    marginVertical: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3,
-    shadowRadius: 5, elevation: 4,
+    backgroundColor: '#b21f1f',
+    borderRadius: 25,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   linkText: { color: '#fff', textAlign: 'center', marginTop: 10, textDecorationLine: 'underline' },

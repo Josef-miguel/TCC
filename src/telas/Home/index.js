@@ -1,68 +1,136 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import TelaPost from '../../modal/TelaPost';
-import ParticiparPost from '../../modal/ParticiparPost';
+import api from '../../../services/api';
 
 export default function Home({ navigation }) {
+  // Controle de visibilidade e animação da sidebar
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-250)).current;
 
+  // Controle do modal e post selecionado
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
 
+  // Controle do campo de busca
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [recommendedPosts, setRecommendedPosts] = useState([
-    { id: 1, fav: false, images: ['https://c4.wallpaperflare.com/wallpaper/929/494/437/rio-de-janeiro-4k-pc-desktop-hd-wallpaper-preview.jpg'], route: 'São Paulo → Rio de Janeiro', excursionInfo: 'Visita guiada pelos principais pontos turísticos.', rating: 8, comments: ['Foi incrível!', 'Recomendo demais.'], type: 'Aventura', theme: 'Montanha' },
-    { id: 2, fav: true, images: ['https://cdn.blablacar.com/wp-content/uploads/br/2024/03/05100620/azeda-buzios-rj.webp'], route: 'Rio de Janeiro → Búzios', excursionInfo: 'Dia de praia e relax.', rating: 9, comments: ['Perfeito!', 'Sol o dia todo.'], type: 'Relax', theme: 'Praia' },
-    { id: 3, fav: false, images: ['https://cdn.vaidepromo.com.br/blog/2024/03/Praia-do-Forte-scaled.jpg'], route: 'Salvador → Praia do Forte', excursionInfo: 'História e cultura local.', rating: 7, comments: ['Interessante.', 'Boa gastronomia.'], type: 'Cultural', theme: 'História' },
-    { id: 4, fav: false, images: ['https://cdn.blablacar.com/wp-content/uploads/br/2023/11/05100605/blumenau-sc-4.jpg'], route: 'Curitiba → Blumenau', excursionInfo: 'Gastronomia típica alemã.', rating: 8, comments: ['Delicioso!', 'Ótima cerveja.'], type: 'Gastronomia', theme: 'Culinária local' }
-  ]);
+  // Estado para armazenar os posts recomendados e populares
+  const [recommendedPosts, setRecommendedPosts] = useState([]);
+  const [popularPosts, setPopularPosts] = useState([]);
 
-  const [popularPosts, setPopularPosts] = useState([
-    { id: 5, fav: true, images: ['https://www.melhoresdestinos.com.br/wp-content/uploads/2019/07/passagens-aereas-foz-do-iguacu-capa2019-05.jpg'], route: 'Curitiba → Foz do Iguaçu', excursionInfo: 'Tour de 3 dias com hotel e ingressos.', rating: 9, comments: ['Maravilhoso!', 'Ótimo custo-benefício.'], type: 'Romântico', theme: 'Praia ao pôr do sol' },
-    { id: 6, fav: true, images: ['https://amazonasatual.com.br/wp-content/uploads/2017/10/TRILHA-AQU%C3%81TICA-DA-MIRATINGA.jpg'], route: 'Manaus → Amazônia', excursionInfo: 'Aventura na floresta.', rating: 8, comments: ['Inesquecível!', 'Muita natureza.'], type: 'Aventura', theme: 'Trilha na floresta' },
-    { id: 7, fav: false, images: ['https://emalgumlugardomundo.com.br/wp-content/uploads/2023/01/o-que-fazer-em-olinda-centro-historico.jpg'], route: 'Recife → Olinda', excursionInfo: 'Circuito cultural histórico.', rating: 7, comments: ['Colorido!', 'Rico em arte.'], type: 'Cultural', theme: 'Museus e arte' }
-  ]);
-
-  // Filtrar posts com base no searchQuery
+  // Filtra os posts recomendados com base na busca
   const filteredRecommended = recommendedPosts.filter(item =>
     item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Filtra os posts populares com base na busca
   const filteredPopular = popularPosts.filter(item =>
     item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Combina e filtra favoritos para "Minhas Viagens"
-  const favoritePosts = [...recommendedPosts, ...popularPosts].filter(post => post.fav);
+  // Carrega os posts ao montar o componente
+  useEffect(() => {
+    renderPosts("rec");
+    renderPosts("pop");
+  }, []);
 
+  // Função para buscar e processar os posts da API
+  async function renderPosts(id) {
+    try {
+      const res = await api.post('TCC/posts.php');
+
+      if (res.status === 200 && res.data.success) {
+        if (id === "rec") {
+          // Preenche os posts recomendados
+          setRecommendedPosts(res.data.result.map(item => ({
+            id: item.id_evento,
+            images: item.images,
+            desc: item.description,
+            route: item.route,
+            route_exit: item.route_exit,
+            price: item.price,
+            numSlots: item.numSlots,
+            exit_date: item.exit_date,
+            return_date: item.return_date,
+            review: item.review,
+            fav: item.fav || false,
+            theme: item.theme || 'Sem tema',
+            type: item.type || 'Sem tipo',
+            title: item.title
+          })));
+        } else if (id === "pop") {
+          // Ordena e pega os 3 posts mais populares
+          const top3 = res.data.result
+            .sort((a, b) => b.review - a.review)
+            .slice(0, 3)
+            .reverse();
+
+          setPopularPosts(top3.map(item => ({
+            id: item.id_evento,
+            images: Array.isArray(item.images) ? item.images : [],
+            desc: item.description,
+            route: item.route,
+            route_exit: item.route_exit,
+            price: item.price,
+            numSlots: item.numSlots,
+            exit_date: item.exit_date,
+            return_date: item.return_date,
+            review: item.review,
+            fav: item.fav || false,
+            theme: item.theme || 'Sem tema',
+            type: item.type || 'Sem tipo',
+            title: item.title
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar posts:', error.message);
+    }
+  }
+
+  // Alterna o estado de favorito de um post
   const toggleFav = (id) => {
     setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
   };
 
+  // Alterna a exibição da sidebar com animação
   const toggleSidebar = () => {
-    Animated.timing(sidebarAnimation, { toValue: sidebarVisible ? -250 : 0, duration: 300, useNativeDriver: true }).start();
+    Animated.timing(sidebarAnimation, {
+      toValue: sidebarVisible ? -250 : 0,
+      duration: 300,
+      useNativeDriver: true
+    }).start();
     setSidebarVisible(!sidebarVisible);
   };
 
+  // Abre o modal com os detalhes de um post
   const openModal = (post) => {
     setSelectedPost(post);
     setModalVisible(true);
   };
 
+  // Renderiza cada card de post
   const renderCard = ({ item }) => (
     <TouchableOpacity onPress={() => openModal(item)} style={styles.card}>
-      <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
+      <Image
+        source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/60' }}
+        style={styles.cardImage}
+      />
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.theme}</Text>
-        <Text style={styles.cardSubtitle}>{item.type}</Text>
+        <Text style={styles.cardTitle}>{item.title}</Text>
+        <Text style={styles.cardSubtitle}>
+          {typeof item.desc === 'string'
+            ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
+            : 'Sem descrição disponível'}
+        </Text>
       </View>
       <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
         <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
@@ -72,6 +140,7 @@ export default function Home({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Barra superior com menu, busca e perfil */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={toggleSidebar}>
           <Ionicons name="menu" size={24} color="black" />
@@ -87,28 +156,39 @@ export default function Home({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Overlay para fechar a sidebar */}
       {sidebarVisible && <TouchableOpacity style={styles.overlay} onPress={toggleSidebar} activeOpacity={1} />}
-      <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}> 
+
+      {/* Sidebar com navegação */}
+      <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}>
         <Text style={styles.sidebarTitle}>Menu</Text>
+
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
           <Text>Agenda</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-  style={styles.sidebarItem}
-  onPress={() => {
-    const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
-    navigation.navigate('Favoritos', { favoritos });
-    toggleSidebar();
-  }}
->
-  <Text>Minhas Viagens</Text>
-</TouchableOpacity>
+
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => {
+          const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
+          navigation.navigate('Historico', { favoritos });
+          toggleSidebar();
+        }}>
+          <Text>Minhas Viagens</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => {
+          const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
+          navigation.navigate('Favoritos', { favoritos });
+          toggleSidebar();
+        }}>
+          <Text>Minhas Viagens</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
         </TouchableOpacity>
       </Animated.View>
 
+      {/* Lista de posts recomendados */}
       <FlatList
         data={filteredRecommended}
         keyExtractor={item => item.id.toString()}
@@ -116,6 +196,8 @@ export default function Home({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         ListHeaderComponent={<Text style={styles.sectionTitle}>Recomendados</Text>}
       />
+
+      {/* Lista de posts populares */}
       <Text style={styles.popularesTxt}>Populares recentemente</Text>
       <FlatList
         data={filteredPopular}
@@ -124,13 +206,18 @@ export default function Home({ navigation }) {
         contentContainerStyle={styles.scrollContent}
       />
 
-     
-
-      <TelaPost modalVisible={modalVisible} setModalVisible={setModalVisible} selectedPost={selectedPost} setSelectedPost={setSelectedPost} />
+      {/* Modal de detalhes do post */}
+      <TelaPost
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        selectedPost={selectedPost}
+        setSelectedPost={setSelectedPost}
+      />
     </View>
   );
 }
 
+// Estilos do componente
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   topBar: { flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#f2f2f2' },
@@ -141,11 +228,9 @@ const styles = StyleSheet.create({
   cardImage: { width: 60, height: 60, borderRadius: 6 },
   cardContent: { flex: 1, marginLeft: 10 },
   cardTitle: { fontSize: 16, fontWeight: 'bold' },
-  cardSubtitle: { fontSize: 14, color: '#666' },
+  cardSubtitle: { fontSize: 14, color: '#666', overflow: 'hidden', flexWrap: 'nowrap' },
   cardIcon: { padding: 4 },
   popularesTxt: { fontWeight: 'bold', fontSize: 14, marginVertical: 10, marginLeft: 10 },
-  minhasViagensButton: { margin: 10, padding: 12, backgroundColor: '#ffdddd', borderRadius: 8, alignItems: 'center' },
-  minhasViagensText: { color: 'red', fontWeight: 'bold' },
   sidebar: { position: 'absolute', top: 0, left: 0, width: 250, height: '100%', backgroundColor: '#f2f2f2', padding: 20, zIndex: 100 },
   sidebarTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
   sidebarItem: { paddingVertical: 10 },

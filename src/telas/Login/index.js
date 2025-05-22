@@ -16,25 +16,44 @@ import { Feather } from '@expo/vector-icons';
 import api from '../../../services/api';
 import { showMessage } from 'react-native-flash-message';
 
+// Tela de Login principal
 export default function Login({ navigation }) {
+  // Valores animados para deslocamento (offset) e opacidade
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
   const [opac] = useState(new Animated.Value(0));
+
+  // Estados para usuário e senha
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
 
+  // Executa a animação de entrada apenas uma vez ao montar o componente
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(offset.y, { toValue: 0, speed: 4, bounciness: 20, useNativeDriver: true }),
-      Animated.timing(opac, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      // Anima o eixo Y com efeito de mola
+      Animated.spring(offset.y, {
+        toValue: 0,
+        speed: 4,
+        bounciness: 20,
+        useNativeDriver: true,
+      }),
+      // Anima a opacidade de 0 a 1
+      Animated.timing(opac, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
+  // Limpa os campos de usuário e senha
   const limparCampos = () => {
     setUser('');
     setPassword('');
   };
 
+  // Função que faz a chamada à API para validar o login
   async function saveData() {
+    // Validação básica de preenchimento
     if (!user || !password) {
       showMessage({
         message: 'Erro ao Salvar',
@@ -45,9 +64,13 @@ export default function Login({ navigation }) {
     }
 
     try {
+      // Requisição POST para endpoint de login
       const res = await api.post('TCC/login.php', { user, password });
+
+      // Verifica se a requisição não retornou status HTTP 200
       if (res.status !== 200) throw new Error('Erro na comunicação com o servidor');
 
+      // Caso o backend retorne sucesso:false, exibe erro e limpa campos
       if (!res.data.success) {
         showMessage({
           message: 'Erro ao Logar',
@@ -56,6 +79,7 @@ export default function Login({ navigation }) {
         });
         limparCampos();
       } else {
+        // Login bem-sucedido, exibe mensagem e navega para a tela Home
         showMessage({
           message: 'Login Bem-Sucedido',
           description: 'Bem-vindo!',
@@ -64,6 +88,7 @@ export default function Login({ navigation }) {
         navigation.navigate('Home');
       }
     } catch (error) {
+      // Captura erros de rede ou internos e exibe mensagem de erro
       showMessage({
         message: 'Ocorreu algum erro',
         description: error.message,
@@ -73,15 +98,18 @@ export default function Login({ navigation }) {
   }
 
   return (
+    // Fundo gradiente de cores
     <LinearGradient
-      colors={['#1e3c72', '#0377fc']} //Alterem a cor
+      colors={['#1e3c72', '#0377fc']} // Altere as cores conforme tema desejado
       style={styles.gradient}
     >
+      {/* ScrollView + KeyboardAvoiding para evitar sobreposição do teclado */}
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
         >
+          {/* Logo animado */}
           <Animated.View
             style={[styles.logoContainer, { opacity: opac, transform: [{ translateY: offset.y }] }]}
           >
@@ -92,7 +120,9 @@ export default function Login({ navigation }) {
             />
           </Animated.View>
 
+          {/* Formulário animado */}
           <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }]}>            
+            {/* Campo de Usuário com ícone */}
             <View style={styles.inputWrapper}>
               <Feather name="user" size={20} style={styles.icon} />
               <TextInput
@@ -105,6 +135,7 @@ export default function Login({ navigation }) {
               />
             </View>
 
+            {/* Campo de Senha com ícone */}
             <View style={styles.inputWrapper}>
               <Feather name="lock" size={20} style={styles.icon} />
               <TextInput
@@ -117,10 +148,12 @@ export default function Login({ navigation }) {
               />
             </View>
 
+            {/* Botão Entrar */}
             <TouchableOpacity style={styles.button} onPress={saveData}>
               <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
 
+            {/* Link para tela de cadastro */}
             <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
               <Text style={styles.linkText}>Ainda não possui conta? Registre-se</Text>
             </TouchableOpacity>
@@ -131,21 +164,23 @@ export default function Login({ navigation }) {
   );
 }
 
+// Estilos da tela
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
+  gradient: { flex: 1 }, 
   scroll: { flexGrow: 1 },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   logoContainer: { marginBottom: 30, alignItems: 'center' },
   logo: { width: 180, height: 60 },
   form: { width: '100%' },
   inputWrapper: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 25,
     paddingHorizontal: 15,
     marginBottom: 15,
     height: 50,
+
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
