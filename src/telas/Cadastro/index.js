@@ -14,8 +14,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { showMessage } from 'react-native-flash-message';
-
-import api from '../../../services/api'
+import DateTimePicker from '@react-native-community/datetimepicker';
+import api from '../../../services/api';
 
 export default function Cadastro({ navigation }) {
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
@@ -24,112 +24,123 @@ export default function Cadastro({ navigation }) {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [cpf , setCpf] = useState("");
-  const [dataNasc, setDataNasc ] = useState(new Date());
-  const [success, setSuccess ] = useState("");
+  const [dataNasc, setDataNasc] = useState(new Date());
+  const [success, setSuccess] = useState("");
+  const [show, setShow] = useState(false);
 
   const values = {
-  'Usuário': user,
-  'E-mail': email,
-  'Senha': password,
-  'CPF': cpf,
-  'Data de nascimento': dataNasc,
-};
-const setters = {
-  'Usuário': setUser,
-  'E-mail': setEmail,
-  'Senha': setPassword,
-  'CPF': setCpf,
-  'Data de nascimento': setDataNasc,
-};
+    'Usuário': user,
+    'E-mail': email,
+    'Senha': password,
+    'CPF': cpf,
+  };
 
-function limparCampos(){
-  setUser("");
-  setEmail("");
-  setCpf("");
-  setPassword("");
-  setDataNasc("");
-}
+  const setters = {
+    'Usuário': setUser,
+    'E-mail': setEmail,
+    'Senha': setPassword,
+    'CPF': setCpf,
+  };
 
-async function saveData() {
-  if (!user || !password || !email || !cpf || !dataNasc) {
-    showMessage({
-      message: "Erro ao Salvar",
-      description: 'Preencha os Campos Obrigatórios!',
-      type: "warning",
-    });
-    return;
+  function limparCampos(){
+    setUser("");
+    setEmail("");
+    setCpf("");
+    setPassword("");
+    setDataNasc(new Date());
   }
 
-  try {
-    // Formatar a data para o padrão 'YYYY-MM-DD'
-    const formattedDate = dataNasc instanceof Date && !isNaN(dataNasc.getTime()) 
-      ? dataNasc.toISOString().split('T')[0] 
-      : '';
-
-
-    const obj = {
-      user: user || '',
-      email: email || '',
-      password: password || '',
-      cpf: cpf || '',
-      dataNasc: formattedDate || ''
-    };
-
-    const res = await api.post('TCC/register.php', obj);
-    
-    if (res.status !== 200) {
-      throw new Error('Erro na comunicação com o servidor');
+  async function saveData() {
+    if (!user || !password || !email || !cpf || !dataNasc) {
+      showMessage({
+        message: "Erro ao Salvar",
+        description: 'Preencha os Campos Obrigatórios!',
+        type: "warning",
+      });
+      return;
     }
 
-    if (res.data.success === false) {
+    try {
+      const formattedDate = dataNasc instanceof Date && !isNaN(dataNasc.getTime()) 
+        ? dataNasc.toISOString().split('T')[0] 
+        : '';
+
+      const obj = {
+        user: user || '',
+        email: email || '',
+        password: password || '',
+        cpf: cpf || '',
+        dataNasc: formattedDate || ''
+      };
+
+      const res = await api.post('TCC/register.php', obj);
+
+      if (res.status !== 200) {
+        throw new Error('Erro na comunicação com o servidor');
+      }
+
+      if (res.data.success === false) {
+        showMessage({
+          message: "Erro ao cadastrar",
+          description: res.data.message || 'CAMPO INVÁLIDO!',
+          type: "warning",
+          duration: 3000,
+        });
+        limparCampos();
+      } else if (res.data.success === true) {
+        showMessage({
+          message: "Cadastro Bem-Sucedido",
+          description: "Bem-vindo!",
+          type: "success",
+          duration: 1800,
+        });
+        setSuccess(true);
+        navigation.navigate('Home');
+      } else {
+        showMessage({
+          message: "Ocorreu algum erro",
+          description: "erro",
+          type: 'warning',
+          duration: 2000
+        });
+      }
+
+    } catch (error) {
       showMessage({
-        message: "Erro ao cadastrar",
-        description: res.data.message || 'CAMPO INVÁLIDO!',
-        type: "warning",
-        duration: 3000,
-      });
-      limparCampos();
-    } else if (res.data.success === true) {
-      showMessage({
-        message: "Cadastro Bem-Sucedido",
-        description: "Bem-vindo!",
-        type: "success",
-        duration: 1800,
-      });
-      setSuccess(true);
-      navigation.navigate('Home');
-    } else {
-      showMessage({
-        message: "Ocorreu algum erro",
+        message: "Ocorreu algum erro: " + error,
         description: "erro",
         type: 'warning',
         duration: 2000
       });
+      setSuccess(false);
     }
-
-    console.log(res.data.success);
-  } catch (error) {
-    console.log(error);
-    showMessage({
-      message: "Ocorreu algum erro: " + error,
-      description: "erro",
-      type: 'warning',
-      duration: 2000
-    });
-    setSuccess(false);
   }
-}
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(offset.y, { toValue: 0, speed: 4, bounciness: 20, useNativeDriver: true }),
-      Animated.timing(opac, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      Animated.spring(offset.y, {
+        toValue: 0,
+        speed: 4,
+        bounciness: 20,
+        useNativeDriver: true
+      }),
+      Animated.timing(opac, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: true
+      }),
     ]).start();
   }, []);
 
+  const onChange = (event, selectedDate) => {
+    const currentDate = selectedDate || dataNasc;
+    setShow(Platform.OS === 'ios');
+    setDataNasc(currentDate);
+  };
+
   return (
     <LinearGradient
-      colors={[ '#1a2a6c', '#b21f1f', '#ff55aa' ]}
+      colors={['#1a2a6c', '#b21f1f', '#ff55aa']}
       style={styles.gradient}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -137,7 +148,7 @@ async function saveData() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
         >
-          <Animated.View style={[styles.logoContainer, { opacity: opac, transform: [{ translateY: offset.y }] }] }>
+          <Animated.View style={[styles.logoContainer, { opacity: opac, transform: [{ translateY: offset.y }] }]}>
             <Image
               source={require('../../../assets/img/iconimg.png')}
               style={styles.logo}
@@ -145,8 +156,8 @@ async function saveData() {
             />
           </Animated.View>
 
-          <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }] }>
-            {['Usuário', 'E-mail', 'Senha', 'CPF', 'Data de nascimento'].map((placeholder, idx) => (
+          <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }]}>
+            {['Usuário', 'E-mail', 'Senha', 'CPF'].map((placeholder, idx) => (
               <View key={idx} style={styles.inputWrapper}>
                 <Feather
                   name={placeholder === 'Senha' ? 'lock' : 'user'}
@@ -159,13 +170,34 @@ async function saveData() {
                   placeholderTextColor="#667"
                   value={values[placeholder]}
                   secureTextEntry={placeholder === 'Senha'}
-                  keyboardType={placeholder === 'CPF' || placeholder === 'Data de nascimento' ? 'numeric' : 'default'}
+                  keyboardType={placeholder === 'CPF' ? 'numeric' : 'default'}
                   onChangeText={text => setters[placeholder](text)}
                 />
               </View>
             ))}
 
-            <TouchableOpacity style={styles.button} onPress={() => {saveData();}}>
+            <View style={styles.inputWrapper}>
+              <Feather name="calendar" size={20} style={styles.icon} />
+              <TouchableOpacity
+                style={styles.input}
+                onPress={() => setShow(true)}
+              >
+                <Text style={{ color: '#333', fontSize: 16 }}>
+                  {dataNasc.toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {show && (
+              <DateTimePicker
+                value={dataNasc}
+                mode="date"
+                display="default"
+                onChange={onChange}
+              />
+            )}
+
+            <TouchableOpacity style={styles.button} onPress={saveData}>
               <Text style={styles.buttonText}>Registrar</Text>
             </TouchableOpacity>
 
