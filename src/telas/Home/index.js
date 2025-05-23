@@ -51,7 +51,7 @@ export default function Home({ navigation }) {
           // Preenche os posts recomendados
           setRecommendedPosts(res.data.result.map(item => ({
             id: item.id_evento,
-            images: item.images,
+            images: Array.isArray(item.images) ? item.images : [],
             desc: item.description,
             route: item.route,
             route_exit: item.route_exit,
