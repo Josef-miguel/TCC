@@ -59,7 +59,7 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
             {/* Seção de informações da excursão */}
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
-              <Text>{selectedPost.excursionInfo}</Text>
+              <Text>{selectedPost.desc}</Text>
             </View>
 
             {/* Seção de avaliação com estrelas clicáveis */}
@@ -80,9 +80,9 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
             {/* Seção de comentários */}
             <Text style={styles.sectionTitle}>Comentários</Text>
             <View style={styles.commentsBox}>
-              {selectedPost.comments.map((c, idx) => (
+              {/* {selectedPost.comments.map((c, idx) => (
                 <Text key={idx} style={styles.commentText}>"{c}"</Text>
-              ))}
+              ))} */}
             </View>
 
             {/* Botão para abrir modal de participação */}
