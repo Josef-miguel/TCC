@@ -1,94 +1,335 @@
-{% extends 'base.html' %}
-
-{% block title %}Login - Excursões e Shows{% endblock %}
-
-{% block content %}
-<style>
-  .login-container {
-    max-width: 400px;
-    background: white;
-    margin: 60px auto;
-    padding: 30px 40px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  .login-container h2 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 25px;
-    font-weight: 700;
-  }
-  .form-group {
-    margin-bottom: 18px;
-  }
-  label {
-    display: block;
-    color: #34495e;
-    margin-bottom: 6px;
-    font-weight: 600;
-  }
-  input[type="text"],
-  input[type="password"] {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.8px solid #bdc3c7;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-  }
-  input[type="text"]:focus,
-  input[type="password"]:focus {
-    outline: none;
-    border-color: #e74c3c;
-  }
-  button {
-    width: 100%;
-    padding: 12px;
-    background-color: #e74c3c;
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-weight: 700;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  button:hover {
-    background-color: #c0392b;
-  }
-  .login-footer {
-    margin-top: 15px;
-    text-align: center;
-    font-size: 0.9rem;
-    color: #7f8c8d;
-  }
-  .login-footer a {
-    color: #e74c3c;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .login-footer a:hover {
-    text-decoration: underline;
-  }
-</style>
-
-<div class="login-container">
-  <h2>Login</h2>
-  <form method="POST" action="{{ url_for('login') }}">
-    <div class="form-group">
-      <label for="username">Usuário</label>
-      <input type="text" id="username" name="username" placeholder="Digite seu usuário" required />
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SetJustGo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos específicos para a página de login */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        
+        .login-container {
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(rgba(44, 62, 80, 0.8), rgba(44, 62, 80, 0.8)), 
+                        url('https://images.unsplash.com/photo-1508672019048-805c876b67e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .login-card {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .login-header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .login-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .login-body {
+            padding: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 2.5rem;
+            color: #7f8c8d;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+        
+        .btn-login:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .login-footer a {
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .social-login {
+            margin-top: 2rem;
+        }
+        
+        .social-login p {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .social-login p:before,
+        .social-login p:after {
+            content: "";
+            display: inline-block;
+            width: 30%;
+            height: 1px;
+            background-color: #ddd;
+            position: absolute;
+            top: 50%;
+        }
+        
+        .social-login p:before {
+            left: 0;
+        }
+        
+        .social-login p:after {
+            right: 0;
+        }
+        
+        .social-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .social-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .btn-google {
+            background-color: #db4437;
+        }
+        
+        .btn-facebook {
+            background-color: #4267B2;
+        }
+        
+        .btn-apple {
+            background-color: #000000;
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .remember-me input {
+            width: auto;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 1rem;
+            }
+            
+            .login-card {
+                max-width: 100%;
+            }
+            
+            .login-body {
+                padding: 1.5rem;
+            }
+            
+            .social-login p:before,
+            .social-login p:after {
+                width: 25%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Bem-vindo de volta!</h1>
+                <p>Faça login para acessar sua conta e planejar sua próxima aventura</p>
+            </div>
+            
+            <div class="login-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="email" class="form-control" placeholder="seu@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Senha</label>
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    
+                    <div class="remember-forgot">
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember">
+                            <label for="remember">Lembrar-me</label>
+                        </div>
+                        <a href="#">Esqueceu a senha?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn-login">Entrar</button>
+                </form>
+                
+                <div class="social-login">
+                    <p>ou continue com</p>
+                    <div class="social-buttons">
+                        <a href="#" class="social-btn btn-google"><i class="fab fa-google"></i></a>
+                        <a href="#" class="social-btn btn-facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-btn btn-apple"><i class="fab fa-apple"></i></a>
+                    </div>
+                </div>
+                
+                <div class="login-footer">
+                    <p>Não tem uma conta? <a href="/register">Cadastre-se</a></p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-      <label for="password">Senha</label>
-      <input type="password" id="password" name="password" placeholder="Digite sua senha" required />
-    </div>
-    <button type="submit">Entrar</button>
-  </form>
-  <div class="login-footer">
-    <p>Não tem uma conta? <a href="#">Cadastre-se</a></p>
-  </div>
-</div>
 
-{% endblock %}
+    <script>
+        // Efeito de foco nos campos de formulário
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                const icon = this.previousElementSibling;
+                if(icon && icon.classList.contains('input-icon')) {
+                    icon.style.color = '#e74c3c';
+                }
+            });
+            
+            input.addEventListener('blur', function() {
+                const icon = this.previousElementSibling;
+                if(icon && icon.classList.contains('input-icon')) {
+                    icon.style.color = '#7f8c8d';
+                }
+            });
+        });
+        
+        // Validação do formulário
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if(email && password) {
+                // Simulação de login bem-sucedido
+                alert('Login realizado com sucesso! Redirecionando...');
+                window.location.href = "/"; // Redireciona para a página inicial
+            } else {
+                alert('Por favor, preencha todos os campos!');
+            }
+        });
+        
+        // Verifica se há erros na URL para mostrar mensagens
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if(error) {
+            alert(error);
+        }
+    </script>
+</body>
+</html>
+
+
