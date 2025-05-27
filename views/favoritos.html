@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Estilos específicos para a página de favoritos */
+    .favorites-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 20px;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    .page-header p {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .favorites-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .favorite-card {
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .favorite-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .favorite-image {
+        height: 200px;
+        width: 100%;
+        object-fit: cover;
+    }
+    
+    .favorite-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: #e74c3c;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    
+    .favorite-content {
+        padding: 1.5rem;
+    }
+    
+    .favorite-title {
+        font-size: 1.3rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .favorite-meta {
+        display: flex;
+        gap: 1rem;
+        color: #7f8c8d;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .favorite-meta i {
+        color: #e74c3c;
+        margin-right: 0.3rem;
+    }
+    
+    .favorite-price {
+        font-size: 1.3rem;
+        color: #e74c3c;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .favorite-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-favorite {
+        flex: 1;
+        padding: 0.7rem;
+        border-radius: 5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .btn-primary {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background-color: #c0392b;
+    }
+    
+    .btn-outline {
+        background: none;
+        border: 1px solid #ddd;
+        color: #7f8c8d;
+    }
+    
+    .btn-outline:hover {
+        border-color: #e74c3c;
+        color: #e74c3c;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 0;
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        color: #bdc3c7;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state h2 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: #7f8c8d;
+        max-width: 500px;
+        margin: 0 auto 2rem;
+    }
+    
+    .btn-explore {
+        display: inline-block;
+        padding: 0.8rem 2rem;
+        background-color: #e74c3c;
+        color: white;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-explore:hover {
+        background-color: #c0392b;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .favorites-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .favorite-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="favorites-container">
+    <div class="page-header">
+        <h1>Seus Favoritos</h1>
+        <p>Suas excursões salvas para planejar sua próxima aventura</p>
+    </div>
+    
+    {% if favoritos %}
+    <div class="favorites-grid">
+        {% for favorito in favoritos %}
+        <div class="favorite-card">
+            <img src="{{ favorito.imagem_url }}" alt="{{ favorito.destino }}" class="favorite-image">
+            <span class="favorite-badge">{{ favorito.n_vagas }} vagas</span>
+            
+            <div class="favorite-content">
+                <h3 class="favorite-title">{{ favorito.destino }}</h3>
+                
+                <div class="favorite-meta">
+                    <span><i class="fas fa-calendar-alt"></i> {{ favorito.data_de_saida }}</span>
+                    <span><i class="fas fa-clock"></i> {{ favorito.duracao }} dias</span>
+                </div>
+                
+                <div class="favorite-price">R$ {{ "%.2f"|format(favorito.preco) }}</div>
+                
+                <div class="favorite-actions">
+                    <button class="btn-favorite btn-primary">Reservar Agora</button>
+                    <button class="btn-favorite btn-outline" onclick="removeFavorite({{ favorito.id_evento }})">
+                        <i class="fas fa-heart-broken"></i> Remover
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-heart"></i>
+        <h2>Nenhuma excursão favoritada ainda</h2>
+        <p>Explore nossas excursões e salve suas favoritas para planejar sua próxima aventura com facilidade.</p>
+        <a href="{{ url_for('home') }}" class="btn-explore">Explorar Excursões</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Função para remover favorito
+    function removeFavorite(eventoId) {
+        if(confirm('Tem certeza que deseja remover esta excursão dos seus favoritos?')) {
+            fetch(`/favoritos/remover/${eventoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    location.reload();
+                } else {
+                    alert('Ocorreu um erro ao remover o favorito');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocorreu um erro ao remover o favorito');
+            });
+        }
+    }
+    
+    // Animação ao carregar os cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.favorite-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = 0;
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+            
+            setTimeout(() => {
+                card.style.opacity = 1;
+                card.style.transform = 'translateY(0)';
+            }, 50);
+        });
+    });
+</script>
+{% endblock %}
