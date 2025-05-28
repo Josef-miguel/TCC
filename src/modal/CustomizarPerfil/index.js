@@ -18,7 +18,7 @@ const CustomizeProfile = ({
     'Sou de Miracatu - SP e adoro viajar pelo Vale do Ribeira...'
   );
   const [isOrganizerMode, setIsOrganizerMode] = useState(false);
-  const [imageUri, setImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState([]);
 
 
 

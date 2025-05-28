@@ -1,13 +1,156 @@
 import { useState } from "react";
-import { Text, TextInput, Modal, View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { Text, TextInput, Modal, View, TouchableOpacity, ScrollView, StyleSheet, Image, Linking } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { showMessage } from 'react-native-flash-message';
 
-// Componente para criar um novo post de viagem
-const createPost = ({ modalVisible, setModalVisible }) => {
-  // Estados locais para armazenar informações do post
-  const [postName, setPostName] = useState('');       // Nome/título do post
-  const [tripType, setTripType] = useState('Viagem');  // Tipo da viagem: 'Viagem' ou 'Excursão'
-  const [description, setDescription] = useState('');  // Descrição detalhada da viagem
+import { Feather } from '@expo/vector-icons';
+
+import api from '../../../services/api'; 
+
+
+const CreatePost = ({ modalVisible, setModalVisible }) => {
+  const [postName, setPostName] = useState('');
+  const [tripType, setTripType] = useState(1);
+  const [description, setDescription] = useState('');
+  const [route, setRoute] = useState('');
+  const [route_exit, setRouteExit] = useState('');
+  const [imageUri, setImageUri] = useState([]);
+  const [tripPrice, setTripPrice] = useState(0);
+  const [numSlots, setNumSlots] = useState(0);
+  const [exit_date, setExitDate] = useState(new Date());
+  const [return_date, setReturnDate] = useState(new Date());
+  
+  const [showExitDate, setShowExitDate] = useState(false);
+  const [showReturnDate, setShowReturnDate] = useState(false);
+
+
+  function limparCampos(){
+    setPostName("");
+    setTripType("");
+    setDescription("");
+    setImageUri([]);
+    setTripPrice(0);
+    setNumSlots(0);
+    
+  }
+
+  async function saveData() {
+    if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0 || !exit_date || !return_date) {
+      showMessage({
+        message: "Erro ao Salvar",
+        description: 'Preencha os Campos Obrigatórios!',
+        type: "warning",
+      });
+      return;
+    }
+
+    console.log("tentar");
+
+    try {
+      const obj = {
+        titulo: postName || '',
+        descricao: description || '',
+        id_tag: tripType || '',
+        local_saida: route_exit || '',
+        imagens: imageUri || [],
+        n_vagas: numSlots || '',
+        preco: tripPrice || 1,
+        data_de_saida: exit_date || '',
+        data_de_retorno: return_date || '',
+      };
+
+      console.log("Nunca desistir: " + obj);
+
+      const res = await api.post('TCC/register.php', obj);
+      console.log(res.data.message);
+      if (res.status !== 200) {
+        throw new Error('Erro na comunicação com o servidor');
+      }
+
+      if (res.data.success === false) {
+        showMessage({
+          message: "Erro ao cadastrar",
+          description: res.data.message || 'CAMPO INVÁLIDO!',
+          type: "warning",
+          duration: 3000,
+        });
+        limparCampos();
+      } else if (res.data.success === true) {
+        showMessage({
+          message: "Cadastro Bem-Sucedido",
+          description: "Bem-vindo!",
+          type: "success",
+          duration: 1800,
+        });
+        setSuccess(true);
+        navigation.navigate('Home');
+      } else {
+        showMessage({
+          message: "Ocorreu algum erro",
+          description: "erro",
+          type: 'warning',
+          duration: 2000
+        });
+      }
+
+    } catch (error) {
+      showMessage({
+        message: "Ocorreu algum erro: " + error,
+        description: "erro",
+        type: 'warning',
+        duration: 2000
+      });
+      setSuccess(false);
+    }
+
+    console.log("rodando");
+  }
+
+
+
+
+  const pickImage = async () => {
+    const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== 'granted') {
+      if (!canAskAgain) {
+        Alert.alert(
+          'Permissão necessária',
+          'Você precisa permitir o acesso às fotos nas configurações do app.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Abrir configurações', onPress: () => Linking.openSettings() },
+          ]
+        );
+      } else {
+        Alert.alert('Permissão negada', 'Precisamos de permissão para acessar suas fotos.');
+      }
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      // console.log('Resultado da imagem:', result);
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newImage = result.assets[0].uri;
+        setImageUri(prevUris => [...prevUris, newImage]);
+      }
+      console.log(imageUri);
+    } catch (error) {
+      console.log('Error picking image: ', error);
+    }
+  };
+
+
+
 
   return (
     <>
@@ -32,7 +175,16 @@ const createPost = ({ modalVisible, setModalVisible }) => {
 
             {/* Placeholder para imagens do destino */}
             <View style={styles.imagePlaceholder}>
-              <Text style={styles.placeholderText}>Imagens do destino</Text>
+              
+              <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+                {imageUri.length > 0 ? (
+                  imageUri.map((uri, index) => (
+                    <Image key={index} source={{ uri }} style={styles.profileImage} />
+                  ))
+                ) : (
+                  <Ionicons name="cloud-upload-outline" size={30} color="#888" />
+                )}
+              </TouchableOpacity>
             </View>
 
             {/* Input para nome do post */}
@@ -44,19 +196,40 @@ const createPost = ({ modalVisible, setModalVisible }) => {
               onChangeText={setPostName}    // Atualiza estado postName
             />
 
+            {/* Para onde vai ir */}
+            <Text style={styles.label}>Rota de chegada</Text>
+            <View>
+              <TextInput
+                style={styles.input}
+                value={route}
+                placeholder="Para onde vamos?"
+                onChangeText={setRoute}
+              ></TextInput>
+            </View>
+            {/* De onde vai sair */}
+            <Text style={styles.label}>Rota de saída</Text>
+            <View>
+              <TextInput
+                style={styles.input}
+                value={route_exit}
+                placeholder="De onde vamos sair?"
+                onChangeText={setRouteExit}
+              ></TextInput>
+            </View>
+
             {/* Seleção de tipo de viagem */}
             <Text style={styles.label}>Tipo de viagem</Text>
             <View style={styles.tripTypeContainer}>
               <TouchableOpacity
                 style={[
                   styles.tripTypeButton,
-                  tripType === 'Viagem' && styles.tripTypeButtonActive
+                  tripType === 1 && styles.tripTypeButtonActive
                 ]}
-                onPress={() => setTripType('Viagem')}  // Marca 'Viagem'
+                onPress={() => setTripType(1)}  // Marca 'Viagem'
               >
                 <Text style={[
                   styles.tripTypeText,
-                  tripType === 'Viagem' && styles.tripTypeTextActive
+                  tripType === 1 && styles.tripTypeTextActive
                 ]}>
                   VIAGEM
                 </Text>
@@ -65,24 +238,102 @@ const createPost = ({ modalVisible, setModalVisible }) => {
               <TouchableOpacity
                 style={[
                   styles.tripTypeButton,
-                  tripType === 'Excursão' && styles.tripTypeButtonActive
+                  tripType === 3 && styles.tripTypeButtonActive
                 ]}
-                onPress={() => setTripType('Excursão')} // Marca 'Excursão'
+                onPress={() => setTripType(3)} // Marca 'Show'
               >
                 <Text style={[
                   styles.tripTypeText,
-                  tripType === 'Excursão' && styles.tripTypeTextActive
+                  tripType === 3 && styles.tripTypeTextActive
+                ]}>
+                  SHOW
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.tripTypeButton,
+                  tripType === 2 && styles.tripTypeButtonActive
+                ]}
+                onPress={() => setTripType(2)} // Marca 'Excursão'
+              >
+                <Text style={[
+                  styles.tripTypeText,
+                  tripType === 2 && styles.tripTypeTextActive
                 ]}>
                   EXCURSÃO
                 </Text>
               </TouchableOpacity>
             </View>
 
+            <Text style={styles.label}>Data de saída</Text>
+              <View style={styles.inputWrapper}>
+                <Feather name="calendar" size={20} style={styles.icon} />
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setShowExitDate(true)}
+                >
+                  <Text style={{ color: '#333', fontSize: 16 }}>
+                    {exit_date.toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {showExitDate && (
+                <DateTimePicker
+                  value={exit_date}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowExitDate(false);
+                    if (selectedDate) setExitDate(selectedDate);
+                  }}
+                />
+              )}
+
+
+            <Text style={styles.label}>Data de retorno</Text>
+            <View style={styles.inputWrapper}>
+              <Feather name="calendar" size={20} style={styles.icon} />
+              <TouchableOpacity
+                style={styles.input}
+                onPress={() => setShowReturnDate(true)}
+              >
+                <Text style={{ color: '#333', fontSize: 16 }}>
+                  {return_date.toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {showReturnDate && (
+              <DateTimePicker
+                value={return_date}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowReturnDate(false);
+                  if (selectedDate) setReturnDate(selectedDate);
+                }}
+              />
+            )}
+
+
+
             {/* Input para quantidade de pessoas */}
             <Text style={styles.label}>Quantidade de pessoas</Text>
             <TextInput
               style={styles.input}
               placeholder="Quantidade de pessoas"
+              value={numSlots}
+              onChangeText={setNumSlots}
+              keyboardType="numeric"          // Tipo numérico
+            />
+            {/* Input para o preço */}
+            <Text style={styles.label}>Preço R$</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="R$00,00"
+              value={tripPrice}
+              onChangeText={setTripPrice}
               keyboardType="numeric"          // Tipo numérico
             />
 
@@ -110,7 +361,7 @@ const createPost = ({ modalVisible, setModalVisible }) => {
             </Text>
 
             {/* Botão para submeter/criar o post */}
-            <TouchableOpacity style={styles.submitButton}>
+            <TouchableOpacity style={styles.submitButton} onPress={saveData}>
               <Text style={styles.submitButtonText}>VIAJAR</Text>
             </TouchableOpacity>
 
@@ -242,6 +493,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  profileImage: { 
+    width: '100%',
+    height: '100%' 
+  },
+   uploadButton: {
+    width: '100%', height: '100%', 
+    backgroundColor: '#f0f0f0', justifyContent: 'center',
+    alignItems: 'center', overflow: 'hidden',
+  }
 });
 
-export default createPost;
+export default CreatePost;
