@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Todos os Eventos</h1>
+    
+    <div class="row">
+        {% for evento in eventos %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ evento.imagem_url or url_for('static', filename='img/evento-default.jpg') }}" 
+                     class="card-img-top" alt="{{ evento.nome }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ evento.nome }}</h5>
+                    <p class="card-text">
+                        <i class="fas fa-calendar-alt"></i> {{ evento.data_de_saida.strftime('%d/%m/%Y') }}<br>
+                        <i class="fas fa-clock"></i> {{ evento.duracao }} dias
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('routes.evento_detalhes', id_evento=evento.id_evento) }}" 
+                       class="btn btn-primary">Detalhes</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
