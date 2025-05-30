@@ -51,8 +51,11 @@ export default function Perfil() {
         </Modal>
 
         {/* Cabeçalho com avatar e informações do usuário */}
-        <View style={styles.header}>
-          <Avatar.Text label="R" size={48} style={styles.avatar} />
+        <View style={styles.header} >
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+
+            <Avatar.Text label="R" size={48} style={styles.avatar} />
+          </TouchableOpacity>
           <Text style={styles.name}>Ferrete Rafael</Text>
           <Text style={styles.level}>Genius Nível 1</Text>
         </View>
@@ -61,7 +64,7 @@ export default function Perfil() {
         <MenuItem
           icon="account-outline"
           label="Minha contas"
-          onPress={() => setModalVisible(true)} // Abre modal de customização
+           // Abre modal de customização
         />
         <MenuItem
           icon="bell-outline"
