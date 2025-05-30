@@ -1,148 +1,112 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Calendar, CalendarDay } from '@marceloterreiro/flash-calendar';
 
-// Tela de favoritos do usuário
-export default function Favoritos({ navigation, route }) {
-  // Estado local para armazenar a lista de favoritos
-  const [favorites, setFavorites] = useState([]);
+const TravelAgenda = () => {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const travels = [
+    { id: '1', date: '2025-05-15', title: 'Viagens atuas...' },
+    { id: '2', date: '2025-05-20', title: 'Viagem Paris' },
+    { id: '3', date: '2025-05-25', title: 'Viagem Tóquio' },
+  ];
 
-  // Hook que executa sempre que a tela ganha foco na navegação
-  useFocusEffect(
-    React.useCallback(() => {
-      // Obtém a lista de favoritos passada via parâmetros da rota ou um array vazio
-      const favs = route.params?.favoritos || [];
-      // Atualiza o estado com os favoritos atuais
-      setFavorites(favs);
-    }, [route.params?.favoritos]) // Executa quando route.params?.favoritos muda
-  );
+  const travelDates = travels.map(t => t.date);
 
-  // Hook para configurar o layout do header antes da renderização
-  useLayoutEffect(() => {
-    // Remove o header padrão da navegação
-    navigation.setOptions({ headerShown: false });
-  }, [navigation]);
-
-  // Função que alterna o estado de favorito de um item e filtra itens não-favoritados
-  const toggleFav = (id) => {
-    const updated = favorites
-      // Se o ID corresponder, inverte a flag "fav"; caso contrário, mantém o item
-      .map(item => (item.id === id ? { ...item, fav: !item.fav } : item))
-      // Remove itens cuja flag "fav" seja false (desfavoritados)
-      .filter(item => item.fav);
-    // Atualiza o estado com a lista filtrada
-    setFavorites(updated);
+  const handleDayPress = (dateId) => {
+    console.log('Selected date:', dateId); // Debug log to confirm date selection
+    setSelectedDate(dateId);
   };
 
-  // Renderiza cada item da lista de favoritos
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      {/* Imagem de destaque da viagem */}
-      <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
-      {/* Informações do item: tema, tipo e rota */}
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.theme}</Text>
-        <Text style={styles.cardSubtitle}>{item.type}</Text>
-        <Text style={styles.cardRoute}>{item.route}</Text>
+  const renderDay = ({ dateId }) => {
+    const hasTravel = travelDates.includes(dateId);
+    const isSelected = selectedDate === dateId;
+    return (
+      <View style={styles.dayContainer}>
+        {hasTravel && <Text style={styles.star}>★</Text>}
+        <CalendarDay
+          dateId={dateId}
+          state={isSelected ? 'selected' : 'idle'}
+          style={styles.day}
+        >
+          <Text style={styles.dayText}>{dateId.split('-')[2]}</Text>
+        </CalendarDay>
       </View>
-      {/* Botão para desfavoritar item */}
-      <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
+
+  const selectedTravel = travels.find(t => t.date === selectedDate);
 
   return (
     <View style={styles.container}>
-      {/* Botão de navegação para voltar */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color="#000" />
-        <Text style={styles.backText}>Minhas Viagens</Text>
-      </TouchableOpacity>
-
-      {/* Se não houver itens na lista, exibe mensagem vazia */}
-      {favorites.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Nenhum favorito.</Text>
-        </View>
-      ) : (
-        // Caso haja favoritos, renderiza a lista com FlatList
-        <FlatList
-          data={favorites}
-          keyExtractor={item => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+      <View style={styles.calendar}>
+        <Calendar
+          calendarMonthId="2025-05-01"
+          onCalendarDayPress={handleDayPress}
+          renderDay={renderDay}
+          style={styles.calendarContainer}
         />
-      )}
+      </View>
+      <View style={styles.travelView}>
+        <Text style={styles.travelTitle}>
+          {selectedTravel ? selectedTravel.title : 'Selecione uma data'}
+        </Text>
+      </View>
     </View>
   );
-}
+};
 
-// Estilos para a tela Favoritos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  backButton: {
-    flexDirection: 'row',       
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#f2f2f2',
+  calendar: {
+    marginTop: 50,
+    flex: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
-  backText: {
-    fontSize: 16,
-    color: '#000',
-    marginLeft: 6,
-  },
-  listContent: {
-    padding: 10,
-  },
-  card: {
-    flexDirection: 'row',       
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 2,               
-    shadowOffset: { width: 0, height: 1 }, 
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    marginBottom: 12,
-    padding: 10,
-  },
-  cardImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 6,
-  },
-  cardContent: {
+  calendarContainer: {
     flex: 1,
-    marginLeft: 10,
+    backgroundColor: '#fff', // Ensure the calendar has a visible background
   },
-  cardTitle: {
+  dayContainer: {
+    position: 'relative',
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  day: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  dayText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#333',
   },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#666',
-  },
-  cardRoute: {
+  star: {
+    position: 'absolute',
     fontSize: 12,
-    color: '#999',
-    marginTop: 4,
+    color: '#800080',
+    top: 2,
+    zIndex: 1,
   },
-  cardIcon: {
-    padding: 4,
-  },
-  emptyContainer: {
+  travelView: {
     flex: 1,
-    justifyContent: 'center', 
-    alignItems: 'center',       
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
+  travelTitle: {
+    fontSize: 18,
+    color: '#333',
+    textAlign: 'center',
   },
 });
+
+export default TravelAgenda;
