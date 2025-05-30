@@ -13,9 +13,10 @@ import Cadastro from './src/telas/Cadastro';
 import Home from './src/telas/Home';
 import Agenda from './src/telas/Agenda';
 import Formapagamento from './src/telas/Formapagamento';
+import Chat from './src/telas/Chat';
 import Historico  from './src/telas/Historico';
 import Perfil from './src/telas/Perfil';
-// import chat from './src/telas/chat';
+
 import Post from './src/telas/Post';
 import Favoritos from './src/telas/Favoritos';
 
@@ -95,6 +96,9 @@ function Tabs(){
         else if (route.name === 'Criar Post') {
           iconName = focused ? 'add-circle' : 'add-circle'; 
         }
+        else if (route.name === 'Chat') {
+          iconName = focused ? 'add-circle' : 'add-circle'; 
+        }
         
         
         //aqui define os ícones que irão aparecer nas Tabs
@@ -129,7 +133,8 @@ function Tabs(){
           />  
 
        <Tab.Screen name= "Perfil" component={Perfil}></Tab.Screen> 
-
+       {/* <Tab.Screen name= "Chat" component={Chat}></Tab.Screen>  */}
+        
 
     </Tab.Navigator>
     <CriarPost modalVisible={modalVisible} setModalVisible={setModalVisible}></CriarPost>
@@ -164,7 +169,7 @@ const Stack= createStackNavigator();
         <Stack.Screen name ="Perfil" component={Perfil} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name ="Post" component={Post} options={{headerShown: false}}></Stack.Screen>  
         <Stack.Screen name="Favoritos" component={Favoritos} options={{headerShown: false}} />
-
+        <Stack.Screen name="Chat" component={Chat} options={{headerShown: false}} />
 
     </Stack.Navigator>
   </NavigationContainer>
