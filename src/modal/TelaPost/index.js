@@ -2,9 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ParticiparPost from '../ParticiparPost';
+import { useNavigation } from '@react-navigation/native';
+
+import Chat from '../../telas/Chat';
+
 
 // Componente de tela de detalhes de um post de viagem
 const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPost }) => {
+  const navigation = useNavigation();
+
   // Estado para controlar abertura do modal de participação
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   // Estado para controlar abertura do modal de chat (não implementado aqui)
@@ -92,6 +98,12 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
             >
               <Text style={styles.buttonText}>Participar da viagem</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.chatButton, styles.modalButton]}
+              onPress={() => navigation.navigate('Chat')
+              }>
+              <Text style={styles.buttonText}>Conversar com o organizador</Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </Modal>
@@ -143,7 +155,7 @@ const styles = StyleSheet.create({
     width: 150,
     height: 100,
     borderRadius: 6,
-    marginRight: 8,
+    alignSelf: 'center'
   },
   routeBox: {
     flexDirection: 'row',
@@ -193,6 +205,10 @@ const styles = StyleSheet.create({
   },
   joinButton: {
     backgroundColor: '#4caf50', 
+  },
+  chatButton: {
+    backgroundColor: '#f65a65', 
+    
   },
   buttonText: {
     color: '#fff',
