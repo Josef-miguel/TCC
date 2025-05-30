@@ -37,25 +37,12 @@ def home():
     cursor.close()
     return render_template('home.html', eventos=eventos)
 
-@routes.route('/login', methods=['POST'])
-def login_ajax():
-    email = request.json.get('email')
-    password = request.json.get('password')
-    
-    cursor = mysql.connection.cursor(DictCursor)
-    cursor.execute('SELECT * FROM Usuario WHERE email = %s', (email,))
-    account = cursor.fetchone()
-    cursor.close()
-    
-    if account and check_password_hash(account['senha'], password):
-        session['loggedin'] = True
-        session['id_usuario'] = account['id_usuario']
-        session['nome'] = account['nome']
-        session['email'] = account['email']
-        session['tipo'] = account['tipo']
-        return jsonify({'success': True})
-    
-    return jsonify({'success': False, 'message': 'Email ou senha incorretos'})
+
+
+@routes.route('/login', methods=['GET', 'POST'])
+def login():
+    # Sua implementação de login aqui
+    return render_template('login.html')
 
 @routes.route('/register', methods=['POST'])
 def register_ajax():
@@ -103,6 +90,8 @@ def perfil():
     usuario = cursor.fetchone()
     cursor.close()
     return render_template('perfil.html', usuario=usuario)
+
+
 
 @routes.route('/eventos')
 def eventos():
