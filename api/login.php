@@ -2,7 +2,7 @@
 
 include_once("connection.php");
 
-$postjson = json_decode(file_get_contents('php://input'));
+$postjson = json_decode(file_get_contents('php://input'), true);
 
 $user = $postjson['user'] ?? "";
 $password = $postjson['password'] ?? "";

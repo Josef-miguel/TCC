@@ -1,45 +1,44 @@
 <?php 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+header('Content-Type: application/json');
 
 include_once('connection.php');
 
-$postjson = json_decode(file_get_contents('php://input'), true);
+try {
+    $query = $pdo->prepare("SELECT * FROM evento");
+    $query->execute();
+    $res = $query->fetchAll(PDO::FETCH_ASSOC);
 
+    $dados = [];
 
-$query = $pdo->prepare("SELECT * from evento");
-
-$query->execute();
-
-$res = $query->fetchAll(PDO::FETCH_ASSOC);
-
-for ($i=0; $i < count($res); $i++) { 
-    foreach ($res[$i] as $key => $value) {  }      
-
-    $dados[] = array(
-        'id_evento' => $res[$i]['id_evento'],  
-        'route' => $res[$i]['destino'],
-        'route_exit' => $res[$i]['local_saida'],
-        'images' => [ $res[$i]['imagens'] ], 
-        'numSlots' => (int) $res[$i]['n_vagas'],
-        'price' => (float) $res[$i]['preco'],
-        'exit_date' => $res[$i]['data_de_saida'],
-        'return_date' => $res[$i]['data_de_retorno'],
-        'review' => (float) $res[$i]['avaliacao'],
-        'fav' => false, // valor padrão para frontend controlar
-        'theme' => '',  // campos que você pode completar se quiser
-        'type' => ''
-                         
-    );
-
+    foreach ($res as $row) {
+        $dados[] = [
+            'id_evento' => $row['id_evento'],
+            'title' => $row['titulo'],
+            'route' => $row['destino'],
+            'description' => $row['descricao'],
+            'route_exit' => $row['local_saida'],
+            'images' => [trim($row['imagens'])],
+            'numSlots' => (int) $row['n_vagas'],
+            'price' => (float) $row['preco'],
+            'exit_date' => $row['data_de_saida'],
+            'return_date' => $row['data_de_retorno'],
+            'review' => (float) $row['avaliacao'],
+            'fav' => false,
+            'theme' => '',
+            'type' => ''
+        ];
     }
 
-   if(count($res) > 0){
-           $result = json_encode(array('success'=>true, 'result'=>$dados));
-
-       }else{
-           $result = json_encode(array('success'=>false, 'result'=>'0'));
-
-       }
-
-echo $result;
-
-?>
+    echo json_encode([
+        'success' => true,
+        'result' => $dados
+    ]);
+} catch (PDOException $e) {
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}
