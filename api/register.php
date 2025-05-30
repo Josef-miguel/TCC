@@ -11,7 +11,7 @@ $user = $postjson['user'] ?? "";
 $email = $postjson['email'] ?? "";
 $password = $postjson['password'] ?? "";
 $cpf = $postjson['cpf'] ?? "";
-$dataNasc = isset($postjson['datanasc']) ? DateTime::createFromFormat('d/m/Y', $postjson['datanasc'])->format('Y-m-d') : "";
+$dataNasc = isset($postjson['datanasc']) ? (new DateTime($postjson['datanasc']))->format('Y-m-d') : "";
 
 
 $res = $pdo->prepare("INSERT INTO usuario(nome, email, senha, cpf, datanasc) VALUES (:user, :email, :password, :cpf, :datanasc)");

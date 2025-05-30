@@ -4,16 +4,16 @@ $table = 'evento';
 
 $postjson = json_decode(file_get_contents('php://input'), true);
 
-$route = @$postjson['route'];
-$title = @$postjson['tile'];
-$description = @$postjson['description'];
-$route_exit = @$postjson['route_exit'];
-$images = json_encode(@$postjson['images']);
-$numSlots = @$postjson['numSlots'];
-$price = @$postjson['price'];
-$exit_date = @$postjson['exit_date'];
-$return_date = @$postjson['return_date'];
-$review = @$postjson['review'];
+$title = $postjson['titulo'];
+$route = @$postjson['destino'];
+$description = @$postjson['descricao'];
+$route_exit = @$postjson['local_saida'];
+$images = json_encode(@$postjson['imagens']);
+$numSlots = @$postjson['n_vagas'];
+$price = @$postjson['preco'];
+$exit_date = @$postjson['data_de_saida'];
+$return_date = @$postjson['data_de_retorno'];
+$trip_type = @$postjson['id_tag'];
 
 $res = $pdo->prepare("INSERT INTO $table SET 
     titulo = :titulo,
@@ -25,26 +25,24 @@ $res = $pdo->prepare("INSERT INTO $table SET
     preco = :preco,
     data_de_saida = :data_de_saida,
     data_de_retorno = :data_de_retorno,
-    avaliacao = :avaliacao
+    id_tag = :id_tag
 ");
 
 
-$res->bindValue(":titulo", $route);
-$res->bindValue(":destino", $title);
+$res->bindValue(":titulo", $title);
+$res->bindValue(":destino", $route);
 $res->bindValue(":descricao", $description);
 $res->bindValue(":local_saida", $route_exit);
-$res->bindValue(":imagens", json_encode($images)); // se for array
+$res->bindValue(":imagens", $images); // se for array
 $res->bindValue(":n_vagas", $numSlots);
 $res->bindValue(":preco", $price);
 $res->bindValue(":data_de_saida", $exit_date);
 $res->bindValue(":data_de_retorno", $return_date);
-$res->bindValue(":avaliacao", $review);
+$res->bindValue(":id_tag", $trip_type);
 
 
 $res->execute();
 
-$result = json_encode(array('mensagem'=>'Salvo com sucesso!', 'sucesso'=>true));
-
-echo $result;
+echo json_encode(['message'=>'Salvo com sucesso!', 'success'=>true, 'result' => "foi"]);
 
 ?>
