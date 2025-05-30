@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { db } from '../../../services/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { useNavigation } from '@react-navigation/native';
 
 export default function Chat() {
+  const navigation = useNavigation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const scrollViewRef = useRef();
@@ -32,6 +34,7 @@ export default function Chat() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
+      <TouchableOpacity style={styles.returnBtn} onPress={() => navigation.navigate('Home')}><Text>Voltar</Text></TouchableOpacity>
       <Text style={styles.header}>Chat</Text>
 
       <ScrollView
@@ -47,7 +50,7 @@ export default function Chat() {
               index % 2 === 0 ? styles.sent : styles.received
             ]}
           >
-            <Text style={styles.messageText}>{msg.text}</Text>
+            <Text style={index % 2 === 0 ? styles.messageText : styles.messageTextReceived}>{msg.text}</Text>
           </View>
         ))}
       </ScrollView>
@@ -100,9 +103,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#E4E6EB',
     alignSelf: 'flex-start',
     borderTopLeftRadius: 0
+    
   },
   messageText: {
     color: '#fff'
+  },
+  messageTextReceived: {
+    color: '#000'
   },
   inputContainer: {
     flexDirection: 'row',
@@ -128,5 +135,13 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: '#fff',
     fontSize: 16
+  },
+  returnBtn: {
+    marginTop: 30,
+    backgroundColor: "#8488",
+    width: 60,
+    height: 30,
+    alignItems: 'center', 
+    padding: 5
   }
 });
