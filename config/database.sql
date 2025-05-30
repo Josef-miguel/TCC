@@ -70,14 +70,13 @@ CREATE TABLE IF NOT EXISTS `evento` (
   CONSTRAINT `evento_ibfk_2` FOREIGN KEY (`id_organizador`) REFERENCES `organizador` (`id_organizador`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4;
 
--- Copiando dados para a tabela tcc.evento: ~4 rows (aproximadamente)
+-- Copiando dados para a tabela tcc.evento: ~5 rows (aproximadamente)
 /*!40000 ALTER TABLE `evento` DISABLE KEYS */;
 INSERT INTO `evento` (`id_evento`, `destino`, `descricao`, `data_de_saida`, `titulo`, `data_de_retorno`, `local_saida`, `imagens`, `n_vagas`, `preco`, `id_organizador`, `avaliacao`, `numLikes`, `id_tag`) VALUES
 	(9, 'Chapada Diamantina', 'Uma aventura nas trilhas e cachoeiras da Chapada.', '2025-07-15', 'Trilhas da Chapada', '2025-07-20', 'Salvador - BA', 'https://th.bing.com/th/id/OIP.VpvRjDOPXLcEZemuQ2NEDQHaEK?rs=1&pid=ImgDetMain', 20, 1499.99, 1, 5, 120, 1),
 	(10, 'Ouro Preto', 'Viagem cultural explorando o barroco mineiro.', '2025-08-10', 'Barroco Mineiro', '2025-08-15', 'Belo Horizonte - MG', 'https://th.bing.com/th/id/OSK.HEROdjlzP4ZaOxQdzR4uDXq37mcqO4uLQ1n0vUuU6IXOD84?w=472&h=280&c=1&rs=2&o=6&pid=SANGAM', 35, 999.50, 1, 4, 85, 1),
 	(11, 'Foz do Iguaçu', 'Tour de 3 dias com hotel e ingressos para as cataratas.', '2025-10-05', 'Cataratas do Iguaçu', '2025-10-08', 'Curitiba - PR', 'https://th.bing.com/th/id/R.b27cb2a855f7e257aef64490b4ee3c95?rik=8E%2bmhAScK57nNg&pid=ImgRaw&r=0', 1, 550.00, 1, 5, 200, 1),
-	(12, 'Amazonas', 'Aventura na floresta Amazônica.', '2025-11-01', 'Exploração na Amazônia', '2025-11-07', 'Manaus - AM', 'https://th.bing.com/th/id/OSK.fpEpBqfOaHdNtPzXxrjkl9yRJ3pAbaYZPewjGcM66FU?w=130&h=100&c=8&o=6&pid=SANGAM', 50, 15000.00, 1, 5, 300, 1),
-	(13, 'Praia de Boa Viagem', 'Viagem top com amigos', '2025-07-15', 'Viagem para praia do caralho', '2025-07-20', 'Terminal rodoviário', '"[\\"img1.png\\",\\"img2.png\\"]"', 30, 150.00, NULL, 5, NULL, NULL);
+	(12, 'Amazonas', 'Aventura na floresta Amazônica.', '2025-11-01', 'Exploração na Amazônia', '2025-11-07', 'Manaus - AM', 'https://th.bing.com/th/id/OSK.fpEpBqfOaHdNtPzXxrjkl9yRJ3pAbaYZPewjGcM66FU?w=130&h=100&c=8&o=6&pid=SANGAM', 50, 15000.00, 1, 5, 300, 1);
 /*!40000 ALTER TABLE `evento` ENABLE KEYS */;
 
 -- Copiando estrutura para tabela tcc.organizador
@@ -93,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `organizador` (
   CONSTRAINT `organizador_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
--- Copiando dados para a tabela tcc.organizador: ~0 rows (aproximadamente)
+-- Copiando dados para a tabela tcc.organizador: ~1 rows (aproximadamente)
 /*!40000 ALTER TABLE `organizador` DISABLE KEYS */;
 INSERT INTO `organizador` (`id_organizador`, `nome_empresa`, `cnpj`, `endereco`, `descricao`, `id_usuario`) VALUES
 	(1, 'etec', '1111111', '12132', '1556', 12);
@@ -144,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `tags` (
   PRIMARY KEY (`id_tag`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
--- Copiando dados para a tabela tcc.tags: ~2 rows (aproximadamente)
+-- Copiando dados para a tabela tcc.tags: ~3 rows (aproximadamente)
 /*!40000 ALTER TABLE `tags` DISABLE KEYS */;
 INSERT INTO `tags` (`id_tag`, `nome_tag`) VALUES
 	(1, 'Viagem'),
@@ -171,7 +170,7 @@ CREATE TABLE IF NOT EXISTS `usuario` (
   CONSTRAINT `fk_usuario_pagamento` FOREIGN KEY (`idPagamento`) REFERENCES `pagamento` (`id_pagamento`)
 ) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=latin1;
 
--- Copiando dados para a tabela tcc.usuario: ~18 rows (aproximadamente)
+-- Copiando dados para a tabela tcc.usuario: ~24 rows (aproximadamente)
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
 INSERT INTO `usuario` (`id_usuario`, `nome`, `email`, `telefone`, `senha`, `cpf`, `tipo`, `idOrganizador`, `idPagamento`, `dataNasc`) VALUES
 	(12, 'ADMIN', 'admin', NULL, 'etec-2325', '11111111111', NULL, NULL, NULL, '0000-00-00'),
