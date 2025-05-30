@@ -175,13 +175,6 @@ export default function Home({ navigation }) {
           <Text>Minhas Viagens</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => {
-          const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
-          navigation.navigate('Favoritos', { favoritos });
-          toggleSidebar();
-        }}>
-          <Text>Minhas Viagens</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
