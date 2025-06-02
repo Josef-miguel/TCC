@@ -15,7 +15,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { showMessage } from 'react-native-flash-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import api from '../../../services/api';
+import {auth, db} from '../../../services/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { collection, addDoc } from 'firebase/firestore';
+
+
+
 
 export default function Cadastro({ navigation }) {
   // Controle de animações: deslocamento vertical e opacidade
@@ -51,6 +56,42 @@ export default function Cadastro({ navigation }) {
     setDataNasc(new Date());
   }
 
+async function addUser(obj) {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, obj.email, obj.password);
+    console.log('Usuário registrado:', userCredential.user);
+
+    // Agora salva no Firestore:
+    await addDoc(collection(db, 'user'), {
+      nome: obj.user,
+      email: obj.email,
+      cpf: obj.cpf,
+      dataNasc: obj.dataNasc,
+      uid: userCredential.user.uid  // salva o UID do Auth também, boa prática!
+    });
+
+    setSuccess(true);
+    showMessage({
+      message: "Cadastro Bem-Sucedido",
+      description: "Bem-vindo!",
+      type: "success",
+      duration: 1800,
+    });
+    navigation.navigate('Home');
+
+  } catch (e) {
+    console.error("Erro ao adicionar usuário: ", e);
+    showMessage({
+      message: "Erro ao cadastrar",
+      description: e.message || 'CAMPO INVÁLIDO!',
+      type: "warning",
+      duration: 3000,
+    });
+  }
+}
+
+
+
   async function saveData() {
     if (!user || !password || !email || !cpf || !dataNasc) {
       showMessage({
@@ -61,7 +102,6 @@ export default function Cadastro({ navigation }) {
       return;
     }
 
-    try {
       const formattedDate = dataNasc instanceof Date && !isNaN(dataNasc.getTime()) 
         ? dataNasc.toISOString().split('T')[0] 
         : '';
@@ -73,48 +113,51 @@ export default function Cadastro({ navigation }) {
         cpf: cpf || '',
         dataNasc: formattedDate || ''
       };
+      
+      addUser(obj);
 
-      const res = await api.post('TCC/register.php', obj);
+      // const res = await api.post('TCC/register.php', obj);
 
-      if (res.status !== 200) {
-        throw new Error('Erro na comunicação com o servidor');
-      }
+      // if (res.status !== 200) {
+      //   throw new Error('Erro na comunicação com o servidor');
+      // }
 
-      if (res.data.success === false) {
-        showMessage({
-          message: "Erro ao cadastrar",
-          description: res.data.message || 'CAMPO INVÁLIDO!',
-          type: "warning",
-          duration: 3000,
-        });
-        limparCampos();
-      } else if (res.data.success === true) {
-        showMessage({
-          message: "Cadastro Bem-Sucedido",
-          description: "Bem-vindo!",
-          type: "success",
-          duration: 1800,
-        });
-        setSuccess(true);
-        navigation.navigate('Home');
-      } else {
-        showMessage({
-          message: "Ocorreu algum erro",
-          description: "erro",
-          type: 'warning',
-          duration: 2000
-        });
-      }
+      // if (res.data.success === false) {
+      //   showMessage({
+      //     message: "Erro ao cadastrar",
+      //     description: res.data.message || 'CAMPO INVÁLIDO!',
+      //     type: "warning",
+      //     duration: 3000,
+      //   });
+      //   limparCampos();
+      // } else if (res.data.success === true) {
+      //   showMessage({
+      //     message: "Cadastro Bem-Sucedido",
+      //     description: "Bem-vindo!",
+      //     type: "success",
+      //     duration: 1800,
+      //   });
+      //   setSuccess(true);
+      //   navigation.navigate('Home');
+      // } else {
+      //   showMessage({
+      //     message: "Ocorreu algum erro",
+      //     description: "erro",
+      //     type: 'warning',
+      //     duration: 2000
+      //   });
+      // }
 
-    } catch (error) {
-      showMessage({
-        message: "Ocorreu algum erro: " + error,
-        description: "erro",
-        type: 'warning',
-        duration: 2000
-      });
-      setSuccess(false);
-    }
+
+    // } catch (error) {
+    //   showMessage({
+    //     message: "Ocorreu algum erro: " + error,
+    //     description: "erro",
+    //     type: 'warning',
+    //     duration: 2000
+    //   });
+    //   setSuccess(false);
+    // }
   }
 
   // Dispara animações ao montar componente

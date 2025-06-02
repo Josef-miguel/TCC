@@ -8,6 +8,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web"
   },
+  "resolutions": {
+    "lodash": "^4.17.21"
+  },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
     "@expo/vector-icons": "^14.1.0",
