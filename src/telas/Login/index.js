@@ -15,6 +15,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import api from '../../../services/api';
 import { showMessage } from 'react-native-flash-message';
+import {auth, db} from '../../../services/firebase';
+import {signInWithEmailAndPassword} from 'firebase/auth';
 
 // Tela de Login principal
 export default function Login({ navigation }) {
@@ -24,6 +26,7 @@ export default function Login({ navigation }) {
 
   // Estados para usuário e senha
   const [user, setUser] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   // Executa a animação de entrada apenas uma vez ao montar o componente
@@ -51,6 +54,21 @@ export default function Login({ navigation }) {
     setPassword('');
   };
 
+  async function handleLogin(obj) {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, obj.email, obj.password);
+    console.log('Usuário logado:', userCredential.user);
+    showMessage({
+      message: 'Login Bem-Sucedido',
+      description: 'Bem-vindo!',
+      type: 'success',
+    });
+    navigation.navigate('Home');
+  } catch (error) {
+    console.error('Erro no login:', error.message);
+  }
+}
+
   // Função que faz a chamada à API para validar o login
   async function saveData() {
     // Validação básica de preenchimento
@@ -63,38 +81,46 @@ export default function Login({ navigation }) {
       return;
     }
 
-    try {
-      // Requisição POST para endpoint de login
-      const res = await api.post('TCC/login.php', { user, password });
-
-      // Verifica se a requisição não retornou status HTTP 200
-      if (res.status !== 200) throw new Error('Erro na comunicação com o servidor');
-
-      // Caso o backend retorne sucesso:false, exibe erro e limpa campos
-      if (!res.data.success) {
-        showMessage({
-          message: 'Erro ao Logar',
-          description: res.data.message || 'Usuário ou senha inválidos!',
-          type: 'warning',
-        });
-        limparCampos();
-      } else {
-        // Login bem-sucedido, exibe mensagem e navega para a tela Home
-        showMessage({
-          message: 'Login Bem-Sucedido',
-          description: 'Bem-vindo!',
-          type: 'success',
-        });
-        navigation.navigate('Home');
-      }
-    } catch (error) {
-      // Captura erros de rede ou internos e exibe mensagem de erro
-      showMessage({
-        message: 'Ocorreu algum erro',
-        description: error.message,
-        type: 'danger',
-      });
+    const obj = {
+      user : user,
+      email : email, 
+      password : password
     }
+
+    handleLogin(obj);
+
+    // try {
+    //   // Requisição POST para endpoint de login
+    //   const res = await api.post('TCC/login.php', { user, password });
+
+    //   // Verifica se a requisição não retornou status HTTP 200
+    //   if (res.status !== 200) throw new Error('Erro na comunicação com o servidor');
+
+    //   // Caso o backend retorne sucesso:false, exibe erro e limpa campos
+    //   if (!res.data.success) {
+    //     showMessage({
+    //       message: 'Erro ao Logar',
+    //       description: res.data.message || 'Usuário ou senha inválidos!',
+    //       type: 'warning',
+    //     });
+    //     limparCampos();
+    //   } else {
+    //     // Login bem-sucedido, exibe mensagem e navega para a tela Home
+    //     showMessage({
+    //       message: 'Login Bem-Sucedido',
+    //       description: 'Bem-vindo!',
+    //       type: 'success',
+    //     });
+    //     navigation.navigate('Home');
+    //   }
+    // } catch (error) {
+    //   // Captura erros de rede ou internos e exibe mensagem de erro
+    //   showMessage({
+    //     message: 'Ocorreu algum erro',
+    //     description: error.message,
+    //     type: 'danger',
+    //   });
+    // }
   }
 
   return (
@@ -132,6 +158,17 @@ export default function Login({ navigation }) {
                 autoCapitalize="none"
                 value={user}
                 onChangeText={setUser}
+              />
+            </View>
+            <View style={styles.inputWrapper}>
+              <Feather name="lock" size={20} style={styles.icon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
               />
             </View>
 

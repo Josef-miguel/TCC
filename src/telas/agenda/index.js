@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Calendar, CalendarDay } from '@marceloterreiro/flash-calendar';
+import { Calendar } from 'react-native-calendars';
 
 const TravelAgenda = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -10,28 +10,27 @@ const TravelAgenda = () => {
     { id: '3', date: '2025-05-25', title: 'Viagem Tóquio' },
   ];
 
-  const travelDates = travels.map(t => t.date);
+  const markedDates = travels.reduce((acc, travel) => {
+    acc[travel.date] = {
+      customStyles: {
+        container: {},
+        text: {},
+      },
+      marked: true,
+    };
+    return acc;
+  }, {});
 
-  const handleDayPress = (dateId) => {
-    console.log('Selected date:', dateId); // Debug log to confirm date selection
-    setSelectedDate(dateId);
-  };
+  if (selectedDate) {
+    markedDates[selectedDate] = {
+      ...markedDates[selectedDate],
+      selected: true,
+      selectedColor: '#b0b0b0',
+    };
+  }
 
-  const renderDay = ({ dateId }) => {
-    const hasTravel = travelDates.includes(dateId);
-    const isSelected = selectedDate === dateId;
-    return (
-      <View style={styles.dayContainer}>
-        {hasTravel && <Text style={styles.star}>★</Text>}
-        <CalendarDay
-          dateId={dateId}
-          state={isSelected ? 'selected' : 'idle'}
-          style={styles.day}
-        >
-          <Text style={styles.dayText}>{dateId.split('-')[2]}</Text>
-        </CalendarDay>
-      </View>
-    );
+  const handleDayPress = (day) => {
+    setSelectedDate(day.dateString);
   };
 
   const selectedTravel = travels.find(t => t.date === selectedDate);
@@ -40,10 +39,16 @@ const TravelAgenda = () => {
     <View style={styles.container}>
       <View style={styles.calendar}>
         <Calendar
-          calendarMonthId="2025-05-01"
-          onCalendarDayPress={handleDayPress}
-          renderDay={renderDay}
-          style={styles.calendarContainer}
+          current="2025-05-01"
+          markedDates={markedDates}
+          onDayPress={handleDayPress}
+          markingType="custom"
+          renderCustomMarked={(date) => {
+            if (markedDates[date]) {
+              return <Text style={styles.star}>★</Text>;
+            }
+            return null;
+          }}
         />
       </View>
       <View style={styles.travelView}>
@@ -66,35 +71,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
-  calendarContainer: {
-    flex: 1,
-    backgroundColor: '#fff', // Ensure the calendar has a visible background
-  },
-  dayContainer: {
-    position: 'relative',
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  day: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  dayText: {
-    fontSize: 16,
-    color: '#333',
-  },
   star: {
     position: 'absolute',
     fontSize: 12,
     color: '#800080',
     top: 2,
-    zIndex: 1,
   },
   travelView: {
     flex: 1,
