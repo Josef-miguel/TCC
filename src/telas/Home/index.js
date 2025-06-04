@@ -1,9 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { onSnapshot, orderBy, collection, query } from 'firebase/firestore';
+
 
 import TelaPost from '../../modal/TelaPost';
-import api from '../../../services/api';
+import {db} from '../../../services/firebase';
 
 export default function Home({ navigation }) {
   // Controle de visibilidade e animação da sidebar
@@ -18,11 +20,11 @@ export default function Home({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Estado para armazenar os posts recomendados e populares
-  const [recommendedPosts, setRecommendedPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
   const [popularPosts, setPopularPosts] = useState([]);
 
   // Filtra os posts recomendados com base na busca
-  const filteredRecommended = recommendedPosts.filter(item =>
+  const filteredRecommended = posts.filter(item =>
     item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.type.toLowerCase().includes(searchQuery.toLowerCase())
@@ -37,67 +39,17 @@ export default function Home({ navigation }) {
 
   // Carrega os posts ao montar o componente
   useEffect(() => {
-    renderPosts("rec");
-    renderPosts("pop");
+    const q = query(collection(db, 'events'), orderBy('timestamp'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Função para buscar e processar os posts da API
-  async function renderPosts(id) {
-    try {
-      const res = await api.post('TCC/posts.php');
-
-      if (res.status === 200 && res.data.success) {
-        if (id === "rec") {
-          // Preenche os posts recomendados
-          setRecommendedPosts(res.data.result.map(item => ({
-            id: item.id_evento,
-            images: Array.isArray(item.images) ? item.images : [],
-            desc: item.description,
-            route: item.route,
-            route_exit: item.route_exit,
-            price: item.price,
-            numSlots: item.numSlots,
-            exit_date: item.exit_date,
-            return_date: item.return_date,
-            review: item.review,
-            fav: item.fav || false,
-            theme: item.theme || 'Sem tema',
-            type: item.type || 'Sem tipo',
-            title: item.title
-          })));
-        } else if (id === "pop") {
-          // Ordena e pega os 3 posts mais populares
-          const top3 = res.data.result
-            .sort((a, b) => b.review - a.review)
-            .slice(0, 3)
-            .reverse();
-
-          setPopularPosts(top3.map(item => ({
-            id: item.id_evento,
-            images: Array.isArray(item.images) ? item.images : [],
-            desc: item.description,
-            route: item.route,
-            route_exit: item.route_exit,
-            price: item.price,
-            numSlots: item.numSlots,
-            exit_date: item.exit_date,
-            return_date: item.return_date,
-            review: item.review,
-            fav: item.fav || false,
-            theme: item.theme || 'Sem tema',
-            type: item.type || 'Sem tipo',
-            title: item.title
-          })));
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao buscar posts:', error.message);
-    }
-  }
 
   // Alterna o estado de favorito de um post
   const toggleFav = (id) => {
-    setRecommendedPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
+    setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
   };
 
@@ -168,7 +120,7 @@ export default function Home({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
-          const favoritos = [...recommendedPosts, ...popularPosts].filter(p => p.fav);
+          const favoritos = [...posts, ...popularPosts].filter(p => p.fav);
           navigation.navigate('Historico', { favoritos });
           toggleSidebar();
         }}>
