@@ -44,210 +44,298 @@
 
         /* Modal login e registro */
         /* Adicione no seu arquivo CSS principal */
-        #authModal .modal-dialog {
-            max-width: 400px;
+        /* Navbar Modernizada */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #e74c3c;
+            --accent-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #1a252f;
+            --text-color: #34495e;
+            --text-light: #7f8c8d;
+            --navbar-height: 80px;
+            --transition-speed: 0.3s;
         }
 
-        #authModal .nav-tabs {
-            border-bottom: none;
+        /* Estrutura Principal da Navbar */
+        .navbar-container {
+            background-color: var(--primary-color);
+            position: fixed;
+            top: 0;
             width: 100%;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all var(--transition-speed) ease;
         }
 
-        #authModal .nav-link {
-            border: none;
-            color: #6c757d;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-        }
-
-        #authModal .nav-link.active {
-            color: #0d6efd;
-            background: none;
-            border-bottom: 2px solid #0d6efd;
-        }
-
-        #authModal .modal-header {
-            border-bottom: none;
-            padding-bottom: 0;
-            position: relative;
-        }
-
-        #authModal .btn-close {
-            position: absolute;
-            right: 1rem;
-            top: 1rem;
-        }
-
-        #authModal .tab-content {
-            padding-top: 1rem;
-        }
-
-        /* Adicione ao seu CSS */
-        #profileDropdown {
-            position: relative;
-        }
-
-        #profileDropdown .dropdown-menu {
-            display: none;
-            position: absolute;
-        }
-
-        #profileDropdown:hover .dropdown-menu {
-            display: block;
-        }
-
-        /* Adicione ao seu CSS */
-        /* Estilo para o dropdown do perfil */
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .dropdown-item {
-            padding: 0.5rem 1.5rem;
-            transition: all 0.2s;
-        }
-
-        .dropdown-item:hover {
-            background-color: #f8f9fa;
-            color: #e74c3c;
-        }
-
-        /* Estilo para o link do perfil quando logado */
-        .logged-in {
-            color: #28a745 !important;
-            font-weight: 600;
-        }
-
-        /* Estilo para os alerts no modal */
-        .alert {
-            margin-bottom: 1rem;
-            padding: 0.75rem 1.25rem;
-        }
-
-        /* Melhorias no modal */
-        #authModal .modal-content {
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        #authModal .nav-tabs {
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        #authModal .nav-link.active {
-            color: #e74c3c;
-            border-bottom-color: #e74c3c;
-        }
-
-        /* Adicione ao seu CSS */
-        .nav-links .nav-link[data-bs-toggle="modal"] {
-            cursor: pointer;
-        }
-
-        /* Estilo quando logado */
-        .nav-links .nav-link[data-bs-toggle="modal"].logged-in {
-            color: #28a745;
-            font-weight: bold;
-        }
-
-        .top-nav {
+        .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 5%;
+            padding: 0 5%;
             max-width: 1400px;
             margin: 0 auto;
-            background-color: var(--primary-color);
+            height: var(--navbar-height);
         }
 
-        .logo {
+        /* Logo */
+        .navbar-logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .navbar-logo:hover {
+            transform: scale(1.03);
         }
 
         .logo-icon {
-            font-size: 2rem;
+            font-size: 2.2rem;
             color: var(--secondary-color);
+            transition: all var(--transition-speed) ease;
         }
 
         .logo-text {
             color: var(--light-color);
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 700;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
+            font-family: 'Montserrat', sans-serif;
         }
 
-        .nav-links {
+        /* Itens de Navegação */
+        .nav-menu {
             display: flex;
-            gap: 2rem;
+            gap: 1.8rem;
             list-style: none;
+            align-items: center;
         }
 
-        .nav-links a {
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
             color: var(--light-color);
             text-decoration: none;
             font-weight: 600;
             font-size: 1.1rem;
-            position: relative;
-            padding: 0.5rem 0;
-            transition: all 0.3s ease;
+            padding: 0.8rem 0;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            transition: all var(--transition-speed) ease;
+            position: relative;
         }
 
-        .nav-links a i {
-            font-size: 0.9rem;
+        .nav-link i {
+            font-size: 1rem;
+            transition: all var(--transition-speed) ease;
         }
 
-        .nav-links a:after {
+        /* Efeito Hover */
+        .nav-link::after {
             content: '';
             position: absolute;
             bottom: 0;
             left: 0;
             width: 0;
-            height: 2px;
+            height: 3px;
             background-color: var(--secondary-color);
-            transition: width 0.3s ease;
+            transition: width var(--transition-speed) ease;
+            border-radius: 2px;
         }
 
-        .nav-links a:hover {
+        .nav-link:hover {
             color: var(--secondary-color);
         }
 
-        .nav-links a:hover:after {
+        .nav-link:hover::after {
             width: 100%;
         }
 
+        .nav-link:hover i {
+            transform: translateY(-2px);
+        }
+
+        /* Botão CTA */
         .nav-cta {
             background-color: var(--secondary-color);
             color: white !important;
-            padding: 0.7rem 1.5rem !important;
+            padding: 0.8rem 1.8rem !important;
             border-radius: 30px;
             transition: all 0.3s ease;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .nav-cta:hover {
             background-color: #c0392b;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(231, 76, 60, 0.25);
         }
 
-        .nav-cta:after {
-            display: none;
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all var(--transition-speed) ease;
+            z-index: 1000;
         }
 
+        .nav-item:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 0.8rem 1.5rem;
+            color: var(--text-color);
+            display: block;
+            transition: all var(--transition-speed) ease;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: var(--secondary-color);
+            padding-left: 1.8rem;
+        }
+
+        .dropdown-item i {
+            margin-right: 8px;
+            width: 18px;
+            text-align: center;
+        }
+
+        /* Ícone do Usuário Logado */
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--light-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Menu Mobile */
         .mobile-menu-btn {
             display: none;
             background: none;
             border: none;
             color: var(--light-color);
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             cursor: pointer;
+            padding: 0.5rem;
+            transition: all var(--transition-speed) ease;
         }
+
+        .mobile-menu-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        /* Responsividade */
+        @media (max-width: 992px) {
+            .nav-menu {
+                gap: 1.2rem;
+            }
+
+            .nav-link {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 1.5rem;
+            }
+
+            .nav-menu {
+                position: fixed;
+                top: var(--navbar-height);
+                left: -100%;
+                width: 80%;
+                height: calc(100vh - var(--navbar-height));
+                background-color: var(--primary-color);
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 2rem;
+                transition: left var(--transition-speed) ease;
+                box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+            }
+
+            .nav-menu.active {
+                left: 0;
+            }
+
+            .nav-item {
+                width: 100%;
+            }
+
+            .nav-link {
+                padding: 1rem 0;
+                font-size: 1.2rem;
+            }
+
+            .dropdown-menu {
+                position: static;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                box-shadow: none;
+                background: rgba(0, 0, 0, 0.1);
+                margin-top: 0.5rem;
+                display: none;
+            }
+
+            .nav-item:hover .dropdown-menu {
+                display: block;
+            }
+
+            .dropdown-item {
+                color: var(--light-color);
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-cta {
+                width: 100%;
+                text-align: center;
+                margin-top: 1rem;
+            }
+        }
+
+        /* Animação de Scroll */
+        .navbar-scrolled {
+            height: 70px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Adicione este JavaScript para o efeito de scroll */
+
 
         /* Search Bar */
         .search-bar {
@@ -520,57 +608,8 @@
         }
 
         /* Responsividade */
-        @media (max-width: 992px) {
-            .nav-links {
-                gap: 1.5rem;
-            }
-
-            .search-container {
-                flex-wrap: wrap;
-            }
-
-            .search-input {
-                min-width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .top-nav {
-                padding: 1rem;
-            }
-
-            .nav-links {
-                position: fixed;
-                top: 70px;
-                left: -100%;
-                width: 80%;
-                height: calc(100vh - 70px);
-                background-color: var(--primary-color);
-                flex-direction: column;
-                align-items: center;
-                padding: 2rem 0;
-                transition: left 0.3s ease;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            }
-
-            .nav-links.active {
-                left: 0;
-            }
-
-            .mobile-menu-btn {
-                display: block;
-            }
-
-            .categories-nav {
-                gap: 1rem;
-            }
-
-            .footer-container {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
 
 <body>
@@ -580,44 +619,83 @@
     </div>
 
     <header>
-        <div class="top-nav">
-            <!-- Corrigi a estrutura do logo que estava mal fechada -->
-            <a href="{{ url_for('routes.home') }}" class="logo">
-                <i class="fas fa-plane-departure logo-icon"></i>
-                <span class="logo-text">SetJustGo</span>
-            </a>
+        <div class="navbar-container">
+            <nav class="navbar">
+                <!-- Logo -->
+                <a href="{{ url_for('routes.home') }}" class="navbar-logo">
+                    <i class="fas fa-plane-departure logo-icon"></i>
+                    <span class="logo-text">SetJustGo</span>
+                </a>
 
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <i class="fas fa-bars"></i>
-            </button>
+                <!-- Menu Mobile -->
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
 
-            <ul class="nav-links" id="navLinks">
-                <li><a href="{{ url_for('routes.home') }}" class="logo">Home</a></li>
-                <li><a href="{{ url_for('routes.eventos') }}"><i class="fas fa-map-marked-alt"></i> Excursões</a></li>
-                <li><a href="{{ url_for('routes.favoritos') }}"><i class="fas fa-info-circle"></i> Favoritos</a></li>
-                <li class="nav-item dropdown">
-                    {% if 'loggedin' in session %}
-                    <a class="nav-link dropdown-toggle logged-in" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        <i class="fas fa-user"></i> {{ session['nome'].split(' ')[0] }}
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{{ url_for('routes.perfil') }}">Meu Perfil</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="{{ url_for('routes.logout') }}">Sair</a></li>
-                    </ul>
+                <!-- Menu Principal -->
+                <ul class="nav-menu" id="navMenu">
+                    <li class="nav-item">
+                        <a href="{{ url_for('routes.home') }}" class="nav-link">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ url_for('routes.eventos') }}" class="nav-link">
+                            <i class="fas fa-map-marked-alt"></i> Excursões
+                        </a>
+                    </li>
+
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('routes.favoritos') }}" class="nav-link">
+                            <i class="fas fa-heart"></i> Favoritos
+                        </a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle">
+                            <span class="user-avatar">{{ current_user.nome.split(' ')[0][0] }}</span>
+                            {{ current_user.nome.split(' ')[0] }}
+                            <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="{{ url_for('routes.perfil') }}" class="dropdown-item">
+                                    <i class="fas fa-user-circle"></i> Meu Perfil
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a href="{{ url_for('routes.logout') }}" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt"></i> Sair
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                     {% else %}
-                    <a href="#" id="openAuthModal" class="nav-link">
-                        <i class="fas fa-user"></i> Perfil
-                    </a>
+                    <li class="nav-item">
+                        <a href="{{ url_for('routes.login') }}" class="nav-link">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
 
+                    <li class="nav-item">
+                        <a href="{{ url_for('routes.register') }}" class="nav-link ">
+                            <i class="fas fa-user-plus"></i> Cadastre-se
+                        </a>
+                    </li>
                     {% endif %}
-                </li>
 
-                <li><a href="#" class="nav-cta"><i class="fas fa-phone-alt"></i> Contato</a></li>
-            </ul>
+                    <li class="nav-item">
+                        <a href="#contact" class="nav-link nav-cta">
+                            <i class="fas fa-phone-alt"></i> Contato
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
 
         <!-- Barra de Pesquisa -->
@@ -726,11 +804,11 @@
             <div>
                 <h3 class="footer-title">Serviços</h3>
                 <ul class="footer-links">
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> Excursões em Grupo</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> Pacotes Personalizados</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> Viagens Corporativas</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> Cruzeiros</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> Seguro Viagem</a></li>
+                    <li><a href="{{ url_for('routes.home') }}"><i class="fas fa-chevron-right"></i> Home</a></li>
+                    <li><a href="{{ url_for('routes.eventos') }}"><i class="fas fa-chevron-right"></i> Excursões</a>
+                    </li>
+                    <li><a href="#contact"><i class="fas fa-chevron-right"></i> Contato</a></li>
+                    <li><a href="#about"><i class="fas fa-chevron-right"></i> Sobre Nós</a></li>
                 </ul>
             </div>
 
@@ -762,13 +840,21 @@
         </div>
     </footer>
 
+
+
+    <!-- Botão que abre o modal -->
+    <button id="openAuthModal" class="btn btn-primary">Abrir Modal</button>
+
+    <!-- Estrutura do Modal -->
     <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header border-0 pb-0">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="authModalLabel">Autenticação</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body pt-0">
+                <div class="modal-body">
+                    <!-- Conteúdo do modal -->
                     <ul class="nav nav-tabs nav-justified mb-4" id="authTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login"
@@ -791,21 +877,76 @@
 
     <!-- Scripts JS -->
     {% block scripts %}
-    
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Configuração do Modal de Autenticação
-            const openAuthModalBtn = document.getElementById('openAuthModal');
-            if (openAuthModalBtn) {
-                openAuthModalBtn.addEventListener('click', function (e) {
+        document.addEventListener('DOMContentLoaded', function () {
+            // Menu Mobile
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            const navMenu = document.getElementById('navMenu');
+
+            mobileBtn.addEventListener('click', function () {
+                navMenu.classList.toggle('active');
+            });
+
+            // Efeito de scroll na navbar
+            const navbar = document.querySelector('.navbar-container');
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            });
+
+            // Fechar menu ao clicar em um item (mobile)
+            const navLinks = document.querySelectorAll('.nav-menu .nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    navMenu.classList.remove('active');
+                });
+            });
+        });
+    </script>
+    <script>document.addEventListener('DOMContentLoaded', function () {
+            const navbar = document.querySelector('.navbar-container');
+
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('navbar-scrolled');
+                }
+
+                else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            });
+        });
+    </script>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Dropdown do perfil - versão simplificada
+            const profileDropdown = document.querySelector('.nav-item.dropdown');
+
+            if (profileDropdown) {
+                const dropdownToggle = profileDropdown.querySelector('.dropdown-toggle');
+                const dropdownMenu = profileDropdown.querySelector('.dropdown-menu');
+
+                // Alternar o dropdown no clique
+                dropdownToggle.addEventListener('click', function (e) {
                     e.preventDefault();
-                    const authModal = new bootstrap.Modal(document.getElementById('authModal'));
-                    authModal.show();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                // Fechar ao clicar fora
+                document.addEventListener('click', function (e) {
+                    if (!profileDropdown.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
                 });
             }
 
-            // Funções de Login e Cadastro
+            // Seu código existente de login/modal pode continuar aqui
             async function handleLogin(e) {
                 e.preventDefault();
                 // ... restante do código handleLogin ...
@@ -899,6 +1040,20 @@
                 // ... código de limpeza ...
             });
         });
+
+        // Corrige o dropdown do perfil
+        $(document).ready(function () {
+            // Dropdown do Bootstrap deve funcionar automaticamente
+            // Se não funcionar, force a inicialização
+            $('.dropdown-toggle').dropdown();
+
+            // Verifique se há algum seletor vazio no seu código
+            $('a[href="#"]').on('click', function (e) {
+                e.preventDefault();
+                // Adicione aqui qualquer comportamento desejado para links vazios
+            });
+        });
+
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 

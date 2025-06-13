@@ -1,49 +1,67 @@
 from flask import Flask
-from flask_mysqldb import MySQL
-from controllers.routes import init_app
-from database import configure_database, create_tables
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from models.database import db, Usuario
+from controllers.routes import routes
+from flask_migrate import Migrate
+
+
+
+
+app = Flask(__name__, template_folder='views')
+app.secret_key = '3d6f45a5fc12445dbac2f59c3b6c7cb1d5725f1d8f22660'  # Defina uma chave segura para sessão
+
+# Configurações do banco de dados
+DB_NAME = 'games'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root@localhost/{DB_NAME}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Inicializa o banco
+db.init_app(app)
+
+migrate = Migrate(app, db)
+
+# Login manager
+login_manager = LoginManager()
+login_manager.login_view = 'routes.login'
+login_manager.init_app(app)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.query.get(int(user_id))
+
+
+# Registrando o blueprint
+app.register_blueprint(routes)
+
+
+# Criação do banco de dados caso não exista
 import pymysql
 
-# Cria a aplicação Flask
-app = Flask(__name__, template_folder='views')
+connection = pymysql.connect(
+    host='localhost',
+    user='root',
+    password='',
+    charset='utf8mb4',
+    cursorclass=pymysql.cursors.DictCursor
+)
 
-# Configurações básicas
-app.secret_key = 'sua_chave_secreta_aqui'  # Substitua por uma chave segura
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+try:
+    with connection.cursor() as cursor:
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+        print("Banco de dados criado ou já existente.")
+except Exception as e:
+    print(f"Erro ao criar o banco: {e}")
+finally:
+    connection.close()
 
-# Nome do banco de dados
-DB_NAME = 'TCC'
 
-# Configura o banco de dados
-mysql = configure_database(app)
+# Criação das tabelas
+with app.app_context():
+    db.create_all()
 
-# Inicializa as rotas
-init_app(app, mysql)  # ✅ Correto (função definida em routes.py)(app, mysql)
 
+# Rodando o servidor
 if __name__ == '__main__':
-    # Cria o banco de dados se não existir
-    try:
-        connection = pymysql.connect(
-            host='localhost',
-            user='root',
-            password='',
-            charset='utf8mb4',
-            cursorclass=pymysql.cursors.DictCursor
-        )
-        
-        with connection.cursor() as cursor:
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
-            print("✅ Banco de dados criado com sucesso!")
-            
-    except Exception as error:
-        print(f"❌ Erro ao criar o banco: {error}")
-    finally:
-        connection.close()
-    
-    # Cria as tabelas
-    with app.app_context():
-        create_tables(mysql)
-    
-    print(app.url_map)
-    # Inicia o servidor
     app.run(host='localhost', port=5000, debug=True)
