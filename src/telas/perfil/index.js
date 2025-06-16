@@ -6,6 +6,8 @@ import { appContext } from '../../../App';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomizarPerfil from '../../modal/CustomizarPerfil';
 
+import { useAuth } from '../../../services/AuthContext';
+
 // Componente de tela de perfil do usuário
 export default function Perfil() {
   const navigation = useNavigation();
@@ -29,6 +31,9 @@ export default function Perfil() {
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>
   );
+
+
+
 
   return (
     <View style={{ flex: 1 }}>

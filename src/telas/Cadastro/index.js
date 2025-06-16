@@ -17,7 +17,7 @@ import { showMessage } from 'react-native-flash-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {auth, db} from '../../../services/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 
@@ -58,16 +58,17 @@ export default function Cadastro({ navigation }) {
 
 async function addUser(obj) {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, obj.email, obj.password);
+    const userCredential = await createUserWithEmailAndPassword(auth, obj.email, obj.password); 
+    const uid = userCredential.user.uid;
     console.log('Usuário registrado:', userCredential.user);
 
     // Agora salva no Firestore:
-    await addDoc(collection(db, 'user'), {
+    await setDoc(doc(db, 'user', uid), {
       nome: obj.user,
       email: obj.email,
       cpf: obj.cpf,
       dataNasc: obj.dataNasc,
-      uid: userCredential.user.uid  // salva o UID do Auth também, boa prática!
+      uid: uid  // salva o UID do Auth também, boa prática!
     });
 
     setSuccess(true);
