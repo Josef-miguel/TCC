@@ -1,3 +1,5 @@
+// miguel isack tentou arrumar em casa pelo web, mas ainda não sei se está a funcionar. Caso tenha erro, volte a versão anterior
+
 import { useState } from "react";
 import { Text, TextInput, Modal, View, TouchableOpacity, ScrollView, StyleSheet, Image, Linking } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +9,8 @@ import { showMessage } from 'react-native-flash-message';
 
 import { Feather } from '@expo/vector-icons';
 
-import api from '../../../services/api'; 
+import { doc, setDoc } from "firebase/firestore";
+import {db} from '../../../services/firebase'
 
 
 const CreatePost = ({ modalVisible, setModalVisible }) => {
@@ -37,7 +40,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   }
 
   async function saveData() {
-    if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0 || !exit_date || !return_date) {
+    if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0) {
       showMessage({
         message: "Erro ao Salvar",
         description: 'Preencha os Campos Obrigatórios!',
@@ -61,39 +64,17 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
         data_de_retorno: return_date || '',
       };
 
-      console.log("Nunca desistir: " + obj);
+      await setDoc(doc(db, 'events'), {
+        obj
+      });
 
-      const res = await api.post('TCC/register.php', obj);
-      console.log(res.data.message);
-      if (res.status !== 200) {
-        throw new Error('Erro na comunicação com o servidor');
-      }
+      showMessage({
+        message: "Criação de post bem-Sucedida",
+        description: "Bem-vindo!",
+        type: "success",
+        duration: 1800,
+      });
 
-      if (res.data.success === false) {
-        showMessage({
-          message: "Erro ao cadastrar",
-          description: res.data.message || 'CAMPO INVÁLIDO!',
-          type: "warning",
-          duration: 3000,
-        });
-        limparCampos();
-      } else if (res.data.success === true) {
-        showMessage({
-          message: "Cadastro Bem-Sucedido",
-          description: "Bem-vindo!",
-          type: "success",
-          duration: 1800,
-        });
-        setSuccess(true);
-        navigation.navigate('Home');
-      } else {
-        showMessage({
-          message: "Ocorreu algum erro",
-          description: "erro",
-          type: 'warning',
-          duration: 2000
-        });
-      }
 
     } catch (error) {
       showMessage({
@@ -102,6 +83,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
         type: 'warning',
         duration: 2000
       });
+      console.log(error);
       setSuccess(false);
     }
 
@@ -271,6 +253,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
                 <TouchableOpacity
                   style={styles.input}
                   onPress={() => setShowExitDate(true)}
+                  
                 >
                   <Text style={{ color: '#333', fontSize: 16 }}>
                     {exit_date.toLocaleDateString()}
