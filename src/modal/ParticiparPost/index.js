@@ -17,7 +17,7 @@ const JoinPost = ({ participationModalVisible, setParticipationModalVisible }) =
   // Fecha o modal principal de detalhes (TelaPost)
   const closeModal = () => {
     setModalVisible(false);
-    setSelectedPost(false);
+    // setSelectedPost(false);
   };
 
   // Fecha este modal de participação

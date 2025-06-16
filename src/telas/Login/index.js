@@ -17,9 +17,13 @@ import api from '../../../services/api';
 import { showMessage } from 'react-native-flash-message';
 import {auth, db} from '../../../services/firebase';
 import {signInWithEmailAndPassword} from 'firebase/auth';
+import { useAuth } from '../../../services/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Tela de Login principal
 export default function Login({ navigation }) {
+  const {setUserData} = useAuth()
+
   // Valores animados para deslocamento (offset) e opacidade
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
   const [opac] = useState(new Animated.Value(0));
@@ -54,18 +58,44 @@ export default function Login({ navigation }) {
     setPassword('');
   };
 
-  async function handleLogin(obj) {
+async function handleLogin(obj) {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, obj.email, obj.password);
-    console.log('Usuário logado:', userCredential.user);
-    showMessage({
-      message: 'Login Bem-Sucedido',
-      description: 'Bem-vindo!',
-      type: 'success',
-    });
-    navigation.navigate('Home');
+    const user = userCredential.user;
+
+    // Buscar dados no Firestore com o UID
+    const docRef = doc(db, 'user', user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const userDataFromFirestore = docSnap.data();
+
+      // Atualiza o contexto com os dados do Firestore
+      setUserData({userInfo: userDataFromFirestore});
+
+      console.log('Usuário logado com dados:', userDataFromFirestore);
+      showMessage({
+        message: 'Login Bem-Sucedido',
+        description: 'Bem-vindo!',
+        type: 'success',
+      });
+      navigation.navigate('Home');
+    } else {
+      console.warn('Usuário logado, mas documento não encontrado no Firestore.');
+      showMessage({
+        message: 'Erro',
+        description: 'Usuário não possui dados salvos no Firestore.',
+        type: 'danger',
+      });
+    }
+
   } catch (error) {
     console.error('Erro no login:', error.message);
+    showMessage({
+      message: 'Erro ao logar',
+      description: error.message,
+      type: 'danger',
+    });
   }
 }
 
@@ -89,38 +119,6 @@ export default function Login({ navigation }) {
 
     handleLogin(obj);
 
-    // try {
-    //   // Requisição POST para endpoint de login
-    //   const res = await api.post('TCC/login.php', { user, password });
-
-    //   // Verifica se a requisição não retornou status HTTP 200
-    //   if (res.status !== 200) throw new Error('Erro na comunicação com o servidor');
-
-    //   // Caso o backend retorne sucesso:false, exibe erro e limpa campos
-    //   if (!res.data.success) {
-    //     showMessage({
-    //       message: 'Erro ao Logar',
-    //       description: res.data.message || 'Usuário ou senha inválidos!',
-    //       type: 'warning',
-    //     });
-    //     limparCampos();
-    //   } else {
-    //     // Login bem-sucedido, exibe mensagem e navega para a tela Home
-    //     showMessage({
-    //       message: 'Login Bem-Sucedido',
-    //       description: 'Bem-vindo!',
-    //       type: 'success',
-    //     });
-    //     navigation.navigate('Home');
-    //   }
-    // } catch (error) {
-    //   // Captura erros de rede ou internos e exibe mensagem de erro
-    //   showMessage({
-    //     message: 'Ocorreu algum erro',
-    //     description: error.message,
-    //     type: 'danger',
-    //   });
-    // }
   }
 
   return (

@@ -5,6 +5,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useAuth } from '../../../services/AuthContext';
+import { db } from '../../../services/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const CustomizeProfile = ({
   modalVisible,
@@ -12,14 +15,13 @@ const CustomizeProfile = ({
   navigation,
   onSave  // callback opcional para enviar os dados pra fora
 }) => {
-  const [name, setName] = useState('Miguel');
-  const [surname, setSurname] = useState('Jose Souza Guimarães');
-  const [description, setDescription] = useState(
-    'Sou de Miracatu - SP e adoro viajar pelo Vale do Ribeira...'
-  );
-  const [isOrganizerMode, setIsOrganizerMode] = useState(false);
-  const [imageUri, setImageUri] = useState([]);
-
+  const {userData} = useAuth();
+  const [name, setName] = useState(userData?.userInfo?.nome);
+  const [surname, setSurname] = useState(userData?.userInfo?.surname);
+  const [description, setDescription] = useState(userData?.userInfo?.desc);
+  const [isOrganizerMode, setIsOrganizerMode] = useState(userData?.userInfo?.isOrganizer);
+  const [imageUri, setImageUri] = useState(null);
+  
 
 
 const pickImage = async () => {
@@ -62,24 +64,35 @@ const pickImage = async () => {
 };
 
 
+
   // Reúne os dados e fecha o modal
-  const handleSave = () => {
-    const profileData = {
-      name,
-      surname,
-      description,
-      isOrganizerMode,
-      imageUri,
+  async function handleSave () {
+    console.log('rodando');
+    const updObj = {
+      nome : name ?? '',
+      surname : surname ?? '',
+      desc : description ?? '',
+      isOrganizer : isOrganizerMode ?? false,
+      // profileImage : imageUri ?? ''
     };
+
+     try {
+      const userRef = doc(db, 'user', userData?.userInfo?.uid);
+      console.log(userData?.userInfo?.userId);
+      await updateDoc(userRef, updObj);
+      console.log('Dados atualizados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar dados:', error);
+    }
 
     // Exemplo: enviar para a API ou salvar localmente
     // await api.updateProfile(profileData);
     // ou AsyncStorage.setItem('@profile', JSON.stringify(profileData));
 
     // Se quiser notificar o componente pai:
-    if (onSave) {
-      onSave(profileData);
-    }
+    // if (onSave) {
+    //   onSave(profileData);
+    // }
 
     // Fecha o modal
     setModalVisible(false);

@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { onSnapshot, orderBy, collection, query } from 'firebase/firestore';
-
+import { onSnapshot, collection, query } from 'firebase/firestore';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 
 import TelaPost from '../../modal/TelaPost';
-import {db} from '../../../services/firebase';
+import { db, auth } from '../../../services/firebase';
 
 export default function Home({ navigation }) {
   // Controle de visibilidade e animação da sidebar
@@ -23,29 +23,53 @@ export default function Home({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [popularPosts, setPopularPosts] = useState([]);
 
+  // Autenticação anônima
+  useEffect(() => {
+    if (!auth.currentUser) {
+      signInAnonymously(auth)
+        .then(() => console.log('Usuário logado anonimamente:', auth.currentUser?.uid))
+        .catch(error => console.error('Erro ao logar anonimamente:', error));
+    } else {
+    }
+  }, []);
+
   // Filtra os posts recomendados com base na busca
   const filteredRecommended = posts.filter(item =>
-    item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.route?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.type?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   // Filtra os posts populares com base na busca
   const filteredPopular = popularPosts.filter(item =>
-    item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.route?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.type?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   // Carrega os posts ao montar o componente
   useEffect(() => {
-    const q = query(collection(db, 'events'), orderBy('timestamp'));
+    const q = query(collection(db, 'events')); // Removido orderBy
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const fetchedPosts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        fav: doc.data().fav || false, // Fallback para fav
+        theme: doc.data().theme || '' // Fallback para theme
+      }));
+      setPosts(fetchedPosts);
+      // Usar review em vez de likes para popularPosts
+      const popular = fetchedPosts.filter(post => (post.review || 0) > 0);
+      setPopularPosts(popular);
+    }, (error) => {
+      console.error('Erro ao buscar eventos:', error);
     });
     return () => unsubscribe();
   }, []);
 
+  // Log para verificar atualizações no estado
+  useEffect(() => {
+  }, [posts, popularPosts]);
 
   // Alterna o estado de favorito de um post
   const toggleFav = (id) => {
@@ -56,7 +80,7 @@ export default function Home({ navigation }) {
   // Alterna a exibição da sidebar com animação
   const toggleSidebar = () => {
     Animated.timing(sidebarAnimation, {
-      toValue: sidebarVisible ? -250 : 0,
+      toValue: sidebarVisible ? -250 : 30,
       duration: 300,
       useNativeDriver: true
     }).start();
@@ -77,7 +101,7 @@ export default function Home({ navigation }) {
         style={styles.cardImage}
       />
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
+        <Text style={styles.cardTitle}>{item.title || 'Sem título'}</Text>
         <Text style={styles.cardSubtitle}>
           {typeof item.desc === 'string'
             ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
@@ -114,11 +138,9 @@ export default function Home({ navigation }) {
       {/* Sidebar com navegação */}
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}>
         <Text style={styles.sidebarTitle}>Menu</Text>
-
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
           <Text>Agenda</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
           const favoritos = [...posts, ...popularPosts].filter(p => p.fav);
           navigation.navigate('Historico', { favoritos });
@@ -126,8 +148,6 @@ export default function Home({ navigation }) {
         }}>
           <Text>Minhas Viagens</Text>
         </TouchableOpacity>
-
-
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
         </TouchableOpacity>
@@ -140,6 +160,7 @@ export default function Home({ navigation }) {
         renderItem={renderCard}
         contentContainerStyle={styles.scrollContent}
         ListHeaderComponent={<Text style={styles.sectionTitle}>Recomendados</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum evento recomendado encontrado</Text>}
       />
 
       {/* Lista de posts populares */}
@@ -149,6 +170,7 @@ export default function Home({ navigation }) {
         keyExtractor={item => item.id.toString()}
         renderItem={renderCard}
         contentContainerStyle={styles.scrollContent}
+        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum evento popular encontrado</Text>}
       />
 
       {/* Modal de detalhes do post */}
@@ -164,20 +186,131 @@ export default function Home({ navigation }) {
 
 // Estilos do componente
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  topBar: { flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#f2f2f2' },
-  searchInput: { flex: 1, height: 35, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10, marginHorizontal: 8 },
-  scrollContent: { padding: 10, paddingBottom: 30 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginVertical: 8 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, elevation: 3, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, marginBottom: 12, padding: 10 },
-  cardImage: { width: 60, height: 60, borderRadius: 6 },
-  cardContent: { flex: 1, marginLeft: 10 },
-  cardTitle: { fontSize: 16, fontWeight: 'bold' },
-  cardSubtitle: { fontSize: 14, color: '#666', overflow: 'hidden', flexWrap: 'nowrap' },
-  cardIcon: { padding: 4 },
-  popularesTxt: { fontWeight: 'bold', fontSize: 14, marginVertical: 10, marginLeft: 10 },
-  sidebar: { position: 'absolute', top: 0, left: 0, width: 250, height: '100%', backgroundColor: '#f2f2f2', padding: 20, zIndex: 100 },
-  sidebarTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
-  sidebarItem: { paddingVertical: 10 },
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)' }
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f7fa', // Soft light gray for a modern, clean background
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#ffffff', // White background for a crisp top bar
+    elevation: 4, // Subtle shadow for Android
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e4e9', // Light border for separation
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    backgroundColor: '#f0f2f5', // Slightly darker input background for contrast
+    borderRadius: 20, // Rounded corners for a modern look
+    paddingHorizontal: 15,
+    marginHorizontal: 12,
+    fontSize: 16,
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#d1d5db', // Subtle border for input
+  },
+  scrollContent: {
+    padding: 16, // Increased padding for better spacing
+    paddingBottom: 80, // Extra padding to avoid content cutoff
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600', // Semi-bold for better hierarchy
+    color: '#1f2937', // Darker text for contrast
+    marginVertical: 12,
+    marginLeft: 4,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12, // Softer, modern rounded corners
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    marginBottom: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb', // Subtle border for card definition
+  },
+  cardImage: {
+    width: 80, // Slightly larger image for better visuals
+    height: 80,
+    borderRadius: 10, // Rounded image corners
+    backgroundColor: '#f0f2f5', // Placeholder background while loading
+  },
+  cardContent: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '600', // Semi-bold for emphasis
+    color: '#1f2937', // Darker text for readability
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#6b7280', // Muted gray for secondary text
+    lineHeight: 20, // Improved readability
+  },
+  cardIcon: {
+    padding: 8,
+    borderRadius: 20, // Circular touch area for favorite icon
+    backgroundColor: '#f9fafb', // Light background for icon
+  },
+  popularesTxt: {
+    fontWeight: '600',
+    fontSize: 16,
+    color: '#1f2937',
+    marginVertical: 12,
+    marginLeft: 16,
+  },
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    left: -30,
+    width: 280, // Slightly wider sidebar for comfort
+    height: '100%',
+    backgroundColor: '#ffffff', // White for a clean look
+    padding: 24,
+    zIndex: 100,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  sidebarTitle: {
+    fontSize: 22,
+    fontWeight: '700', // Bold for prominence
+    color: '#111827', // Dark text for contrast
+    marginBottom: 24,
+    marginTop: 16,
+  },
+  sidebarItem: {
+    paddingVertical: 12,
+    // paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#f9fafb', // Light hover-like effect
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)', // Slightly darker overlay for better focus
+    zIndex: 99,
+  },
 });
