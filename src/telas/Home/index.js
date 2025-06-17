@@ -109,7 +109,7 @@ export default function Home({ navigation }) {
         </Text>
       </View>
       <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
+        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="#f37100" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -188,7 +188,7 @@ export default function Home({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7fa', // Soft light gray for a modern, clean background
+    backgroundColor: '#1a1b21', // Soft light gray for a modern, clean background
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
 
   },
@@ -196,26 +196,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#ffffff', // White background for a crisp top bar
+    backgroundColor: '#363942', // White background for a crisp top bar
     elevation: 4, // Subtle shadow for Android
     shadowColor: '#000', // iOS shadow
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e4e9', // Light border for separation
+    borderBottomColor: '#f37100', // Light border for separation
   },
   searchInput: {
     flex: 1,
     height: 40,
-    backgroundColor: '#f0f2f5', // Slightly darker input background for contrast
+    backgroundColor: '#2b2c33', // Slightly darker input background for contrast
     borderRadius: 20, // Rounded corners for a modern look
     paddingHorizontal: 15,
     marginHorizontal: 12,
     fontSize: 16,
     color: '#333',
     borderWidth: 1,
-    borderColor: '#d1d5db', // Subtle border for input
+    borderColor: '#f37100', // Subtle border for input
   },
   scrollContent: {
     padding: 16, // Increased padding for better spacing
@@ -224,14 +224,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600', // Semi-bold for better hierarchy
-    color: '#1f2937', // Darker text for contrast
+    color: '#fff', // Darker text for contrast
     marginVertical: 12,
     marginLeft: 4,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#363942',
     borderRadius: 12, // Softer, modern rounded corners
     elevation: 3,
     shadowColor: '#000',
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb', // Subtle border for card definition
+    borderColor: '#f37100', // Subtle border for card definition
   },
   cardImage: {
     width: 80, // Slightly larger image for better visuals
@@ -257,12 +257,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 17,
     fontWeight: '600', // Semi-bold for emphasis
-    color: '#1f2937', // Darker text for readability
+    color: '#fff', // Darker text for readability
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#6b7280', // Muted gray for secondary text
+    color: '#a0a4ad', // Muted gray for secondary text
     lineHeight: 20, // Improved readability
   },
   cardIcon: {
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   popularesTxt: {
     fontWeight: '600',
     fontSize: 16,
-    color: '#1f2937',
+    color: '#fff',
     marginVertical: 12,
     marginLeft: 16,
   },
