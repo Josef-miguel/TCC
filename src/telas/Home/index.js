@@ -139,14 +139,14 @@ export default function Home({ navigation }) {
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}>
         <Text style={styles.sidebarTitle}>Menu</Text>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text>Agenda</Text>
+          <Text style={styles.sidebarText}>Agenda</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
           const favoritos = [...posts, ...popularPosts].filter(p => p.fav);
           navigation.navigate('Historico', { favoritos });
           toggleSidebar();
         }}>
-          <Text>Minhas Viagens</Text>
+          <Text style={styles.sidebarText}>Minhas Viagens</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
@@ -279,11 +279,11 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     left: -30,
     width: 280, // Slightly wider sidebar for comfort
     height: '100%',
-    backgroundColor: '#ffffff', // White for a clean look
+    backgroundColor: '#363942', // White for a clean look
     padding: 24,
     zIndex: 100,
     elevation: 5,
@@ -292,10 +292,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
+  sidebarText: {
+    color: "#e4e4e4",
+    marginHorizontal: 'auto'
+  },
   sidebarTitle: {
     fontSize: 22,
     fontWeight: '700', // Bold for prominence
-    color: '#111827', // Dark text for contrast
+    color: '#fff', // Dark text for contrast
     marginBottom: 24,
     marginTop: 16,
   },
@@ -304,7 +308,7 @@ const styles = StyleSheet.create({
     // paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#f9fafb', // Light hover-like effect
+    backgroundColor: '#2b2c33', // Light hover-like effect
   },
   overlay: {
     position: 'absolute',
