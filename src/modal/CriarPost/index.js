@@ -13,6 +13,7 @@ import { collection, addDoc } from "firebase/firestore";
 import {db} from '../../../services/firebase'
 
 
+
 const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [postName, setPostName] = useState('');
   const [tripType, setTripType] = useState(1);
@@ -52,20 +53,16 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
     console.log("tentar");
 
     try {
-      const obj = {
-        titulo: postName || '',
-        descricao: description || '',
-        id_tag: tripType || '',
-        local_saida: route_exit || '',
-        imagens: imageUri || [],
-        n_vagas: numSlots || '',
-        preco: tripPrice || 1,
-        data_de_saida: exit_date || '',
-        data_de_retorno: return_date || '',
-      };
-
       await addDoc(collection(db, 'events', ), {
-        obj
+        title: postName || '',
+        desc: description || '',
+        type: tripType || '',
+        exit_route: route_exit || '',
+        images: imageUri || [],
+        numSlots: numSlots || '',
+        price: tripPrice || 1,
+        exit_date: exit_date || '',
+        return_date: return_date || '',
       });
 
       showMessage({

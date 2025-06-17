@@ -1,5 +1,6 @@
 import React, { useState, createContext, useContext } from 'react';
-import { StyleSheet, Text, View, Modal, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Modal, ScrollView, TouchableOpacity, StatusBar, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -26,7 +27,6 @@ import CriarPost from './src/modal/CriarPost';
 export const appContext = createContext();
 
 import {Ionicons} from '@expo/vector-icons';
-
 
 const Tab= createBottomTabNavigator();
 const organizerMode = () => {
@@ -113,7 +113,7 @@ function Tabs(){
     >  
       {/* <Tab.Screen name= "Login" component={Login}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
-       <Tab.Screen name= "Home"component={Home}></Tab.Screen> 
+       <Tab.Screen name= "Home" component={Home} options={{headerShown: false}}></Tab.Screen> 
         
 
        <Tab.Screen
@@ -133,7 +133,7 @@ function Tabs(){
               }}
           />  
 
-       <Tab.Screen name= "Perfil" component={Perfil}></Tab.Screen> 
+       <Tab.Screen name= "Perfil" component={Perfil} options={{headerShown: false}}></Tab.Screen> 
        {/* <Tab.Screen name= "Chat" component={Chat}></Tab.Screen>  */}
         
 
@@ -152,17 +152,17 @@ const Stack= createStackNavigator();
   return (
     <>
   <AuthProvider>
+    <SafeAreaProvider>
     <NavigationContainer>
-    <Stack.Navigator initialRouteName='Cadastro'>
+    <Stack.Navigator initialRouteName='Cadastro' screenOptions={{headerShown: false}}>
 
+    
     <Stack.Screen name="Login" component={Login} options={{headerShown: false}}></Stack.Screen>
       <Stack.Screen 
           name="Home" 
           component={Tabs}
           options={{headerShown: false}}
-          >
-
-      </Stack.Screen>
+      ></Stack.Screen>
        <Stack.Screen name ="Cadastro" component={Cadastro} options={{headerShown: false}}></Stack.Screen> 
   
         <Stack.Screen name ="Agenda" component={Agenda} options={{headerShown: false}}></Stack.Screen>  
@@ -174,8 +174,9 @@ const Stack= createStackNavigator();
         <Stack.Screen name="Chat" component={Chat} options={{headerShown: false}} />
 
     </Stack.Navigator>
+    <FlashMessage position="top"/>
   </NavigationContainer>
-  <FlashMessage position="top"/>
+  </SafeAreaProvider>
   </AuthProvider>
 </>
   );
