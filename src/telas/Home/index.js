@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
@@ -115,7 +115,7 @@ export default function Home({ navigation }) {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Barra superior com menu, busca e perfil */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={toggleSidebar}>
@@ -180,7 +180,7 @@ export default function Home({ navigation }) {
         selectedPost={selectedPost}
         setSelectedPost={setSelectedPost}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -189,11 +189,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f7fa', // Soft light gray for a modern, clean background
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 10,
     backgroundColor: '#ffffff', // White background for a crisp top bar
     elevation: 4, // Subtle shadow for Android
     shadowColor: '#000', // iOS shadow
