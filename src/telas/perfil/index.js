@@ -63,7 +63,7 @@ export default function Perfil() {
             {
               userData?.userInfo?.profileImage
                 ? <Avatar.Image source={{ uri: userData.userInfo.profileImage }} size={128} style={styles.avatar} />
-                : <Avatar.Text label="R" size={128} style={styles.avatar} />
+                : <Avatar.Text label="R" size={128} style={styles.avatar} sx={{bgcolor: "#ff0" }} />
             }          
           </TouchableOpacity>
           <Text style={styles.name}>{userData?.userInfo?.nome}</Text>
