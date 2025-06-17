@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, SafeAreaView } from 'react-native';
 import { Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { appContext } from '../../../App';
@@ -10,6 +10,8 @@ import { useAuth } from '../../../services/AuthContext';
 
 // Componente de tela de perfil do usuário
 export default function Perfil() {
+  const {userData} = useAuth();
+
   const navigation = useNavigation();
   // Controle de visibilidade do modal de confirmação de saída
   const [isVisible, setIsVisible] = useState(false);
@@ -36,7 +38,7 @@ export default function Perfil() {
 
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       {/* ScrollView para lista de opções */}
       <ScrollView contentContainerStyle={styles.container}>
 
@@ -58,10 +60,13 @@ export default function Perfil() {
         {/* Cabeçalho com avatar e informações do usuário */}
         <View style={styles.header} >
           <TouchableOpacity onPress={() => setModalVisible(true)}>
-
-            <Avatar.Text label="R" size={48} style={styles.avatar} />
+            {
+              userData?.userInfo?.profileImage
+                ? <Avatar.Image source={{ uri: userData.userInfo.profileImage }} size={128} style={styles.avatar} />
+                : <Avatar.Text label="R" size={128} style={styles.avatar} sx={{bgcolor: "#ff0" }} />
+            }          
           </TouchableOpacity>
-          <Text style={styles.name}>Ferrete Rafael</Text>
+          <Text style={styles.name}>{userData?.userInfo?.nome}</Text>
           <Text style={styles.level}>Genius Nível 1</Text>
         </View>
 
@@ -98,7 +103,7 @@ export default function Perfil() {
         setModalVisible={setModalVisible}
         navigation={navigation}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -110,7 +115,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    marginTop: 10,
+    marginTop: 50,
     marginBottom: 20,
     alignItems: 'center',
   },
