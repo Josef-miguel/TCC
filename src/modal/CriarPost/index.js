@@ -9,7 +9,7 @@ import { showMessage } from 'react-native-flash-message';
 
 import { Feather } from '@expo/vector-icons';
 
-import { doc, setDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import {db} from '../../../services/firebase'
 
 
@@ -64,7 +64,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
         data_de_retorno: return_date || '',
       };
 
-      await setDoc(doc(db, 'events'), {
+      await addDoc(collection(db, 'events', ), {
         obj
       });
 
