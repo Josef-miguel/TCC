@@ -24,6 +24,7 @@ export default function Home({ navigation }) {
     }
   }, []);
 
+
   const filteredRecommended = posts.filter(item =>
     (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -53,6 +54,13 @@ export default function Home({ navigation }) {
     });
     return () => unsubscribe();
   }, []);
+
+
+  // Log para verificar atualizações no estado
+  useEffect(() => {
+  }, [posts, popularPosts]);
+
+  // Alterna o estado de favorito de um post (Ajustar o id para o firebase)
 
   const toggleFav = (id) => {
     setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
