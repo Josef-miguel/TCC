@@ -617,7 +617,7 @@
         style="position: fixed; bottom: 10px; right: 10px; background: #f8f9fa; padding: 10px; border-radius: 5px; z-index: 1000;">
         Status: {% if 'loggedin' in session %}Logado (ID: {{ session['id_usuario'] }}){% else %}Não logado{% endif %}
     </div>
-
+    {% if not hide_header %}
     <header>
         <div class="navbar-container">
             <nav class="navbar">
@@ -652,6 +652,14 @@
                             <i class="fas fa-heart"></i> Favoritos
                         </a>
                     </li>
+
+                    {% if current_user.is_authenticated and current_user.tipo == 'organizador' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes.dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Painel do Organizador
+                        </a>
+                    </li>
+                    {% endif %}
 
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle">
@@ -765,7 +773,7 @@
             </div>
         </div>
     </header>
-
+    {% endif %}
     <main>
         {% block content %}
         <!-- Conteúdo específico de cada página vai aqui -->

@@ -1,483 +1,197 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{% set hide_header = true %}
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SetJustGo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #e74c3c;
-            --accent-color: #3498db;
-            --light-color: #ecf0f1;
-            --dark-color: #1a252f;
-            --text-color: #34495e;
-            --text-light: #7f8c8d;
-            --success-color: #2ecc71;
-            --error-color: #e74c3c;
-        }
+{% block content %}
+<style>
+    .login-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+        min-height: calc(100vh - var(--navbar-height));
+        padding: 4rem 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    .login-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        max-width: 500px;
+        margin: 0 auto;
+    }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(26, 37, 47, 0.95)),
-                url('https://images.unsplash.com/photo-1508672019048-805c876b67e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
-            background-size: cover;
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+    .login-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
 
-        .login-container {
-            width: 100%;
-            max-width: 450px;
-            animation: fadeInUp 0.6s ease-out;
-        }
+    .login-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
 
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+    .login-title {
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.8rem;
+    }
 
-        .login-header {
-            background: linear-gradient(135deg, var(--secondary-color), #c0392b);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
+    .login-body {
+        padding: 2.5rem;
+        background-color: white;
+    }
 
-        .login-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
-            transform: rotate(30deg);
-        }
+    .form-label {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
 
-        .login-header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-            position: relative;
-            font-weight: 600;
-        }
+    .form-control {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        transition: all 0.3s ease;
+    }
 
-        .login-header p {
-            font-size: 14px;
-            opacity: 0.9;
-            font-weight: 300;
-            position: relative;
-        }
+    .form-control:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
 
+    .btn-login {
+        background-color: var(--secondary-color);
+        border: none;
+        border-radius: 8px;
+        padding: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        color: white;
+        width: 100%;
+    }
+
+    .btn-login:hover {
+        background-color: #c0392b;
+        transform: translateY(-2px);
+    }
+
+    .login-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .login-link {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .login-link:hover {
+        color: #2980b9;
+        text-decoration: underline;
+    }
+
+    .register-text {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: var(--text-light);
+    }
+
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Animações */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-card {
+        animation: fadeIn 0.5s ease forwards;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
         .login-body {
-            padding: 30px;
+            padding: 1.5rem;
         }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideDown 0.4s ease-out;
+        
+        .login-title {
+            font-size: 1.5rem;
         }
-
-        .alert-error {
-            background-color: rgba(231, 76, 60, 0.1);
-            border-left: 4px solid var(--error-color);
-            color: var(--error-color);
+        
+        .login-options {
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-start;
         }
+    }
+</style>
 
-        .alert-success {
-            background-color: rgba(46, 204, 113, 0.1);
-            border-left: 4px solid var(--success-color);
-            color: var(--success-color);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--primary-color);
-            font-size: 14px;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 14px 16px 14px 48px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background-color: rgba(255, 255, 255, 0.8);
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
-            background-color: white;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-light);
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus + .input-icon {
-            color: var(--secondary-color);
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--secondary-color), #c0392b);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-            font-family: 'Poppins', sans-serif;
-            box-shadow: 0 4px 6px rgba(231, 76, 60, 0.2);
-        }
-
-        .btn-login:hover {
-            background: linear-gradient(135deg, #c0392b, #a5281b);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(231, 76, 60, 0.3);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        .login-footer {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 14px;
-        }
-
-        .login-footer a {
-            color: var(--secondary-color);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        .remember-forgot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            font-size: 13px;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .remember-me input {
-            width: auto;
-            accent-color: var(--secondary-color);
-        }
-
-        .social-login {
-            margin-top: 25px;
-        }
-
-        .social-login p {
-            text-align: center;
-            color: var(--text-light);
-            margin-bottom: 15px;
-            position: relative;
-            font-size: 13px;
-        }
-
-        .social-login p::before,
-        .social-login p::after {
-            content: "";
-            display: inline-block;
-            width: 30%;
-            height: 1px;
-            background-color: #e0e0e0;
-            position: absolute;
-            top: 50%;
-        }
-
-        .social-login p::before {
-            left: 0;
-        }
-
-        .social-login p::after {
-            right: 0;
-        }
-
-        .social-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .social-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .social-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-google {
-            background-color: #db4437;
-        }
-
-        .btn-facebook {
-            background-color: #4267B2;
-        }
-
-        .btn-apple {
-            background-color: #000000;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .login-card {
-                border-radius: 12px;
-            }
-            
-            .login-header {
-                padding: 25px 20px;
-            }
-            
-            .login-body {
-                padding: 25px 20px;
-            }
-            
-            .social-login p::before,
-            .social-login p::after {
-                width: 25%;
-            }
-        }
-
-        /* Efeito de loading */
-        .btn-loading {
-            position: relative;
-            pointer-events: none;
-        }
-
-        .btn-loading::after {
-            content: "";
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            margin: auto;
-            border: 3px solid transparent;
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <h1>Bem-vindo de volta!</h1>
-                <p>Faça login para acessar sua conta e planejar sua próxima aventura</p>
-            </div>
-
-            <div class="login-body">
-                <!-- Mensagens de erro/sucesso -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }}">
-                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
-                                {{ message }}
+<div class="login-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="login-card">
+                    <div class="login-header">
+                        <h2 class="login-title">Acesse sua conta</h2>
+                    </div>
+                    <div class="login-body">
+                        <form method="POST" action="{{ url_for('routes.login') }}" novalidate>
+                            {{ form.hidden_tag() }}
+                            
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                    {% for category, message in messages %}
+                                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} mb-4">
+                                            {{ message }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %}
+                            
+                            <div class="mb-4">
+                                <label for="email" class="form-label">E-mail</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="seu@email.com" required>
                             </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <form method="POST" action="{{ url_for('routes.login') }}" id="loginForm">
-                    <div class="form-group">
-                        <label for="email">E-mail</label>
-                        <div class="input-wrapper">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" id="email" name="email" class="form-control" placeholder="seu@email.com" required>
-                        </div>
+                            
+                            <div class="mb-3">
+                                <label for="senha" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="senha" name="senha" placeholder="Digite sua senha" required>
+                            </div>
+                            
+                            <div class="login-options">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="lembrar" name="lembrar">
+                                    <label class="form-check-label" for="lembrar">Lembrar-me</label>
+                                </div>
+                                <a href="#" class="login-link">Esqueci minha senha</a>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-login mt-4">
+                                Entrar
+                            </button>
+                            
+                            <div class="register-text">
+                                <p class="mb-0">Não tem uma conta? <a href="{{ url_for('routes.register') }}" class="login-link">Cadastre-se</a></p>
+                            </div>
+                        </form>
                     </div>
-
-                    <div class="form-group">
-                        <label for="password">Senha</label>
-                        <div class="input-wrapper">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="password" name="senha" class="form-control" placeholder="••••••••" required>
-                        </div>
-                    </div>
-
-                    <div class="remember-forgot">
-                        <div class="remember-me">
-                            <input type="checkbox" id="remember" name="remember">
-                            <label for="remember">Lembrar-me</label>
-                        </div>
-                        <a href="#">Esqueceu a senha?</a>
-                    </div>
-
-                    <button type="submit" class="btn-login" id="loginBtn">
-                        <span id="loginText">Entrar</span>
-                    </button>
-                </form>
-
-                <div class="social-login">
-                    <p>ou continue com</p>
-                    <div class="social-buttons">
-                        <a href="#" class="social-btn btn-google">
-                            <i class="fab fa-google"></i>
-                        </a>
-                        <a href="#" class="social-btn btn-facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="login-footer">
-                    <p>Não tem uma conta? <a href="{{ url_for('routes.register') }}">Cadastre-se</a></p>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        // Efeitos de interação
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('loginForm');
-            const loginBtn = document.getElementById('loginBtn');
-            const loginText = document.getElementById('loginText');
-            
-            // Validação em tempo real
-            form.addEventListener('submit', function(e) {
-                if (!form.checkValidity()) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Adiciona classes de erro nos campos inválidos
-                    document.querySelectorAll('.form-control:invalid').forEach(input => {
-                        input.style.borderColor = 'var(--error-color)';
-                        input.nextElementSibling.style.color = 'var(--error-color)';
-                    });
-                } else {
-                    // Mostra loading no botão
-                    loginBtn.classList.add('btn-loading');
-                    loginText.textContent = 'Autenticando...';
-                }
-            });
-            
-            // Remove classes de erro quando o usuário começa a digitar
-            document.querySelectorAll('.form-control').forEach(input => {
-                input.addEventListener('input', function() {
-                    if (this.checkValidity()) {
-                        this.style.borderColor = '';
-                        if (this.nextElementSibling) {
-                            this.nextElementSibling.style.color = '';
-                        }
-                    }
-                });
-            });
-            
-            // Foco no primeiro campo ao carregar a página
-            document.getElementById('email')?.focus();
-        });
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

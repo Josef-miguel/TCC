@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Editar Excursão</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('routes.editar_evento', id=evento.id_evento) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="destino" class="form-label">Destino</label>
+                                <input type="text" class="form-control" id="destino" name="destino" 
+                                       value="{{ evento.destino }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="local_saida" class="form-label">Local de Saída</label>
+                                <input type="text" class="form-control" id="local_saida" name="local_saida" 
+                                       value="{{ evento.local_saida }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="data_de_saida" class="form-label">Data de Saída</label>
+                                <input type="date" class="form-control" id="data_de_saida" name="data_de_saida" 
+                                       value="{{ evento.data_de_saida_str }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="data_de_retorno" class="form-label">Data de Retorno</label>
+                                <input type="date" class="form-control" id="data_de_retorno" name="data_de_retorno" 
+                                       value="{{ evento.data_de_retorno_str }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="preco" class="form-label">Preço (R$)</label>
+                                <input type="number" step="0.01" class="form-control" id="preco" name="preco" 
+                                       value="{{ evento.preco }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="n_vagas" class="form-label">Número de Vagas</label>
+                                <input type="number" class="form-control" id="n_vagas" name="n_vagas" 
+                                       value="{{ evento.n_vagas }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="4">{{ evento.descricao }}</textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                            <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -11,7 +11,7 @@ app = Flask(__name__, template_folder='views')
 app.secret_key = '3d6f45a5fc12445dbac2f59c3b6c7cb1d5725f1d8f22660'  # Chave secreta para sessão
 
 # Configurações do banco de dados
-DB_NAME = 'games'
+DB_NAME = 'tcc'
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root@localhost/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

@@ -5,6 +5,8 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError
 from forms import RegistrationForm
+from forms import LoginForm  # Ou o caminho correto para seu arquivo forms.py
+from flask_login import UserMixin
 
 routes = Blueprint('routes', __name__)
 
@@ -29,26 +31,41 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('routes.dashboard'))
 
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        senha = request.form.get('senha', '')
+    form = LoginForm()
 
-        if not email or not senha:
-            flash('Preencha todos os campos', 'error')
-            return redirect(url_for('routes.login'))
-
-        user = Usuario.query.filter_by(email=email).first()
-
-        if user and check_password_hash(user.senha, senha):
-            login_user(user)
+    if form.validate_on_submit():
+        user = Usuario.query.filter_by(email=form.email.data).first()
+        
+        if user and check_password_hash(user.senha, form.senha.data):
+            login_user(user, remember=form.lembrar.data)
+            flash('Login realizado com sucesso!', 'success')
+            
             next_page = request.args.get('next')
             return redirect(next_page or url_for('routes.dashboard'))
-
-        flash('Credenciais inválidas', 'error')
-
-    return redirect(url_for('routes.login'))
+        
+        flash('E-mail ou senha incorretos', 'error')
+    
+    return render_template('login.html', form=form)
 
 # Logout
+
+@routes.route('/reset-password', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('routes.dashboard'))
+    
+    form = ResetPasswordRequestForm()  # Você precisará criar este formulário
+    
+    if form.validate_on_submit():
+        user = Usuario.query.filter_by(email=form.email.data).first()
+        if user:
+            # Aqui você implementaria o envio do e-mail de recuperação
+            send_password_reset_email(user)  # Função que você precisa implementar
+            
+        flash('Se o e-mail existir em nosso sistema, enviaremos instruções para redefinir sua senha', 'info')
+        return redirect(url_for('routes.login'))
+    
+    return render_template('reset_password_request.html', form=form)
 
 
 @routes.route('/logout')
@@ -91,23 +108,22 @@ def register():
         existing_user = Usuario.query.filter_by(email=form.email.data).first()
         if existing_user:
             flash('E-mail já cadastrado!', 'danger')
-            return redirect(url_for('routes.register'))  # Corrigido
-
-        # Criar novo usuário
-        hashed_password = generate_password_hash(
-            form.senha.data, method='scrypt')
-        new_user = Usuario(
-            nome=form.nome.data,
-            email=form.email.data,
-            telefone=form.telefone.data,
-            senha=hashed_password,
-            cpf=form.cpf.data,
-            tipo='organizador' if form.tipo_organizador.data else 'usuario'
-        )
+            return redirect(url_for('routes.register'))
 
         try:
+            # Criar novo usuário (sem organizador ainda)
+            hashed_password = generate_password_hash(form.senha.data, method='scrypt')
+            new_user = Usuario(
+                nome=form.nome.data,
+                email=form.email.data,
+                telefone=form.telefone.data,
+                senha=hashed_password,
+                cpf=form.cpf.data,
+                tipo='organizador' if form.tipo_organizador.data else 'usuario'
+            )
+            
             db.session.add(new_user)
-            db.session.commit()
+            db.session.commit()  # Commit aqui para obter o id_usuario
 
             # Se for organizador, criar registro na tabela organizador
             if form.tipo_organizador.data:
@@ -122,13 +138,14 @@ def register():
                 db.session.commit()
 
             flash('Cadastro realizado com sucesso!', 'success')
-            return redirect(url_for('routes.login'))  # Corrigido
+            return redirect(url_for('routes.login'))
 
-        except IntegrityError:
+        except Exception as e:
             db.session.rollback()
-            flash('Erro ao cadastrar usuário. Tente novamente.', 'danger')
+            flash(f'Erro ao cadastrar usuário: {str(e)}', 'danger')
 
-    # Renderiza o template em vez de redirecionar
+    # Para depuração - mostre os erros do formulário
+    print(form.errors) if form.errors else None
     return render_template('register.html', form=form)
 
 
@@ -160,26 +177,20 @@ def register_ajax():
 @routes.route('/dashboard')
 @login_required
 def dashboard():
-    try:
-        if current_user.tipo == 'organizador':
-            organizador = Organizador.query.filter_by(
-                id_usuario=current_user.id_usuario).first()
-            if not organizador:
-                flash('Perfil de organizador incompleto', 'error')
-                return redirect(url_for('routes.logout'))
-
-            eventos = Evento.query.filter_by(idOrganizador=organizador.id_organizador)\
-                .order_by(Evento.data_de_saida.desc()).all()
-            return render_template('dashboard_organizador.html', eventos=eventos)
-
-        # Usuário comum
-        reservas = Reserva.query.filter_by(id_usuario=current_user.id_usuario)\
-            .options(db.joinedload(Reserva.evento)).all()
-        return render_template('dashboard_usuario.html', reservas=reservas)
-
-    except Exception as e:
-        flash('Erro ao carregar dashboard', 'error')
-        return redirect(url_for('routes.home'))
+    if current_user.tipo == 'organizador':
+        organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
+        if not organizador:
+            flash('Complete seu perfil de organizador primeiro', 'error')
+            return redirect(url_for('routes.perfil'))
+            
+        eventos = Evento.query.filter_by(id_organizador=organizador.id_organizador)\
+            .order_by(Evento.data_de_saida.desc()).all()
+        return render_template('dashboard_organizador.html', eventos=eventos)
+    
+    # Usuário comum
+    reservas = Reserva.query.filter_by(id_usuario=current_user.id_usuario)\
+        .options(db.joinedload(Reserva.evento)).all()
+    return render_template('dashboard_usuario.html', reservas=reservas)
 
 # Lista de Eventos
 
@@ -204,44 +215,51 @@ def nova_excursao():
         flash('Acesso restrito a organizadores', 'error')
         return redirect(url_for('routes.dashboard'))
 
-    organizador = Organizador.query.filter_by(
-        id_usuario=current_user.id_usuario).first()
+    organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
     if not organizador:
         flash('Complete seu perfil de organizador primeiro', 'error')
-        return redirect(url_for('routes.dashboard'))
+        return redirect(url_for('routes.perfil'))
 
     if request.method == 'POST':
         try:
+            # Validações básicas
             required_fields = ['destino', 'local_saida', 'data_de_saida',
-                               'data_de_retorno', 'preco', 'n_vagas']
+                              'data_de_retorno', 'preco', 'n_vagas']
             if any(not request.form.get(field) for field in required_fields):
                 flash('Preencha todos os campos obrigatórios', 'error')
                 return redirect(url_for('routes.nova_excursao'))
 
-            # Validação de datas
-            data_saida = datetime.strptime(
-                request.form['data_de_saida'], '%Y-%m-%d')
-            data_retorno = datetime.strptime(
-                request.form['data_de_retorno'], '%Y-%m-%d')
-
+            # Converter datas
+            data_saida = datetime.strptime(request.form['data_de_saida'], '%Y-%m-%d')
+            data_retorno = datetime.strptime(request.form['data_de_retorno'], '%Y-%m-%d')
+            
             if data_retorno <= data_saida:
                 flash('Data de retorno deve ser após a data de saída', 'error')
                 return redirect(url_for('routes.nova_excursao'))
 
+            # Validar preço e vagas
+            preco = float(request.form['preco'])
+            n_vagas = int(request.form['n_vagas'])
+            
+            if preco <= 0 or n_vagas <= 0:
+                flash('Preço e número de vagas devem ser maiores que zero', 'error')
+                return redirect(url_for('routes.nova_excursao'))
+
+            # Criar o evento
             evento = Evento(
                 destino=request.form['destino'],
                 descricao=request.form.get('descricao', ''),
                 local_saida=request.form['local_saida'],
                 data_de_saida=data_saida,
                 data_de_retorno=data_retorno,
-                preco=float(request.form['preco']),
-                n_vagas=int(request.form['n_vagas']),
-                idOrganizador=organizador.id_organizador
+                preco=preco,
+                n_vagas=n_vagas,
+                id_organizador=organizador.id_organizador
             )
 
             db.session.add(evento)
             db.session.commit()
-            flash('Evento criado com sucesso!', 'success')
+            flash('Excursão criada com sucesso!', 'success')
             return redirect(url_for('routes.dashboard'))
 
         except ValueError:
@@ -249,7 +267,7 @@ def nova_excursao():
             flash('Valores inválidos nos campos numéricos ou datas', 'error')
         except Exception as e:
             db.session.rollback()
-            flash(f'Erro ao criar evento: {str(e)}', 'error')
+            flash(f'Erro ao criar excursão: {str(e)}', 'error')
 
     return render_template('novo_evento.html')
 
@@ -274,57 +292,79 @@ def detalhes_evento(id):
 @routes.route('/eventos/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_evento(id):
-    try:
-        evento = Evento.query.get_or_404(id)
-        organizador = Organizador.query.filter_by(
-            id_usuario=current_user.id_usuario).first()
+    evento = Evento.query.get_or_404(id)
+    organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
 
-        if not organizador or evento.idOrganizador != organizador.id_organizador:
-            flash('Você não tem permissão para editar este evento', 'error')
-            return redirect(url_for('routes.dashboard'))
-
-        if request.method == 'POST':
-            try:
-                evento.destino = request.form['destino']
-                evento.descricao = request.form.get('descricao', '')
-                evento.local_saida = request.form['local_saida']
-                evento.data_de_saida = datetime.strptime(
-                    request.form['data_de_saida'], '%Y-%m-%d')
-                evento.data_de_retorno = datetime.strptime(
-                    request.form['data_de_retorno'], '%Y-%m-%d')
-                evento.preco = float(request.form['preco'])
-                evento.n_vagas = int(request.form['n_vagas'])
-
-                db.session.commit()
-                flash('Evento atualizado com sucesso!', 'success')
-                return redirect(url_for('routes.detalhes_evento', id=evento.id_evento))
-            except ValueError:
-                db.session.rollback()
-                flash('Valores inválidos nos campos numéricos ou datas', 'error')
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Erro ao atualizar evento: {str(e)}', 'error')
-
-        return render_template('editar_evento.html', evento=evento)
-    except Exception as e:
-        flash('Erro ao carregar formulário de edição', 'error')
+    # Verificar permissão
+    if not organizador or evento.id_organizador != organizador.id_organizador:
+        flash('Você não tem permissão para editar este evento', 'error')
         return redirect(url_for('routes.dashboard'))
 
+    if request.method == 'POST':
+        try:
+            # Validações
+            required_fields = ['destino', 'local_saida', 'data_de_saida',
+                             'data_de_retorno', 'preco', 'n_vagas']
+            if any(not request.form.get(field) for field in required_fields):
+                flash('Preencha todos os campos obrigatórios', 'error')
+                return redirect(url_for('routes.editar_evento', id=id))
+
+            data_saida = datetime.strptime(request.form['data_de_saida'], '%Y-%m-%d')
+            data_retorno = datetime.strptime(request.form['data_de_retorno'], '%Y-%m-%d')
+            
+            if data_retorno <= data_saida:
+                flash('Data de retorno deve ser após a data de saída', 'error')
+                return redirect(url_for('routes.editar_evento', id=id))
+
+            # Atualizar evento
+            evento.destino = request.form['destino']
+            evento.descricao = request.form.get('descricao', '')
+            evento.local_saida = request.form['local_saida']
+            evento.data_de_saida = data_saida
+            evento.data_de_retorno = data_retorno
+            evento.preco = float(request.form['preco'])
+            
+            # Não permitir reduzir vagas abaixo do número de reservas confirmadas
+            novas_vagas = int(request.form['n_vagas'])
+            reservas_confirmadas = sum(1 for r in evento.reservas if r.status == 'confirmado')
+            
+            if novas_vagas < reservas_confirmadas:
+                flash(f'Não é possível ter menos vagas ({novas_vagas}) que reservas confirmadas ({reservas_confirmadas})', 'error')
+                return redirect(url_for('routes.editar_evento', id=id))
+                
+            evento.n_vagas = novas_vagas
+
+            db.session.commit()
+            flash('Evento atualizado com sucesso!', 'success')
+            return redirect(url_for('routes.detalhes_evento', id=evento.id_evento))
+
+        except ValueError:
+            db.session.rollback()
+            flash('Valores inválidos nos campos numéricos ou datas', 'error')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar evento: {str(e)}', 'error')
+
+    # Formatar datas para o input type="date"
+    evento.data_de_saida_str = evento.data_de_saida.strftime('%Y-%m-%d')
+    evento.data_de_retorno_str = evento.data_de_retorno.strftime('%Y-%m-%d')
+    
+    return render_template('editar_evento.html', evento=evento)
 # Excluir Evento
 
 
 @routes.route('/eventos/<int:id>/excluir', methods=['POST'])
 @login_required
 def excluir_evento(id):
+    evento = Evento.query.get_or_404(id)
+    organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
+
+    # Verificar permissão
+    if not organizador or evento.id_organizador != organizador.id_organizador:
+        flash('Você não tem permissão para excluir este evento', 'error')
+        return redirect(url_for('routes.dashboard'))
+
     try:
-        evento = Evento.query.get_or_404(id)
-        organizador = Organizador.query.filter_by(
-            id_usuario=current_user.id_usuario).first()
-
-        if not organizador or evento.idOrganizador != organizador.id_organizador:
-            flash('Você não tem permissão para excluir este evento', 'error')
-            return redirect(url_for('routes.dashboard'))
-
         db.session.delete(evento)
         db.session.commit()
         flash('Evento excluído com sucesso!', 'success')

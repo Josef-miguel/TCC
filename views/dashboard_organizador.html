@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Minhas Excursões</h2>
+        <a href="{{ url_for('routes.nova_excursao') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nova Excursão
+        </a>
+    </div>
+    
+    {% if eventos %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Destino</th>
+                    <th>Data</th>
+                    <th>Vagas</th>
+                    <th>Preço</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for evento in eventos %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}">
+                            {{ evento.destino }}
+                        </a>
+                    </td>
+                    <td>{{ evento.data_de_saida.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ evento.vagas_disponiveis() }}/{{ evento.n_vagas }}</td>
+                    <td>R$ {{ "%.2f"|format(evento.preco) }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if evento.vagas_disponiveis() > 0 else 'danger' }}">
+                            {{ 'Disponível' if evento.vagas_disponiveis() > 0 else 'Esgotado' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('routes.editar_evento', id=evento.id_evento) }}" 
+                           class="btn btn-sm btn-outline-primary" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('routes.excluir_evento', id=evento.id_evento) }}" 
+                              class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta excursão?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        Você ainda não criou nenhuma excursão. <a href="{{ url_for('routes.nova_excursao') }}">Crie sua primeira excursão</a>.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -2,6 +2,18 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField
 from flask_wtf import FlaskForm
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp
+from flask_login import UserMixin
+
+class LoginForm(FlaskForm):
+    email = StringField('E-mail', validators=[
+        DataRequired(message='O e-mail é obrigatório'),
+        Email(message='Por favor, insira um e-mail válido')
+    ])
+    senha = PasswordField('Senha', validators=[
+        DataRequired(message='A senha é obrigatória'),
+        Length(min=6, message='A senha deve ter pelo menos 6 caracteres')
+    ])
+    lembrar = BooleanField('Lembrar-me')
 
 
 class RegistrationForm(FlaskForm):
@@ -24,3 +36,7 @@ class RegistrationForm(FlaskForm):
     cnpj = StringField('CNPJ')
     endereco = StringField('Endereço')
     descricao = TextAreaField('Descrição da Empresa')
+    
+#class ResetPasswordRequestForm(FlaskForm):
+    #email = StringField('E-mail', validators=[DataRequired(), Email()])
+    #submit = SubmitField('Solicitar Redefinição de Senha')

@@ -3,10 +3,17 @@ from flask_login import UserMixin
 from datetime import datetime
 
 db = SQLAlchemy()
+from flask_login import UserMixin
 
-# Usuário
 class Usuario(db.Model, UserMixin):
     __tablename__ = 'usuario'
+    
+    id_usuario = db.Column(db.Integer, primary_key=True)
+    # ... outros campos ...
+    
+    # Método obrigatório para Flask-Login
+    def get_id(self):
+        return str(self.id_usuario)  # Convertendo para string como recomendado
 
     id_usuario = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String(255), nullable=False)
@@ -21,11 +28,14 @@ class Usuario(db.Model, UserMixin):
     reservas = db.relationship('Reserva', back_populates='usuario')
     avaliacoes = db.relationship('Avaliacao', back_populates='usuario')
     mensagens = db.relationship('ChatSuporte', back_populates='usuario')
-    favoritos = db.relationship('Evento', secondary='favoritos', 
-                          backref=db.backref('usuarios_favoritos', lazy='dynamic'))
+    favoritos = db.relationship('Evento', 
+                          secondary='favoritos', 
+                          back_populates='usuarios_favoritos')
 
     def is_organizador(self):
         return self.tipo == 'organizador'
+    def get_id(self):
+        return str(self.id_usuario)
 
 # Organizador (extensão de Usuario)
 class Organizador(db.Model):
@@ -47,27 +57,29 @@ class Organizador(db.Model):
 # Evento (Excursão)
 class Evento(db.Model):
     __tablename__ = 'evento'
-
-    id_evento = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    
+    id_evento = db.Column(db.Integer, primary_key=True)
     destino = db.Column(db.String(255), nullable=False)
     descricao = db.Column(db.Text)
-    data_de_saida = db.Column(db.Date, nullable=False)
-    data_de_retorno = db.Column(db.Date, nullable=False)
+    data_de_saida = db.Column(db.DateTime, nullable=False)
+    data_de_retorno = db.Column(db.DateTime, nullable=False)
     local_saida = db.Column(db.String(255), nullable=False)
     n_vagas = db.Column(db.Integer, nullable=False)
     preco = db.Column(db.Numeric(10, 2), nullable=False)
     n_favoritos = db.Column(db.Integer, default=0)
     n_acessos = db.Column(db.Integer, default=0)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # Correção: usar o nome correto da coluna de FK
+    
+    # Chave estrangeira para Organizador
     id_organizador = db.Column(db.Integer, db.ForeignKey('organizador.id_organizador'))
-
-    # Correção no relacionamento
+    
+    # Relacionamentos
     organizador = db.relationship('Organizador', back_populates='eventos')
     reservas = db.relationship('Reserva', back_populates='evento', cascade='all, delete-orphan')
-    usuarios_favoritos = db.relationship('Usuario', secondary='favoritos', 
-                                   backref=db.backref('favoritos', lazy='dynamic'))
+    
+    def vagas_disponiveis(self):
+        reservas_confirmadas = sum(1 for reserva in self.reservas if reserva.status == 'confirmado')
+        return self.n_vagas - reservas_confirmadas
     
     
 # Favoritos (relação muitos-para-muitos entre Usuário e Evento)
