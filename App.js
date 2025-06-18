@@ -101,7 +101,7 @@ function Tabs() {
             },
             tabBarStyle: {
               backgroundColor: "#2b2c33",
-              borderWidth: 1,
+              borderTopWidth: 1,
               borderColor: "#f37100",
             },
           })}
