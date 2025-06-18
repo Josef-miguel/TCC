@@ -123,9 +123,8 @@ async function handleLogin(obj) {
 
   return (
     // Fundo gradiente de cores
-    <LinearGradient
-      colors={['#1e3c72', '#0377fc']} // Altere as cores conforme tema desejado
-      style={styles.gradient}
+    <View
+      style={styles.background}
     >
       {/* ScrollView + KeyboardAvoiding para evitar sobreposição do teclado */}
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -138,7 +137,7 @@ async function handleLogin(obj) {
             style={[styles.logoContainer, { opacity: opac, transform: [{ translateY: offset.y }] }]}
           >
             <Image
-              source={require('../../../assets/img/iconimg.png')}
+              source={require('../../../assets/img/JSGlogo.png')}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -159,7 +158,7 @@ async function handleLogin(obj) {
               />
             </View>
             <View style={styles.inputWrapper}>
-              <Feather name="lock" size={20} style={styles.icon} />
+              <Feather name="mail" size={20} style={styles.icon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -195,22 +194,22 @@ async function handleLogin(obj) {
           </Animated.View>
         </KeyboardAvoidingView>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
 // Estilos da tela
 const styles = StyleSheet.create({
-  gradient: { flex: 1 }, 
+  background: { flex: 1, backgroundColor: '#1a1b21'}, 
   scroll: { flexGrow: 1 },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   logoContainer: { marginBottom: 30, alignItems: 'center' },
-  logo: { width: 180, height: 60 },
+  logo: { width: 100, height: 100, borderRadius: 0 },
   form: { width: '100%' },
   inputWrapper: {
     flexDirection: 'row', 
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#2b2c33',
     borderRadius: 25,
     paddingHorizontal: 15,
     marginBottom: 15,
@@ -222,10 +221,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  icon: { color: '#1e3c72', marginRight: 10 },
-  input: { flex: 1, fontSize: 16, color: '#333' },
+  icon: { color: '#f37100', marginRight: 10 },
+  input: { flex: 1, fontSize: 16, color: '#fff' },
   button: {
-    backgroundColor: '#1e3c72',
+    backgroundColor: '#f37100',
     borderRadius: 25,
     height: 50,
     alignItems: 'center',
