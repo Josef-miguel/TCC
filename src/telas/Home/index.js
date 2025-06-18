@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, FlatList, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
@@ -109,13 +109,13 @@ export default function Home({ navigation }) {
         </Text>
       </View>
       <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
+        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="#f37100" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Barra superior com menu, busca e perfil */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={toggleSidebar}>
@@ -139,14 +139,14 @@ export default function Home({ navigation }) {
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}>
         <Text style={styles.sidebarTitle}>Menu</Text>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text>Agenda</Text>
+          <Text style={styles.sidebarText}>Agenda</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
           const favoritos = [...posts, ...popularPosts].filter(p => p.fav);
           navigation.navigate('Historico', { favoritos });
           toggleSidebar();
         }}>
-          <Text>Minhas Viagens</Text>
+          <Text style={styles.sidebarText}>Minhas Viagens</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'red' }}>Fechar</Text>
@@ -180,7 +180,7 @@ export default function Home({ navigation }) {
         selectedPost={selectedPost}
         setSelectedPost={setSelectedPost}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -188,32 +188,34 @@ export default function Home({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7fa', // Soft light gray for a modern, clean background
+    backgroundColor: '#1a1b21', // Soft light gray for a modern, clean background
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#ffffff', // White background for a crisp top bar
+    padding: 10,
+    backgroundColor: '#363942', // White background for a crisp top bar
     elevation: 4, // Subtle shadow for Android
     shadowColor: '#000', // iOS shadow
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e4e9', // Light border for separation
+    borderBottomColor: '#f37100', // Light border for separation
   },
   searchInput: {
     flex: 1,
     height: 40,
-    backgroundColor: '#f0f2f5', // Slightly darker input background for contrast
+    backgroundColor: '#2b2c33', // Slightly darker input background for contrast
     borderRadius: 20, // Rounded corners for a modern look
     paddingHorizontal: 15,
     marginHorizontal: 12,
     fontSize: 16,
     color: '#333',
     borderWidth: 1,
-    borderColor: '#d1d5db', // Subtle border for input
+    borderColor: '#f37100', // Subtle border for input
   },
   scrollContent: {
     padding: 16, // Increased padding for better spacing
@@ -222,14 +224,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600', // Semi-bold for better hierarchy
-    color: '#1f2937', // Darker text for contrast
+    color: '#fff', // Darker text for contrast
     marginVertical: 12,
     marginLeft: 4,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#363942',
     borderRadius: 12, // Softer, modern rounded corners
     elevation: 3,
     shadowColor: '#000',
@@ -239,7 +241,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb', // Subtle border for card definition
+    borderColor: '#f37100', // Subtle border for card definition
   },
   cardImage: {
     width: 80, // Slightly larger image for better visuals
@@ -255,12 +257,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 17,
     fontWeight: '600', // Semi-bold for emphasis
-    color: '#1f2937', // Darker text for readability
+    color: '#fff', // Darker text for readability
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#6b7280', // Muted gray for secondary text
+    color: '#a0a4ad', // Muted gray for secondary text
     lineHeight: 20, // Improved readability
   },
   cardIcon: {
@@ -271,17 +273,17 @@ const styles = StyleSheet.create({
   popularesTxt: {
     fontWeight: '600',
     fontSize: 16,
-    color: '#1f2937',
+    color: '#fff',
     marginVertical: 12,
     marginLeft: 16,
   },
   sidebar: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     left: -30,
     width: 280, // Slightly wider sidebar for comfort
     height: '100%',
-    backgroundColor: '#ffffff', // White for a clean look
+    backgroundColor: '#363942', // White for a clean look
     padding: 24,
     zIndex: 100,
     elevation: 5,
@@ -290,10 +292,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
+  sidebarText: {
+    color: "#e4e4e4",
+    marginHorizontal: 'auto'
+  },
   sidebarTitle: {
     fontSize: 22,
     fontWeight: '700', // Bold for prominence
-    color: '#111827', // Dark text for contrast
+    color: '#fff', // Dark text for contrast
     marginBottom: 24,
     marginTop: 16,
   },
@@ -302,7 +308,7 @@ const styles = StyleSheet.create({
     // paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#f9fafb', // Light hover-like effect
+    backgroundColor: '#2b2c33', // Light hover-like effect
   },
   overlay: {
     position: 'absolute',

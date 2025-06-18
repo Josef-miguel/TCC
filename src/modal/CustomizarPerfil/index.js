@@ -73,7 +73,7 @@ const pickImage = async () => {
       surname : surname ?? '',
       desc : description ?? '',
       isOrganizer : isOrganizerMode ?? false,
-      // profileImage : imageUri ?? ''
+      profileImage : imageUri ?? ''
     };
 
      try {
