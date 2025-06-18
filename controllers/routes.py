@@ -208,6 +208,8 @@ def eventos():
 # Criar Novo Evento
 
 
+
+
 @routes.route('/eventos/novo', methods=['GET', 'POST'])
 @login_required
 def nova_excursao():
@@ -220,56 +222,33 @@ def nova_excursao():
         flash('Complete seu perfil de organizador primeiro', 'error')
         return redirect(url_for('routes.perfil'))
 
-    if request.method == 'POST':
+    # Crie uma classe de formulário para eventos (adicione isso no seu forms.py)
+    form = EventoForm()  # Você precisará criar esta classe
+
+    if form.validate_on_submit():
         try:
-            # Validações básicas
-            required_fields = ['destino', 'local_saida', 'data_de_saida',
-                              'data_de_retorno', 'preco', 'n_vagas']
-            if any(not request.form.get(field) for field in required_fields):
-                flash('Preencha todos os campos obrigatórios', 'error')
-                return redirect(url_for('routes.nova_excursao'))
-
-            # Converter datas
-            data_saida = datetime.strptime(request.form['data_de_saida'], '%Y-%m-%d')
-            data_retorno = datetime.strptime(request.form['data_de_retorno'], '%Y-%m-%d')
-            
-            if data_retorno <= data_saida:
-                flash('Data de retorno deve ser após a data de saída', 'error')
-                return redirect(url_for('routes.nova_excursao'))
-
-            # Validar preço e vagas
-            preco = float(request.form['preco'])
-            n_vagas = int(request.form['n_vagas'])
-            
-            if preco <= 0 or n_vagas <= 0:
-                flash('Preço e número de vagas devem ser maiores que zero', 'error')
-                return redirect(url_for('routes.nova_excursao'))
-
-            # Criar o evento
             evento = Evento(
-                destino=request.form['destino'],
-                descricao=request.form.get('descricao', ''),
-                local_saida=request.form['local_saida'],
-                data_de_saida=data_saida,
-                data_de_retorno=data_retorno,
-                preco=preco,
-                n_vagas=n_vagas,
+                destino=form.destino.data,
+                descricao=form.descricao.data,
+                local_saida=form.local_saida.data,
+                data_de_saida=form.data_de_saida.data,
+                data_de_retorno=form.data_de_retorno.data,
+                preco=form.preco.data,
+                n_vagas=form.n_vagas.data,
                 id_organizador=organizador.id_organizador
             )
 
             db.session.add(evento)
             db.session.commit()
-            flash('Excursão criada com sucesso!', 'success')
+            flash('Evento criado com sucesso!', 'success')
             return redirect(url_for('routes.dashboard'))
 
-        except ValueError:
-            db.session.rollback()
-            flash('Valores inválidos nos campos numéricos ou datas', 'error')
         except Exception as e:
             db.session.rollback()
-            flash(f'Erro ao criar excursão: {str(e)}', 'error')
+            flash(f'Erro ao criar evento: {str(e)}', 'error')
 
-    return render_template('novo_evento.html')
+    # Passe o form para o template
+    return render_template('novo_evento.html', form=form)
 
 # Detalhes do Evento
 

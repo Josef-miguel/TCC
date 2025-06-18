@@ -5,11 +5,19 @@ from datetime import datetime
 db = SQLAlchemy()
 from flask_login import UserMixin
 
+
 class Usuario(db.Model, UserMixin):
     __tablename__ = 'usuario'
     
     id_usuario = db.Column(db.Integer, primary_key=True)
     # ... outros campos ...
+    
+    eventos_favoritos = db.relationship(
+        'Evento',
+        secondary='favoritos',
+        back_populates='usuarios_favoritos',
+        lazy='dynamic'
+    )
     
     # Método obrigatório para Flask-Login
     def get_id(self):
@@ -59,6 +67,14 @@ class Evento(db.Model):
     __tablename__ = 'evento'
     
     id_evento = db.Column(db.Integer, primary_key=True)
+    
+    usuarios_favoritos = db.relationship(
+        'Usuario',
+        secondary='favoritos',
+        back_populates='eventos_favoritos',
+        lazy='dynamic'
+    )
+    
     destino = db.Column(db.String(255), nullable=False)
     descricao = db.Column(db.Text)
     data_de_saida = db.Column(db.DateTime, nullable=False)
@@ -86,7 +102,7 @@ class Evento(db.Model):
 class Favorito(db.Model):
     __tablename__ = 'favoritos'
     
-    id_favorito = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_favorito = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'), nullable=False)
     id_evento = db.Column(db.Integer, db.ForeignKey('evento.id_evento'), nullable=False)
     data_adicionado = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

@@ -3,6 +3,20 @@ from wtforms import StringField, PasswordField, BooleanField, TextAreaField
 from flask_wtf import FlaskForm
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp
 from flask_login import UserMixin
+from flask_wtf import FlaskForm
+from wtforms import StringField, TextAreaField, DateField, DecimalField, IntegerField, SubmitField
+from wtforms.validators import DataRequired, NumberRange
+from datetime import datetime
+
+class EventoForm(FlaskForm):
+    destino = StringField('Destino', validators=[DataRequired()])
+    descricao = TextAreaField('Descrição')
+    local_saida = StringField('Local de Saída', validators=[DataRequired()])
+    data_de_saida = DateField('Data de Saída', format='%Y-%m-%d', validators=[DataRequired()])
+    data_de_retorno = DateField('Data de Retorno', format='%Y-%m-%d', validators=[DataRequired()])
+    preco = DecimalField('Preço', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
+    n_vagas = IntegerField('Número de Vagas', validators=[DataRequired(), NumberRange(min=1)])
+    submit = SubmitField('Criar Evento')
 
 class LoginForm(FlaskForm):
     email = StringField('E-mail', validators=[

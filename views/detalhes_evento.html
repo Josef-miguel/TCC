@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <!-- Cabeçalho com título -->
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">{{ evento.destino }}</h2>
+                </div>
+                
+                <!-- Corpo do card com detalhes do evento -->
+                <div class="card-body">
+                    <!-- Informações principais -->
+                    <div class="mb-4">
+                        <p><strong>Organizador:</strong> {{ evento.organizador.nome_empresa }}</p>
+                        <p><strong>Data de Saída:</strong> {{ evento.data_de_saida.strftime('%d/%m/%Y') }}</p>
+                        <p><strong>Data de Retorno:</strong> {{ evento.data_de_retorno.strftime('%d/%m/%Y') }}</p>
+                        <p><strong>Local de Saída:</strong> {{ evento.local_saida }}</p>
+                        <p><strong>Preço:</strong> R$ {{ "%.2f"|format(evento.preco) }}</p>
+                        <p><strong>Vagas disponíveis:</strong> {{ evento.vagas_disponiveis() }}/{{ evento.n_vagas }}</p>
+                        
+                        {% if evento.descricao %}
+                        <div class="mt-3">
+                            <h5>Descrição:</h5>
+                            <p>{{ evento.descricao }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- BOTÕES DE EDIÇÃO/EXCLUSÃO (PARA ORGANIZADORES) -->
+                    {% if current_user.is_authenticated and current_user.tipo == 'organizador' and evento.organizador.id_usuario == current_user.id_usuario %}
+                    <div class="mt-4 border-top pt-3">
+                        <a href="{{ url_for('routes.editar_evento', id=evento.id_evento) }}" class="btn btn-primary me-2">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form method="POST" action="{{ url_for('routes.excluir_evento', id=evento.id_evento) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este evento?');">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Seção de reservas (para usuários comuns) -->
+                    {% if current_user.is_authenticated and current_user.tipo == 'usuario' %}
+                    <div class="mt-4 border-top pt-3">
+                        <!-- Formulário de reserva -->
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
