@@ -5,6 +5,9 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
+  Platform,
+  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -18,6 +21,8 @@ const CriarPagamento = ({ visible, onClose }) => {
 
   return (
     <Modal visible={visible} transparent animationType="slide">
+      <View style={styles.container}>
+
       <View style={styles.overlay}>
         <View style={styles.modalBox}>
           {/* Botão de voltar/fechar */}
@@ -58,6 +63,7 @@ const CriarPagamento = ({ visible, onClose }) => {
           </TouchableOpacity>
         </View>
       </View>
+      </View>
     </Modal>
   );
 };
@@ -65,6 +71,11 @@ const CriarPagamento = ({ visible, onClose }) => {
 export default CriarPagamento;
 
 const styles = StyleSheet.create({
+  container: {
+      flex: 1,
+      backgroundColor: '#1a1b21',
+      paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
