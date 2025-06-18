@@ -33,14 +33,14 @@ export default function Home({ navigation }) {
     }
   }, []);
 
-  // Filtra os posts recomendados com base na busca
+  // Filtra os posts recomendados com base na busca (Ajustar as querys para o firebase)
   const filteredRecommended = posts.filter(item =>
     (item.route?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.type?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
-  // Filtra os posts populares com base na busca
+  // Filtra os posts populares com base na busca (Ajustar as querys para o firebase)
   const filteredPopular = popularPosts.filter(item =>
     (item.route?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -71,7 +71,7 @@ export default function Home({ navigation }) {
   useEffect(() => {
   }, [posts, popularPosts]);
 
-  // Alterna o estado de favorito de um post
+  // Alterna o estado de favorito de um post (Ajustar o id para o firebase)
   const toggleFav = (id) => {
     setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
