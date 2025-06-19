@@ -99,54 +99,116 @@ def login_ajax():
     return jsonify({'success': False, 'message': 'Credenciais inválidas'})
 
 
-@routes.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegistrationForm()
+@routes.route('/perfil', methods=['GET', 'POST'], endpoint='perfil_usuario')
+@login_required
+def perfil_usuario():
+    # Importações (se não estiverem no topo do arquivo)
+    from forms import PerfilForm, SenhaForm, OrganizadorForm
 
+    # Inicialização de formulários
+    form = PerfilForm(obj=current_user)
+    senha_form = SenhaForm()
+    org_form = OrganizadorForm()
+
+    # Verificar se é organizador
+    organizador = None
+    if current_user.tipo == 'organizador':
+        organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
+        if organizador and request.method == 'GET':
+            org_form = OrganizadorForm(obj=organizador)
+
+    # Carregar reservas do usuário
+    reservas = Reserva.query.filter_by(id_usuario=current_user.id_usuario)\
+        .options(db.joinedload(Reserva.evento))\
+        .order_by(Reserva.data_de_reserva.desc())\
+        .all()
+
+    # Processar POST do formulário principal
     if form.validate_on_submit():
-        # Verificar se usuário já existe
-        existing_user = Usuario.query.filter_by(email=form.email.data).first()
-        if existing_user:
-            flash('E-mail já cadastrado!', 'danger')
-            return redirect(url_for('routes.register'))
-
         try:
-            # Criar novo usuário (sem organizador ainda)
-            hashed_password = generate_password_hash(form.senha.data, method='scrypt')
-            new_user = Usuario(
-                nome=form.nome.data,
-                email=form.email.data,
-                telefone=form.telefone.data,
-                senha=hashed_password,
-                cpf=form.cpf.data,
-                tipo='organizador' if form.tipo_organizador.data else 'usuario'
-            )
-            
-            db.session.add(new_user)
-            db.session.commit()  # Commit aqui para obter o id_usuario
-
-            # Se for organizador, criar registro na tabela organizador
-            if form.tipo_organizador.data:
-                new_organizador = Organizador(
-                    nome_empresa=form.nome_empresa.data,
-                    cnpj=form.cnpj.data,
-                    endereco=form.endereco.data,
-                    descricao=form.descricao.data,
-                    id_usuario=new_user.id_usuario
-                )
-                db.session.add(new_organizador)
-                db.session.commit()
-
-            flash('Cadastro realizado com sucesso!', 'success')
-            return redirect(url_for('routes.login'))
-
+            form.populate_obj(current_user)
+            db.session.commit()
+            flash('Perfil atualizado com sucesso!', 'success')
+            return redirect(url_for('routes.perfil'))
         except Exception as e:
             db.session.rollback()
-            flash(f'Erro ao cadastrar usuário: {str(e)}', 'danger')
+            flash(f'Erro ao atualizar perfil: {str(e)}', 'error')
 
-    # Para depuração - mostre os erros do formulário
-    print(form.errors) if form.errors else None
-    return render_template('register.html', form=form)
+    # Estatísticas para organizador
+    stats = {
+        'total_eventos': 0,
+        'total_reservas': 0,
+        'faturamento_total': 0
+    }
+
+    if organizador:
+        stats['total_eventos'] = Evento.query.filter_by(id_organizador=organizador.id_organizador).count()
+        
+        eventos_ids = [e.id_evento for e in Evento.query.filter_by(id_organizador=organizador.id_organizador).all()]
+        stats['total_reservas'] = Reserva.query.filter(Reserva.id_evento.in_(eventos_ids)).count()
+        
+        faturamento = db.session.query(
+            db.func.sum(Evento.preco)
+        ).join(Reserva).filter(
+            Reserva.id_evento.in_(eventos_ids),
+            Reserva.status == 'confirmado'
+        ).scalar()
+        
+        stats['faturamento_total'] = faturamento if faturamento else 0
+
+    return render_template(
+        'perfil.html',
+        form=form,
+        senha_form=senha_form,
+        org_form=org_form,
+        reservas=reservas,
+        organizador=organizador,
+        **stats
+    )
+
+
+@routes.route('/alterar-senha', methods=['POST'])
+@login_required
+def alterar_senha():
+    from forms import SenhaForm
+    form = SenhaForm()
+    
+    if form.validate_on_submit():
+        try:
+            if not check_password_hash(current_user.senha, form.senha_atual.data):
+                flash('Senha atual incorreta', 'error')
+            else:
+                current_user.senha = generate_password_hash(form.nova_senha.data)
+                db.session.commit()
+                flash('Senha alterada com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao alterar senha: {str(e)}', 'error')
+    
+    return redirect(url_for('routes.perfil'))
+
+
+@routes.route('/atualizar-organizador', methods=['POST'])
+@login_required
+def atualizar_organizador():
+    if current_user.tipo != 'organizador':
+        abort(403)
+    
+    from forms import OrganizadorForm
+    form = OrganizadorForm()
+    
+    if form.validate_on_submit():
+        organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first_or_404()
+        
+        try:
+            form.populate_obj(organizador)
+            db.session.commit()
+            flash('Informações atualizadas com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar informações: {str(e)}', 'error')
+    
+    return redirect(url_for('routes.perfil'))
 
 
 @routes.route('/register/ajax', methods=['POST'])

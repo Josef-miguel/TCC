@@ -2,480 +2,71 @@
 
 {% block content %}
 <style>
-    /* Estilos específicos para a página de perfil */
-    .profile-container {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 0 20px;
-    }
-    
-    .profile-header {
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-        margin-bottom: 3rem;
-        background-color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .profile-avatar {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 5px solid #e74c3c;
-    }
-    
-    .profile-info h1 {
-        font-size: 2.2rem;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-    
-    .profile-meta {
-        display: flex;
-        gap: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .profile-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        color: #7f8c8d;
-    }
-    
-    .profile-meta-item i {
-        color: #e74c3c;
-    }
-    
-    .profile-status {
-        display: inline-block;
-        padding: 0.3rem 1rem;
-        background-color: #2ecc71;
-        color: white;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: bold;
-    }
-    
-    .profile-tabs {
-        display: flex;
-        border-bottom: 1px solid #ddd;
-        margin-bottom: 2rem;
-    }
-    
-    .profile-tab {
-        padding: 1rem 2rem;
-        cursor: pointer;
-        font-weight: 600;
-        color: #7f8c8d;
-        position: relative;
-    }
-    
-    .profile-tab.active {
-        color: #2c3e50;
-    }
-    
-    .profile-tab.active:after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background-color: #e74c3c;
-    }
-    
-    .profile-tab-content {
-        display: none;
-    }
-    
-    .profile-tab-content.active {
-        display: block;
-    }
-    
-    .profile-section {
-        background-color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        margin-bottom: 2rem;
-    }
-    
-    .section-title {
-        font-size: 1.5rem;
-        color: #2c3e50;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: #2c3e50;
-    }
-    
-    .form-control {
-        width: 100%;
-        padding: 0.8rem 1rem;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 1rem;
-    }
-    
-    .form-control:focus {
-        outline: none;
-        border-color: #e74c3c;
-    }
-    
-    .btn-save {
-        background-color: #e74c3c;
-        color: white;
-        padding: 0.8rem 2rem;
-        border: none;
-        border-radius: 5px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-save:hover {
-        background-color: #c0392b;
-        transform: translateY(-2px);
-    }
-    
-    .payment-methods {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-    }
-    
-    .payment-card {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 1.5rem;
-        position: relative;
-    }
-    
-    .payment-card-default {
-        border: 2px solid #e74c3c;
-    }
-    
-    .payment-card-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-    
-    .payment-card-type {
-        font-weight: 600;
-        color: #2c3e50;
-    }
-    
-    .payment-card-default-badge {
-        background-color: #e74c3c;
-        color: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 3px;
-        font-size: 0.8rem;
-    }
-    
-    .payment-card-number {
-        font-family: monospace;
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-        letter-spacing: 1px;
-    }
-    
-    .payment-card-actions {
-        display: flex;
-        gap: 1rem;
-    }
-    
-    .payment-card-btn {
-        background: none;
-        border: none;
-        color: #7f8c8d;
-        cursor: pointer;
-        transition: color 0.3s ease;
-    }
-    
-    .payment-card-btn:hover {
-        color: #e74c3c;
-    }
-    
-    .btn-add-payment {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        background-color: #f8f9fa;
-        border: 2px dashed #ddd;
-        border-radius: 8px;
-        padding: 1.5rem;
-        width: 100%;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-add-payment:hover {
-        border-color: #e74c3c;
-        color: #e74c3c;
-    }
-    
-    .bookings-list {
-        display: grid;
-        gap: 1.5rem;
-    }
-    
-    .booking-card {
-        display: grid;
-        grid-template-columns: 150px 1fr;
-        gap: 1.5rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    
-    .booking-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .booking-content {
-        padding: 1.5rem;
-    }
-    
-    .booking-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-    
-    .booking-title {
-        font-size: 1.2rem;
-        color: #2c3e50;
-    }
-    
-    .booking-status {
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: bold;
-    }
-    
-    .booking-status.confirmed {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    
-    .booking-status.pending {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-    
-    .booking-details {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .booking-detail {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .booking-detail i {
-        color: #e74c3c;
-    }
-    
-    .booking-actions {
-        display: flex;
-        gap: 1rem;
-    }
-    
-    .booking-btn {
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .booking-btn-primary {
-        background-color: #e74c3c;
-        color: white;
-        border: none;
-    }
-    
-    .booking-btn-primary:hover {
-        background-color: #c0392b;
-    }
-    
-    .booking-btn-outline {
-        background: none;
-        border: 1px solid #ddd;
-        color: #7f8c8d;
-    }
-    
-    .booking-btn-outline:hover {
-        border-color: #e74c3c;
-        color: #e74c3c;
-    }
-    
-    .loyalty-program {
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-        background: linear-gradient(135deg, #2c3e50, #4ca1af);
-        padding: 2rem;
-        border-radius: 10px;
-        color: white;
-    }
-    
-    .loyalty-badge {
-        font-size: 3rem;
-        color: #f1c40f;
-    }
-    
-    .loyalty-content h3 {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .loyalty-progress {
-        margin-top: 1rem;
-    }
-    
-    .progress-bar {
-        height: 10px;
-        background-color: rgba(255, 255, 255, 0.2);
-        border-radius: 5px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .progress-fill {
-        height: 100%;
-        width: 65%;
-        background-color: #f1c40f;
-        border-radius: 5px;
-    }
-    
-    .progress-text {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.9rem;
-    }
-    
-    .preferences-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-    
-    .preference-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .preference-checkbox {
-        width: 18px;
-        height: 18px;
-    }
-    
-    @media (max-width: 768px) {
-        .profile-header {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .profile-meta {
-            justify-content: center;
-        }
-        
-        .profile-tabs {
-            overflow-x: auto;
-        }
-        
-        .booking-card {
-            grid-template-columns: 1fr;
-        }
-        
-        .booking-image {
-            height: 150px;
-        }
-        
-        .loyalty-program {
-            flex-direction: column;
-            text-align: center;
-        }
-    }
+    /* (Mantenha todos os estilos CSS do template anterior) */
 </style>
 
 <div class="profile-container">
     <!-- Cabeçalho do Perfil -->
     <div class="profile-header">
-        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Foto do usuário" class="profile-avatar">
+        <div class="profile-avatar" style="background-color: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+            {{ current_user.nome[0]|upper }}
+        </div>
         <div class="profile-info">
-            <h1>Maria Silva</h1>
+            <h1>{{ current_user.nome }}</h1>
             <div class="profile-meta">
-                <span class="profile-meta-item"><i class="fas fa-envelope"></i> maria.silva@email.com</span>
-                <span class="profile-meta-item"><i class="fas fa-phone"></i> (11) 98765-4321</span>
-                <span class="profile-meta-item"><i class="fas fa-birthday-cake"></i> 15/03/1985</span>
+                <span class="profile-meta-item"><i class="fas fa-envelope"></i> {{ current_user.email }}</span>
+                {% if current_user.telefone %}
+                <span class="profile-meta-item"><i class="fas fa-phone"></i> {{ current_user.telefone }}</span>
+                {% endif %}
+                {% if current_user.cpf %}
+                <span class="profile-meta-item"><i class="fas fa-id-card"></i> {{ current_user.cpf }}</span>
+                {% endif %}
             </div>
-            <span class="profile-status"><i class="fas fa-check"></i> Conta verificada</span>
+            <span class="profile-status">
+                <i class="fas fa-check"></i> 
+                {% if current_user.tipo == 'organizador' %}
+                Conta Organizador
+                {% else %}
+                Conta Verificada
+                {% endif %}
+            </span>
         </div>
     </div>
     
     <!-- Abas de Navegação -->
     <div class="profile-tabs">
         <div class="profile-tab active" data-tab="info">Informações Pessoais</div>
-        <div class="profile-tab" data-tab="payments">Formas de Pagamento</div>
         <div class="profile-tab" data-tab="bookings">Minhas Reservas</div>
-        <div class="profile-tab" data-tab="preferences">Preferências</div>
+        {% if current_user.tipo == 'organizador' %}
+        <div class="profile-tab" data-tab="organizer">Painel Organizador</div>
+        {% endif %}
     </div>
     
     <!-- Conteúdo das Abas -->
     <div class="profile-tab-content active" id="info-tab">
         <div class="profile-section">
             <h2 class="section-title">Informações Pessoais</h2>
-            <form>
+            <form method="POST" action="{{ url_for('routes.perfil') }}">
+                {{ form.hidden_tag() }}
+                
                 <div class="form-group">
-                    <label for="fullName" class="form-label">Nome Completo</label>
-                    <input type="text" id="fullName" class="form-control" value="Maria Silva">
+                    {{ form.nome.label(class="form-label") }}
+                    {{ form.nome(class="form-control", value=current_user.nome) }}
                 </div>
                 
                 <div class="form-group">
-                    <label for="email" class="form-label">E-mail</label>
-                    <input type="email" id="email" class="form-control" value="maria.silva@email.com">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", value=current_user.email) }}
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone" class="form-label">Telefone</label>
-                    <input type="tel" id="phone" class="form-control" value="(11) 98765-4321">
+                    {{ form.telefone.label(class="form-label") }}
+                    {{ form.telefone(class="form-control", value=current_user.telefone or '') }}
                 </div>
                 
                 <div class="form-group">
-                    <label for="birthdate" class="form-label">Data de Nascimento</label>
-                    <input type="date" id="birthdate" class="form-control" value="1985-03-15">
-                </div>
-                
-                <div class="form-group">
-                    <label for="document" class="form-label">CPF</label>
-                    <input type="text" id="document" class="form-control" value="123.456.789-00">
+                    {{ form.cpf.label(class="form-label") }}
+                    {{ form.cpf(class="form-control", value=current_user.cpf, readonly=(current_user.cpf is not none)) }}
                 </div>
                 
                 <button type="submit" class="btn-save">Salvar Alterações</button>
@@ -483,58 +74,23 @@
         </div>
         
         <div class="profile-section">
-            <h2 class="section-title">Endereço</h2>
-            <form>
-                <div class="form-group">
-                    <label for="address" class="form-label">Endereço</label>
-                    <input type="text" id="address" class="form-control" value="Rua das Flores, 123">
-                </div>
-                
-                <div class="form-group">
-                    <label for="complement" class="form-label">Complemento</label>
-                    <input type="text" id="complement" class="form-control" value="Apto 101">
-                </div>
-                
-                <div class="form-group">
-                    <label for="neighborhood" class="form-label">Bairro</label>
-                    <input type="text" id="neighborhood" class="form-control" value="Jardim Paulista">
-                </div>
-                
-                <div class="form-group">
-                    <label for="city" class="form-label">Cidade</label>
-                    <input type="text" id="city" class="form-control" value="São Paulo">
-                </div>
-                
-                <div class="form-group">
-                    <label for="state" class="form-label">Estado</label>
-                    <input type="text" id="state" class="form-control" value="SP">
-                </div>
-                
-                <div class="form-group">
-                    <label for="zipcode" class="form-label">CEP</label>
-                    <input type="text" id="zipcode" class="form-control" value="01415-000">
-                </div>
-                
-                <button type="submit" class="btn-save">Salvar Endereço</button>
-            </form>
-        </div>
-        
-        <div class="profile-section">
             <h2 class="section-title">Alterar Senha</h2>
-            <form>
+            <form method="POST" action="{{ url_for('routes.alterar_senha') }}">
+                {{ senha_form.hidden_tag() }}
+                
                 <div class="form-group">
-                    <label for="currentPassword" class="form-label">Senha Atual</label>
-                    <input type="password" id="currentPassword" class="form-control">
+                    {{ senha_form.senha_atual.label(class="form-label") }}
+                    {{ senha_form.senha_atual(class="form-control") }}
                 </div>
                 
                 <div class="form-group">
-                    <label for="newPassword" class="form-label">Nova Senha</label>
-                    <input type="password" id="newPassword" class="form-control">
+                    {{ senha_form.nova_senha.label(class="form-label") }}
+                    {{ senha_form.nova_senha(class="form-control") }}
                 </div>
                 
                 <div class="form-group">
-                    <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
-                    <input type="password" id="confirmPassword" class="form-control">
+                    {{ senha_form.confirmar_senha.label(class="form-label") }}
+                    {{ senha_form.confirmar_senha(class="form-control") }}
                 </div>
                 
                 <button type="submit" class="btn-save">Alterar Senha</button>
@@ -542,266 +98,179 @@
         </div>
     </div>
     
-    <!-- Formas de Pagamento -->
-    <div class="profile-tab-content" id="payments-tab">
-        <div class="profile-section">
-            <h2 class="section-title">Formas de Pagamento</h2>
-            <div class="payment-methods">
-                <div class="payment-card payment-card-default">
-                    <div class="payment-card-header">
-                        <span class="payment-card-type">Cartão de Crédito</span>
-                        <span class="payment-card-default-badge">Padrão</span>
-                    </div>
-                    <div class="payment-card-number">•••• •••• •••• 1234</div>
-                    <div class="payment-card-meta">VISA - Validade: 05/25</div>
-                    <div class="payment-card-actions">
-                        <button class="payment-card-btn"><i class="fas fa-edit"></i> Editar</button>
-                        <button class="payment-card-btn"><i class="fas fa-trash"></i> Remover</button>
-                    </div>
-                </div>
-                
-                <div class="payment-card">
-                    <div class="payment-card-header">
-                        <span class="payment-card-type">Cartão de Crédito</span>
-                    </div>
-                    <div class="payment-card-number">•••• •••• •••• 5678</div>
-                    <div class="payment-card-meta">MASTERCARD - Validade: 10/24</div>
-                    <div class="payment-card-actions">
-                        <button class="payment-card-btn"><i class="fas fa-edit"></i> Editar</button>
-                        <button class="payment-card-btn"><i class="fas fa-trash"></i> Remover</button>
-                        <button class="payment-card-btn"><i class="fas fa-check"></i> Tornar padrão</button>
-                    </div>
-                </div>
-                
-                <div class="payment-card">
-                    <div class="payment-card-header">
-                        <span class="payment-card-type">PayPal</span>
-                    </div>
-                    <div class="payment-card-number">maria.silva@email.com</div>
-                    <div class="payment-card-meta">Conta vinculada em 15/02/2023</div>
-                    <div class="payment-card-actions">
-                        <button class="payment-card-btn"><i class="fas fa-trash"></i> Remover</button>
-                        <button class="payment-card-btn"><i class="fas fa-check"></i> Tornar padrão</button>
-                    </div>
-                </div>
-                
-                <button class="btn-add-payment">
-                    <i class="fas fa-plus"></i> Adicionar Forma de Pagamento
-                </button>
-            </div>
-        </div>
-    </div>
-    
     <!-- Minhas Reservas -->
     <div class="profile-tab-content" id="bookings-tab">
         <div class="profile-section">
-            <h2 class="section-title">Próximas Viagens</h2>
+            <h2 class="section-title">Minhas Reservas</h2>
+            {% if reservas %}
             <div class="bookings-list">
+                {% for reserva in reservas %}
                 <div class="booking-card">
-                    <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Fernando de Noronha" class="booking-image">
+                    {% if reserva.evento.imagem %}
+                    <img src="{{ url_for('static', filename='uploads/' + reserva.evento.imagem) }}" alt="{{ reserva.evento.destino }}" class="booking-image">
+                    {% else %}
+                    <div style="background: #eee; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-image" style="font-size: 2rem; color: #999;"></i>
+                    </div>
+                    {% endif %}
                     <div class="booking-content">
                         <div class="booking-header">
-                            <h3 class="booking-title">Pacote Fernando de Noronha - 5 dias</h3>
-                            <span class="booking-status confirmed">Confirmado</span>
+                            <h3 class="booking-title">{{ reserva.evento.destino }}</h3>
+                            <span class="booking-status {{ 'confirmed' if reserva.status == 'confirmado' else 'pending' }}">
+                                {{ reserva.status|capitalize }}
+                            </span>
                         </div>
                         <div class="booking-details">
                             <div class="booking-detail">
                                 <i class="fas fa-calendar-alt"></i>
-                                <span>15 a 20 de Agosto, 2025</span>
+                                <span>{{ reserva.evento.data_de_saida.strftime('%d/%m/%Y') }} - {{ reserva.evento.data_de_retorno.strftime('%d/%m/%Y') }}</span>
                             </div>
                             <div class="booking-detail">
-                                <i class="fas fa-users"></i>
-                                <span>2 Adultos</span>
-                            </div>
-                            <div class="booking-detail">
-                                <i class="fas fa-hotel"></i>
-                                <span>Pousada Maravilha</span>
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ reserva.evento.local_saida }}</span>
                             </div>
                             <div class="booking-detail">
                                 <i class="fas fa-money-bill-wave"></i>
-                                <span>R$ 4.998,00</span>
+                                <span>R$ {{ "%.2f"|format(reserva.evento.preco) }}</span>
                             </div>
                         </div>
                         <div class="booking-actions">
-                            <button class="booking-btn booking-btn-primary">Ver Detalhes</button>
-                            <button class="booking-btn booking-btn-outline">Cancelar</button>
+                            <a href="{{ url_for('routes.detalhes_evento', id=reserva.evento.id_evento) }}" class="booking-btn booking-btn-primary">
+                                Ver Detalhes
+                            </a>
+                            {% if reserva.status == 'pendente' %}
+                            <form method="POST" action="{{ url_for('routes.cancelar_reserva', id=reserva.id_reserva) }}" style="display: inline;">
+                                <button type="submit" class="booking-btn booking-btn-outline" onclick="return confirm('Tem certeza que deseja cancelar esta reserva?');">
+                                    Cancelar
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-                
-                <div class="booking-card">
-                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Chapada Diamantina" class="booking-image">
-                    <div class="booking-content">
-                        <div class="booking-header">
-                            <h3 class="booking-title">Aventura na Chapada Diamantina</h3>
-                            <span class="booking-status pending">Pagamento Pendente</span>
-                        </div>
-                        <div class="booking-details">
-                            <div class="booking-detail">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>10 a 14 de Outubro, 2025</span>
-                            </div>
-                            <div class="booking-detail">
-                                <i class="fas fa-users"></i>
-                                <span>4 Pessoas</span>
-                            </div>
-                            <div class="booking-detail">
-                                <i class="fas fa-hotel"></i>
-                                <span>Hostel Natureza</span>
-                            </div>
-                            <div class="booking-detail">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>R$ 3.596,00</span>
-                            </div>
-                        </div>
-                        <div class="booking-actions">
-                            <button class="booking-btn booking-btn-primary">Pagar Agora</button>
-                            <button class="booking-btn booking-btn-outline">Cancelar</button>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
-        </div>
-        
-        <div class="profile-section">
-            <h2 class="section-title">Histórico de Viagens</h2>
-            <div class="bookings-list">
-                <div class="booking-card">
-                    <img src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Rio de Janeiro" class="booking-image">
-                    <div class="booking-content">
-                        <div class="booking-header">
-                            <h3 class="booking-title">Rio de Janeiro - Reveillon</h3>
-                            <span class="booking-status confirmed">Concluído</span>
-                        </div>
-                        <div class="booking-details">
-                            <div class="booking-detail">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>28/12/2024 a 02/01/2025</span>
-                            </div>
-                            <div class="booking-detail">
-                                <i class="fas fa-users"></i>
-                                <span>2 Adultos</span>
-                            </div>
-                            <div class="booking-detail">
-                                <i class="fas fa-hotel"></i>
-                                <span>Hotel Copacabana</span>
-                            </div>
-                            <div class="booking-detail">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>R$ 3.200,00</span>
-                            </div>
-                        </div>
-                        <div class="booking-actions">
-                            <button class="booking-btn booking-btn-primary">Ver Detalhes</button>
-                            <button class="booking-btn booking-btn-outline">Avaliar</button>
-                        </div>
-                    </div>
-                </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h4>Nenhuma reserva encontrada</h4>
+                <p>Você ainda não fez nenhuma reserva. Explore nossos eventos disponíveis!</p>
+                <a href="{{ url_for('routes.eventos') }}" class="btn btn-primary">
+                    Ver Eventos
+                </a>
             </div>
+            {% endif %}
         </div>
     </div>
     
-    <!-- Preferências -->
-    <div class="profile-tab-content" id="preferences-tab">
+    {% if current_user.tipo == 'organizador' %}
+    <!-- Painel Organizador -->
+    <div class="profile-tab-content" id="organizer-tab">
         <div class="profile-section">
-            <h2 class="section-title">Programa de Fidelidade</h2>
-            <div class="loyalty-program">
-                <div class="loyalty-badge">
-                    <i class="fas fa-gem"></i>
+            <h2 class="section-title">Informações da Empresa</h2>
+            {% if organizador %}
+            <form method="POST" action="{{ url_for('routes.atualizar_organizador') }}">
+                {{ org_form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ org_form.nome_empresa.label(class="form-label") }}
+                    {{ org_form.nome_empresa(class="form-control", value=organizador.nome_empresa) }}
                 </div>
-                <div class="loyalty-content">
-                    <h3>Nível Ouro</h3>
-                    <p>Você tem 8.500 pontos. Falta 1.500 pontos para alcançar o próximo nível e desbloquear benefícios exclusivos!</p>
-                    <div class="loyalty-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill"></div>
+                
+                <div class="form-group">
+                    {{ org_form.cnpj.label(class="form-label") }}
+                    {{ org_form.cnpj(class="form-control", value=organizador.cnpj) }}
+                </div>
+                
+                <div class="form-group">
+                    {{ org_form.endereco.label(class="form-label") }}
+                    {{ org_form.endereco(class="form-control", value=organizador.endereco) }}
+                </div>
+                
+                <div class="form-group">
+                    {{ org_form.descricao.label(class="form-label") }}
+                    {{ org_form.descricao(class="form-control", rows=4) }}{{ organizador.descricao or '' }}
+                </div>
+                
+                <button type="submit" class="btn-save">Atualizar Informações</button>
+            </form>
+            {% else %}
+            <div class="alert alert-warning">
+                Complete seu cadastro como organizador para acessar todas as funcionalidades.
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if organizador %}
+        <div class="profile-section">
+            <h2 class="section-title">Estatísticas</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3>{{ total_eventos }}</h3>
+                            <p class="text-muted">Eventos Criados</p>
                         </div>
-                        <div class="progress-text">
-                            <span>8.500 pontos</span>
-                            <span>10.000 pontos</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3>{{ total_reservas }}</h3>
+                            <p class="text-muted">Reservas Totais</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3>R$ {{ "%.2f"|format(faturamento_total) }}</h3>
+                            <p class="text-muted">Faturamento</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="profile-section">
-            <h2 class="section-title">Preferências de Viagem</h2>
-            <form>
-                <div class="form-group">
-                    <label class="form-label">Tipos de Viagem Preferidos</label>
-                    <div class="preferences-list">
-                        <label class="preference-item">
-                            <input type="checkbox" class="preference-checkbox" checked>
-                            <span>Praia</span>
-                        </label>
-                        <label class="preference-item">
-                            <input type="checkbox" class="preference-checkbox" checked>
-                            <span>Aventura</span>
-                        </label>
-                        <label class="preference-item">
-                            <input type="checkbox" class="preference-checkbox">
-                            <span>Cidades</span>
-                        </label>
-                        <label class="preference-item">
-                            <input type="checkbox" class="preference-checkbox">
-                            <span>Ecoturismo</span>
-                        </label>
-                        <label class="preference-item">
-                            <input type="checkbox" class="preference-checkbox" checked>
-                            <span>Cultural</span>
-                        </label>
-                        <label class="preference-item">
-                            <input type="checkbox" class="preference-checkbox">
-                            <span>Romântico</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="newsletter" class="form-label">Receber Newsletter</label>
-                    <select id="newsletter" class="form-control">
-                        <option value="weekly">Semanalmente</option>
-                        <option value="monthly" selected>Mensalmente</option>
-                        <option value="none">Não receber</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="notifications" class="form-label">Notificações</label>
-                    <select id="notifications" class="form-control">
-                        <option value="all" selected>Todas as notificações</option>
-                        <option value="important">Apenas importantes</option>
-                        <option value="none">Nenhuma notificação</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="btn-save">Salvar Preferências</button>
-            </form>
-        </div>
+        {% endif %}
     </div>
+    {% endif %}
 </div>
 
 <script>
     // Controle das abas
     document.querySelectorAll('.profile-tab').forEach(tab => {
         tab.addEventListener('click', () => {
-            // Remove a classe active de todas as abas e conteúdos
             document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
             
-            // Adiciona a classe active à aba clicada e ao conteúdo correspondente
             tab.classList.add('active');
             const tabId = tab.getAttribute('data-tab');
             document.getElementById(`${tabId}-tab`).classList.add('active');
         });
     });
     
-    // Simular upload de foto de perfil
-    const avatar = document.querySelector('.profile-avatar');
-    avatar.addEventListener('click', () => {
-        // Na implementação real, isso abriria um seletor de arquivos
-        alert('Clique aqui para alterar sua foto de perfil');
+    // Máscaras para campos
+    document.addEventListener('DOMContentLoaded', function() {
+        // Máscara para telefone
+        const telefone = document.getElementById('telefone');
+        if (telefone) {
+            telefone.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '')
+                    .replace(/^(\d{2})(\d)/g, '($1) $2')
+                    .replace(/(\d)(\d{4})$/, '$1-$2');
+            });
+        }
+        
+        // Máscara para CPF
+        const cpf = document.getElementById('cpf');
+        if (cpf) {
+            cpf.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '')
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            });
+        }
     });
 </script>
 {% endblock %}

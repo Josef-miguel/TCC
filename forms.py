@@ -1,12 +1,36 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, TextAreaField
+from wtforms import StringField, PasswordField, BooleanField, TextAreaField, SubmitField
 from flask_wtf import FlaskForm
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp
 from flask_login import UserMixin
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, DecimalField, IntegerField, SubmitField
-from wtforms.validators import DataRequired, NumberRange
+from wtforms.validators import DataRequired, NumberRange, ValidationError
 from datetime import datetime
+from models.database import Usuario
+
+class PerfilForm(FlaskForm):
+    nome = StringField('Nome Completo', validators=[DataRequired()])
+    email = StringField('E-mail', validators=[DataRequired(), Email()])
+    telefone = StringField('Telefone')
+    cpf = StringField('CPF')  # Readonly após cadastro
+    submit = SubmitField('Salvar Alterações')
+
+class SenhaForm(FlaskForm):
+    senha_atual = PasswordField('Senha Atual', validators=[DataRequired()])
+    nova_senha = PasswordField('Nova Senha', validators=[DataRequired(), Length(min=6)])
+    confirmar_senha = PasswordField('Confirmar Nova Senha', validators=[
+        DataRequired(),
+        EqualTo('nova_senha', message='As senhas devem ser iguais')
+    ])
+    submit = SubmitField('Alterar Senha')
+
+class OrganizadorForm(FlaskForm):
+    nome_empresa = StringField('Nome da Empresa', validators=[DataRequired()])
+    cnpj = StringField('CNPJ', validators=[DataRequired()])
+    endereco = StringField('Endereço', validators=[DataRequired()])
+    descricao = TextAreaField('Descrição')
+    submit = SubmitField('Atualizar Informações')
 
 class EventoForm(FlaskForm):
     destino = StringField('Destino', validators=[DataRequired()])
