@@ -51,13 +51,13 @@ function Tabs() {
   const activeOrganizerPost = () => {
     if (isOrganizer) {
       return (
-        <TouchableOpacity
+          <TouchableOpacity
           style={styles.createPostButton}
           onPress={() => setModalVisible(true)} // Open the modal
         >
           <Ionicons name="add-circle" size={50} color="#f37100" />
         </TouchableOpacity>
-      );
+        );
     } else if (!isOrganizer) {
       return null;
     }
@@ -72,27 +72,11 @@ function Tabs() {
               let iconName;
               if (route.name === "Home") {
                 iconName = focused ? "home" : "home";
-              } else if (route.name === "Home") {
-                iconName = focused ? "list" : "list";
-              } else if (route.name === "Login") {
-                iconName = focused ? "people" : "people";
-              } else if (route.name === "Cadastro") {
-                iconName = focused ? "albums-outline" : "albums-outline";
-              } else if (route.name === "Post") {
-                iconName = focused ? "albums-outline" : "albums-outline";
               } else if (route.name === "Perfil") {
                 iconName = focused
                   ? "people-circle-outline"
                   : "people-circle-outline";
-              } else if (route.name === "Historico") {
-                iconName = focused ? "albums-outline" : "albums-outline";
-              } else if (route.name === "Formapagamento") {
-                iconName = focused ? "wallet-outline" : "wallet-outline";
-              } else if (route.name === "Agenda") {
-                iconName = focused ? "albums-outline" : "albums-outline";
               } else if (route.name === "Criar Post") {
-                iconName = focused ? "add-circle" : "add-circle";
-              } else if (route.name === "Chat") {
                 iconName = focused ? "add-circle" : "add-circle";
               }
 
@@ -104,11 +88,9 @@ function Tabs() {
               borderTopWidth: 1,
               borderColor: "#f37100",
             },
+            tabBarActiveTintColor: "#f37100",
+            tabBarInactiveTintColor: "#999999",
           })}
-          tabBarOptions={{
-            activeTintColor: "#f37100",
-            inactiveTintColor: "#1a1b21",
-          }}
         >
           {/* <Tab.Screen name= "Login" component={Login}></Tab.Screen>
       <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
@@ -124,14 +106,6 @@ function Tabs() {
             enabled={false}
             options={{
               tabBarButton: (props) => activeOrganizerPost(),
-              // (
-              // <TouchableOpacity
-              // style={styles.createPostButton}
-              // onPress={() => setModalVisible(true)} // Open the modal
-              // >
-              // <Ionicons name="add-circle" size={50} color="#3f64c7" />
-              // </TouchableOpacity>
-              // ),
             }}
           />
 
@@ -236,8 +210,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 70,
     height: 70,
-    borderRadius: 35,
+    borderRadius: 50,
     backgroundColor: "#2b2c33",
+    borderWidth: 1,
+    borderColor: "#f37100"
   },
   modalOverlay: {
     flex: 1,
@@ -302,18 +278,6 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     alignItems: "center",
   },
-  tripTypeButtonActive: {
-    backgroundColor: "#e0f7fa",
-    borderColor: "#00bcd4",
-  },
-  tripTypeText: {
-    fontSize: 12,
-    color: "#333",
-  },
-  tripTypeTextActive: {
-    color: "#00bcd4",
-    fontWeight: "bold",
-  },
   mapPlaceholder: {
     height: 100,
     backgroundColor: "#f0f0f0",
@@ -321,26 +285,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 15,
-  },
-  termsText: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 15,
-  },
-  termsLink: {
-    color: "#00bcd4",
-    textDecorationLine: "underline",
-  },
-  submitButton: {
-    backgroundColor: "#00bcd4",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  submitButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
   },
 });

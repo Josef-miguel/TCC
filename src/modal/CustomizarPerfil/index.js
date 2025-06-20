@@ -107,7 +107,7 @@ const pickImage = async () => {
           {/* --- Header --- */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Ionicons name="arrow-back" size={24} color="black" />
+              <Ionicons name="arrow-back" size={32} color="#f37100" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Customizar perfil</Text>
           </View>
@@ -118,7 +118,7 @@ const pickImage = async () => {
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.profileImage} />
               ) : (
-                <Ionicons name="cloud-upload-outline" size={30} color="#888" />
+                <Ionicons name="cloud-upload-outline" size={30} color="#f37100" />
               )}
             </TouchableOpacity>
           </View>
@@ -130,6 +130,7 @@ const pickImage = async () => {
             value={name}
             onChangeText={setName}
             placeholder="Digite seu nome"
+            placeholderTextColor="#a4a4a4"
           />
 
           <Text style={styles.label}>Sobrenome</Text>
@@ -138,6 +139,7 @@ const pickImage = async () => {
             value={surname}
             onChangeText={setSurname}
             placeholder="Digite seu sobrenome"
+            placeholderTextColor="#a4a4a4"
           />
 
           <Text style={styles.label}>Descrição</Text>
@@ -147,6 +149,7 @@ const pickImage = async () => {
             onChangeText={setDescription}
             placeholder="Fale um pouco sobre você..."
             multiline
+            placeholderTextColor="#a4a4a4"
           />
 
           {/* --- Switch --- */}
@@ -154,10 +157,10 @@ const pickImage = async () => {
             <Switch
               value={isOrganizerMode}
               onValueChange={setIsOrganizerMode}
-              thumbColor={isOrganizerMode ? '#3f64c7' : '#f4f3f4'}
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={isOrganizerMode ? '#f37100' : '#000'}
+              trackColor={{ false: '#767577', true: '#494949' }}
             />
-            <Text style={styles.switchLabel}>modo organizador</Text>
+            <Text style={styles.switchLabel}>Modo organizador</Text>
           </View>
 
           {/* --- Botões Extras --- */}
@@ -199,32 +202,32 @@ const styles = StyleSheet.create({
   },
   background: {
     width: '90%',
-    backgroundColor: '#FFF',
+    backgroundColor: '#2b2c33',
     borderRadius: 8,
     padding: 20,
   },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center', color: "#f37100" },
   profilePicContainer: { alignItems: 'center', marginBottom: 20 },
   uploadButton: {
     width: 100, height: 100, borderRadius: 50,
-    backgroundColor: '#f0f0f0', justifyContent: 'center',
+    backgroundColor: '#363942', justifyContent: 'center',
     alignItems: 'center', overflow: 'hidden',
   },
   profileImage: { width: '100%', height: '100%' },
-  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5 },
+  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5, color: "#e4e4e4" },
   input: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 8,
-    padding: 10, marginBottom: 15, backgroundColor: '#f5f5f5',
+    borderWidth: 1, borderColor: '#f37100', borderRadius: 8,
+    padding: 10, marginBottom: 15, backgroundColor: '#363942', color: "#fff" 
   },
   descriptionInput: { height: 80, textAlignVertical: 'top' },
   switchContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  switchLabel: { marginLeft: 10, fontSize: 14, color: '#333' },
+  switchLabel: { marginLeft: 10, fontSize: 14, color: '#e4e4e4' },
   button: { padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 10 },
-  paymentButton: { backgroundColor: '#4CAF50' },
-  verificationButton: { backgroundColor: '#3f64c7' },
-  saveButton: { backgroundColor: '#28A745' }, // verde para Salvar
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  paymentButton: { backgroundColor: '#a0a4ad', borderWidth: 1, borderColor: "#f37100" },
+  verificationButton: { backgroundColor: '#a0a4ad', borderWidth: 1, borderColor: "#f37100" },
+  saveButton: { backgroundColor: '#a0a4ad' }, // verde para Salvar
+  buttonText: { color: '#f37100', fontWeight: 'bold', fontSize: 16 },
 });
 
 export default CustomizeProfile;

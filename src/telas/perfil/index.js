@@ -29,7 +29,7 @@ export default function Perfil() {
   // Componente interno para itens de menu
   const MenuItem = ({ icon, label, onPress }) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress}>
-      <Icon name={icon} size={24} color="#333" style={styles.icon} />
+      <Icon name={icon} size={32} color="#f37100" style={styles.icon} />
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>
   );
@@ -38,7 +38,7 @@ export default function Perfil() {
 
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       {/* ScrollView para lista de opções */}
       <ScrollView contentContainerStyle={styles.container}>
 
@@ -63,7 +63,7 @@ export default function Perfil() {
             {
               userData?.userInfo?.profileImage
                 ? <Avatar.Image source={{ uri: userData.userInfo.profileImage }} size={128} style={styles.avatar} />
-                : <Avatar.Text label="R" size={128} style={styles.avatar} sx={{bgcolor: "#ff0" }} />
+                : <Avatar.Text label="R" size={128} style={styles.avatar} sx={{bgcolor: "#ff0"}} />
             }          
           </TouchableOpacity>
           <Text style={styles.name}>{userData?.userInfo?.nome}</Text>
@@ -111,7 +111,7 @@ export default function Perfil() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1b21',
     flexGrow: 1,
   },
   header: {
@@ -120,12 +120,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    backgroundColor: '#f57c00', 
+    backgroundColor: '#191919',
+    borderWidth: 1,
+    borderColor: "#f37100"
   },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 8,
+    color: "#fff"
   },
   level: {
     color: '#888',
@@ -136,12 +139,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 0.5,
     borderBottomColor: '#ccc',
+    color: "#e4e4e4"
   },
   icon: {
     marginRight: 12,
   },
   label: {
     fontSize: 16,
+    color: "#b9b9b9"
   },
   modalOverlay: {
     flex: 1,
@@ -150,7 +155,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#363942',
     padding: 20,
     borderRadius: 10,
     width: '80%',
@@ -158,14 +163,17 @@ const styles = StyleSheet.create({
   modalText: {
     marginBottom: 20,
     fontSize: 16,
+    color: "#fff"
   },
   logoutText: {
     color: 'red',
     fontWeight: 'bold',
+    textAlign: 'right'
   },
   cancelText: {
     marginTop: 10,
     textAlign: 'right',
+    color: "#FFF"
   },
 });
 
