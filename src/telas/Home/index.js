@@ -133,8 +133,8 @@ export default function Home({ navigation }) {
         }}>
           <Text style={styles.sidebarText}>Minhas Viagens</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#ffe6e6' }]} onPress={toggleSidebar}>
-          <Text style={{ color: 'red', textAlign: 'center' }}>Fechar</Text>
+        <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#f37100' }]} onPress={toggleSidebar}>
+          <Text style={{ color: 'black', textAlign: 'center' }}>Fechar</Text>
         </TouchableOpacity>
       </Animated.View>
 

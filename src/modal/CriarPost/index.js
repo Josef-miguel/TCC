@@ -147,7 +147,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
             {/* Cabeçalho do modal com botão de voltar e título */}
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="arrow-back" size={24} color="black" />
+                <Ionicons name="arrow-back" size={32} color="#f37100" />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Criar post</Text>
             </View>
@@ -161,7 +161,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
                     <Image key={index} source={{ uri }} style={styles.profileImage} />
                   ))
                 ) : (
-                  <Ionicons name="cloud-upload-outline" size={30} color="#888" />
+                  <Ionicons name="cloud-upload-outline" size={30} color="#f37100" />
                 )}
               </TouchableOpacity>
             </View>
@@ -360,22 +360,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  createPostButton: {
-    top: -20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#fff',
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     justifyContent: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2b2c33',
     marginHorizontal: 20,
     borderRadius: 10,
     padding: 15,
@@ -391,10 +382,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
     textAlign: 'center',
+    color: "#f37100"
   },
   imagePlaceholder: {
     height: 100,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#363942',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -407,13 +399,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: "#e4e4e4"
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#f37100',
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
+    color: "#e4e4e4"
   },
   descriptionInput: {
     height: 80,
@@ -429,19 +423,19 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#e4e4e4',
     alignItems: 'center',
   },
   tripTypeButtonActive: {
-    backgroundColor: '#e0f7fa',     
-    borderColor: '#00bcd4',         
+    backgroundColor: '#a0a4ad',     
+    borderColor: '#f37100',         
   },
   tripTypeText: {
     fontSize: 12,
-    color: '#333',
+    color: '#fff',
   },
   tripTypeTextActive: {
-    color: '#00bcd4',
+    color: '#f37100',
     fontWeight: 'bold',
   },
   mapPlaceholder: {
@@ -454,7 +448,7 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 12,
-    color: '#666',
+    color: '#b9b9b9',
     textAlign: 'center',
     marginBottom: 15,
   },
@@ -463,10 +457,12 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   submitButton: {
-    backgroundColor: '#00bcd4',
+    backgroundColor: '#a4a0ad',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: "#f37100"
   },
   submitButtonText: {
     color: '#fff',
@@ -479,7 +475,7 @@ const styles = StyleSheet.create({
   },
    uploadButton: {
     width: '100%', height: '100%', 
-    backgroundColor: '#f0f0f0', justifyContent: 'center',
+    backgroundColor: '#363942', justifyContent: 'center',
     alignItems: 'center', overflow: 'hidden',
   }
 });

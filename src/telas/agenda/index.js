@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import { Ionicons } from '@expo/vector-icons';
 
-const TravelAgenda = () => {
+export default function TravelAgenda({navigation}) {
   const [selectedDate, setSelectedDate] = useState(null);
   const travels = [
     { id: '1', date: '2025-05-15', title: 'Viagens atuas...' },
@@ -37,8 +38,13 @@ const TravelAgenda = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Ionicons name="arrow-back" color="#f37100" size={32} onPress={() => navigation.goBack()}></Ionicons>
+        <Text style={styles.headerText}>Agenda</Text>
+      </View>
       <View style={styles.calendar}>
         <Calendar
+          style={{ backgroundColor: '#363942' }}
           current="2025-05-01"
           markedDates={markedDates}
           onDayPress={handleDayPress}
@@ -48,6 +54,17 @@ const TravelAgenda = () => {
               return <Text style={styles.star}>★</Text>;
             }
             return null;
+          }}
+          theme={{
+            backgroundColor: '#2b2c33',
+            calendarBackground: '#363942',
+            dayTextColor: '#fff',
+            textDisabledColor: '#888',
+            todayTextColor: '#f37100',
+            selectedDayBackgroundColor: '#f37100',
+            monthTextColor: '#fff',
+            arrowColor: '#f37100',
+            textSectionTitleColor: '#fff',
           }}
         />
       </View>
@@ -63,13 +80,18 @@ const TravelAgenda = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1b21',
+  },
+  header:{
+    marginBottom: 50,
+  },
+  headerText:{
+    fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center', color: "#f37100"
   },
   calendar: {
-    marginTop: 50,
     flex: 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#ccc'
   },
   star: {
     position: 'absolute',
@@ -79,7 +101,7 @@ const styles = StyleSheet.create({
   },
   travelView: {
     flex: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#2b2c33',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -89,5 +111,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-export default TravelAgenda;
