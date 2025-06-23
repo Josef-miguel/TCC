@@ -31,7 +31,7 @@ export default function Home({ navigation }) {
     (item.type !== undefined && item.type.toString().includes(searchQuery))
   );
 
-  const filteredPopular = popularPosts.filter(item =>
+  const filteredPopular = posts.filter(item =>
     (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.type !== undefined && item.type.toString().includes(searchQuery))

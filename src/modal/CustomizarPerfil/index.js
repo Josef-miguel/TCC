@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   Switch, Modal, Image, Alert, Linking
@@ -8,6 +8,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../services/AuthContext';
 import { db } from '../../../services/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { appContext } from '../../../App';
+
 
 const CustomizeProfile = ({
   modalVisible,
@@ -15,14 +17,15 @@ const CustomizeProfile = ({
   navigation,
   onSave  // callback opcional para enviar os dados pra fora
 }) => {
+  // const { organizerMode, toggleOrganizer } = useContext(appContext);
   const {userData} = useAuth();
-  const [name, setName] = useState(userData?.userInfo?.nome);
-  const [surname, setSurname] = useState(userData?.userInfo?.surname);
-  const [description, setDescription] = useState(userData?.userInfo?.desc);
-  const [isOrganizerMode, setIsOrganizerMode] = useState(userData?.userInfo?.isOrganizer);
+  const [name, setName] = useState(userData?.userInfo?.nome || "");
+  const [surname, setSurname] = useState(userData?.userInfo?.surname || "");
+  const [description, setDescription] = useState(userData?.userInfo?.desc || "");
+  const [isOrganizerMode, setIsOrganizerMode] = useState(userData?.userInfo?.isOrganizer || false);
   const [imageUri, setImageUri] = useState(null);
   
-
+console.log(userData?.userInfo);
 
 const pickImage = async () => {
   const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -156,7 +159,7 @@ const pickImage = async () => {
           <View style={styles.switchContainer}>
             <Switch
               value={isOrganizerMode}
-              onValueChange={setIsOrganizerMode}
+              onValueChange={(value) => setIsOrganizerMode(value)}
               thumbColor={isOrganizerMode ? '#f37100' : '#000'}
               trackColor={{ false: '#767577', true: '#494949' }}
             />

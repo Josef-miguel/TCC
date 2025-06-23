@@ -69,6 +69,13 @@ export default function Cadastro({ navigation }) {
         email: obj.email,
         cpf: obj.cpf,
         dataNasc: obj.dataNasc,
+        preferences : {
+          favoriteType : [],
+          favoriteBudget : [],
+          favoriteDuration : [],
+          favoriteTags : [],
+        },
+        isOrganizer: false,
         uid: uid, // salva o UID do Auth também, boa prática!
       });
 
@@ -79,7 +86,7 @@ export default function Cadastro({ navigation }) {
         type: "success",
         duration: 1800,
       });
-      navigation.navigate("Home");
+      navigation.navigate("Algoritmo");
     } catch (e) {
       console.error("Erro ao adicionar usuário: ", e);
       showMessage({
@@ -115,48 +122,6 @@ export default function Cadastro({ navigation }) {
     };
 
     addUser(obj);
-
-    // const res = await api.post('TCC/register.php', obj);
-
-    // if (res.status !== 200) {
-    //   throw new Error('Erro na comunicação com o servidor');
-    // }
-
-    // if (res.data.success === false) {
-    //   showMessage({
-    //     message: "Erro ao cadastrar",
-    //     description: res.data.message || 'CAMPO INVÁLIDO!',
-    //     type: "warning",
-    //     duration: 3000,
-    //   });
-    //   limparCampos();
-    // } else if (res.data.success === true) {
-    //   showMessage({
-    //     message: "Cadastro Bem-Sucedido",
-    //     description: "Bem-vindo!",
-    //     type: "success",
-    //     duration: 1800,
-    //   });
-    //   setSuccess(true);
-    //   navigation.navigate('Home');
-    // } else {
-    //   showMessage({
-    //     message: "Ocorreu algum erro",
-    //     description: "erro",
-    //     type: 'warning',
-    //     duration: 2000
-    //   });
-    // }
-
-    // } catch (error) {
-    //   showMessage({
-    //     message: "Ocorreu algum erro: " + error,
-    //     description: "erro",
-    //     type: 'warning',
-    //     duration: 2000
-    //   });
-    //   setSuccess(false);
-    // }
   }
 
   // Dispara animações ao montar componente

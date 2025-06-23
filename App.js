@@ -13,10 +13,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-
+import { updateDoc, doc } from "firebase/firestore";
 import FlashMessage from "react-native-flash-message";
-import { AuthProvider } from "./services/AuthContext";
-
+import { AuthProvider, useAuth } from "./services/AuthContext";
+import { db } from "./services/firebase";
 import Login from "./src/telas/Login";
 import Cadastro from "./src/telas/Cadastro";
 import Home from "./src/telas/Home";
@@ -28,12 +28,15 @@ import Perfil from "./src/telas/Perfil";
 
 import Post from "./src/telas/Post";
 import Favoritos from "./src/telas/Favoritos";
+import Algoritmo from "./src/telas/Algoritmo";
 
 import CriarPost from "./src/modal/CriarPost";
 
 export const appContext = createContext();
 
 import { Ionicons } from "@expo/vector-icons";
+import { Provider as PaperProvider } from 'react-native-paper';
+
 
 const Tab = createBottomTabNavigator();
 const organizerMode = () => {
@@ -41,46 +44,60 @@ const organizerMode = () => {
 };
 
 function Tabs() {
+  const { userData, setUserData } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
-  const [isOrganizer, setIsOrganizer] = useState(true);
+  const [isOrganizer, setIsOrganizer] = useState(userData?.isOrganizer || false);
 
-  const toggleOrganizer = () => {
-    setIsOrganizer((prev) => !prev);
+  // Atualiza valor no Firestore
+  const changeOrganizerStatus = async (newStatus) => {
+    try {
+      const userRef = doc(db, 'user', userData.uid);
+      await updateDoc(userRef, { isOrganizer: newStatus });
+
+      // Atualiza localmente também, se quiser resposta instantânea
+      setUserData((prev) => ({
+        ...prev,
+        isOrganizer: newStatus,
+      }));
+      setIsOrganizer(newStatus);
+    } catch (e) {
+      console.error('Erro ao atualizar isOrganizer:', e);
+    }
   };
 
+  // Alterna entre organizador e não-organizador
+  const toggleOrganizer = () => {
+    if (userData?.isOrganizer !== undefined) {
+      const newStatus = !userData.isOrganizer;
+      changeOrganizerStatus(newStatus);
+    }
+  };
+
+  // Mostra botão só se for organizador
   const activeOrganizerPost = () => {
     if (isOrganizer) {
       return (
-          <TouchableOpacity
+        <TouchableOpacity
           style={styles.createPostButton}
-          onPress={() => setModalVisible(true)} // Open the modal
+          onPress={() => setModalVisible(true)}
         >
           <Ionicons name="add-circle" size={50} color="#f37100" />
         </TouchableOpacity>
-        );
-    } else if (!isOrganizer) {
-      return null;
+      );
     }
+    return null;
   };
 
   return (
     <>
-      <appContext.Provider value={{ organizerMode, toggleOrganizer }}>
+      <appContext.Provider value={{ organizerMode, toggleOrganizer, isOrganizer }}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
               let iconName;
-              if (route.name === "Home") {
-                iconName = focused ? "home" : "home";
-              } else if (route.name === "Perfil") {
-                iconName = focused
-                  ? "people-circle-outline"
-                  : "people-circle-outline";
-              } else if (route.name === "Criar Post") {
-                iconName = focused ? "add-circle" : "add-circle";
-              }
-
-              //aqui define os ícones que irão aparecer nas Tabs
+              if (route.name === "Home") iconName = "home";
+              else if (route.name === "Perfil") iconName = "people-circle-outline";
+              else if (route.name === "Criar Post") iconName = "add-circle";
               return <Ionicons name={iconName} size={size} color={color} />;
             },
             tabBarStyle: {
@@ -92,38 +109,33 @@ function Tabs() {
             tabBarInactiveTintColor: "#999999",
           })}
         >
-          {/* <Tab.Screen name= "Login" component={Login}></Tab.Screen>
-      <Tab.Screen name= "Cadastro" component={Cadastro}></Tab.Screen> */}
           <Tab.Screen
             name="Home"
             component={Home}
             options={{ headerShown: false }}
-          ></Tab.Screen>
-
+          />
           <Tab.Screen
             name="Criar Post"
             component={() => null}
-            enabled={false}
             options={{
-              tabBarButton: (props) => activeOrganizerPost(),
+              tabBarButton: () => activeOrganizerPost(),
             }}
           />
-
           <Tab.Screen
             name="Perfil"
             component={Perfil}
             options={{ headerShown: false }}
-          ></Tab.Screen>
-          {/* <Tab.Screen name= "Chat" component={Chat}></Tab.Screen>  */}
+          />
         </Tab.Navigator>
         <CriarPost
           modalVisible={modalVisible}
           setModalVisible={setModalVisible}
-        ></CriarPost>
+        />
       </appContext.Provider>
     </>
   );
 }
+
 
 export default function App() {
   const Stack = createStackNavigator();
@@ -131,7 +143,8 @@ export default function App() {
     <>
       <AuthProvider>
         <SafeAreaProvider>
-          <NavigationContainer>
+          <PaperProvider>
+            <NavigationContainer>
             <Stack.Navigator
               initialRouteName="Cadastro"
               screenOptions={{ headerShown: false }}
@@ -183,6 +196,11 @@ export default function App() {
                 options={{ headerShown: false }}
               />
               <Stack.Screen
+                name="Algoritmo"
+                component={Algoritmo}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
                 name="Chat"
                 component={Chat}
                 options={{ headerShown: false }}
@@ -190,6 +208,7 @@ export default function App() {
             </Stack.Navigator>
             <FlashMessage position="top" />
           </NavigationContainer>
+          </PaperProvider>
         </SafeAreaProvider>
       </AuthProvider>
     </>
