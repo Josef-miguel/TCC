@@ -99,9 +99,9 @@ def login_ajax():
     return jsonify({'success': False, 'message': 'Credenciais inválidas'})
 
 
-@routes.route('/perfil', methods=['GET', 'POST'], endpoint='perfil_usuario')
+@routes.route('/perfil', methods=['GET', 'POST'])
 @login_required
-def perfil_usuario():
+def perfil():
     # Importações (se não estiverem no topo do arquivo)
     from forms import PerfilForm, SenhaForm, OrganizadorForm
 
@@ -164,7 +164,7 @@ def perfil_usuario():
         reservas=reservas,
         organizador=organizador,
         **stats
-    )
+    ) 
 
 
 @routes.route('/alterar-senha', methods=['POST'])
@@ -210,6 +210,53 @@ def atualizar_organizador():
     
     return redirect(url_for('routes.perfil'))
 
+
+@routes.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        try:
+            # Criar hash da senha
+            hashed_password = generate_password_hash(form.senha.data)
+            
+            # Criar novo usuário
+            new_user = Usuario(
+                nome=form.nome.data,
+                email=form.email.data,
+                senha=hashed_password,
+                telefone=form.telefone.data,
+                cpf=form.cpf.data,
+                tipo='organizador' if form.tipo_organizador.data else 'usuario'
+            )
+            
+            db.session.add(new_user)
+            db.session.commit()  # Commit para gerar o id_usuario
+            
+            # Se for organizador, criar perfil
+            if form.tipo_organizador.data:
+                organizador = Organizador(
+                    id_usuario=new_user.id_usuario,
+                    nome_empresa=form.nome_empresa.data,
+                    cnpj=form.cnpj.data,
+                    endereco=form.endereco.data,
+                    descricao=form.descricao.data
+                )
+                db.session.add(organizador)
+                db.session.commit()
+            
+            flash('Cadastro realizado com sucesso!', 'success')
+            return redirect(url_for('routes.login'))
+            
+        except IntegrityError:
+            db.session.rollback()
+            flash('E-mail ou CPF já cadastrado', 'error')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao cadastrar: {str(e)}', 'error')
+            print(f"Erro detalhado: {str(e)}")  # Log para debug
+    
+    return render_template('register.html', form=form)
 
 @routes.route('/register/ajax', methods=['POST'])
 def register_ajax():
@@ -415,32 +462,16 @@ def excluir_evento(id):
 
     return redirect(url_for('routes.dashboard'))
 
-# Perfil do Usuário
 
-
-@routes.route('/perfil')
-@login_required
-def perfil():
-    try:
-        if current_user.tipo == 'organizador':
-            organizador = Organizador.query.filter_by(
-                id_usuario=current_user.id_usuario).first()
-            return render_template('perfil.html', usuario=current_user, organizador=organizador)
-        return render_template('perfil.html', usuario=current_user)
-    except Exception as e:
-        flash('Erro ao carregar perfil', 'error')
-        return redirect(url_for('routes.dashboard'))
 
 # Favoritos
-
-
 @routes.route('/favoritos')
 @login_required
 def favoritos():
     try:
-        favoritos = Favorito.query.filter_by(id_usuario=current_user.id_usuario)\
-            .options(db.joinedload(Favorito.evento)).all()
-        return render_template('favoritos.html', favoritos=favoritos)
+        # Usando o relacionamento many-to-many
+        eventos_favoritos = current_user.eventos_favoritos
+        return render_template('favoritos.html', eventos_favoritos=eventos_favoritos)
     except Exception as e:
         flash('Erro ao carregar favoritos', 'error')
         return redirect(url_for('routes.dashboard'))
