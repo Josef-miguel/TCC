@@ -20,6 +20,7 @@ import {signInWithEmailAndPassword} from 'firebase/auth';
 import { useAuth } from '../../../services/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 
+
 // Tela de Login principal
 export default function Login({ navigation }) {
   const {setUserData} = useAuth()
@@ -99,7 +100,7 @@ async function handleLogin(obj) {
   }
 }
 
-  // Função que faz a chamada à API para validar o login
+
   async function saveData() {
     // Validação básica de preenchimento
     if (!user || !password) {
@@ -191,6 +192,7 @@ async function handleLogin(obj) {
             <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
               <Text style={styles.linkText}>Ainda não possui conta? Registre-se</Text>
             </TouchableOpacity>
+
           </Animated.View>
         </KeyboardAvoidingView>
       </ScrollView>

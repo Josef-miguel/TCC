@@ -5,7 +5,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase'; // ajusta o caminho se for diferente
 
 const AuthContext = createContext();
-
 export function AuthProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true); // pra evitar render enquanto carrega
