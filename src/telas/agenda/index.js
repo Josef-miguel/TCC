@@ -39,7 +39,7 @@ export default function TravelAgenda({navigation}) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="arrow-back" color="#f37100" size={32} onPress={() => navigation.goBack()}></Ionicons>
+        <Ionicons name="arrow-back" style={styles.flecha} color="#f37100" size={32} onPress={() => navigation.goBack()}></Ionicons>
         <Text style={styles.headerText}>Agenda</Text>
       </View>
       <View style={styles.calendar}>
@@ -83,15 +83,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1b21',
   },
   header:{
-    marginBottom: 50,
+    marginBottom: 30,
   },
   headerText:{
     fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center', color: "#f37100"
   },
+  flecha: {
+    marginTop: 70,
+  },
   calendar: {
     flex: 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc'
+    borderBottomColor: '#f37100'
   },
   star: {
     position: 'absolute',
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
   },
   travelTitle: {
     fontSize: 18,
-    color: '#333',
+    color: '#fff',
     textAlign: 'center',
   },
 });
