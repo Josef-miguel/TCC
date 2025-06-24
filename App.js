@@ -20,11 +20,11 @@ import { db } from "./services/firebase";
 import Login from "./src/telas/Login";
 import Cadastro from "./src/telas/Cadastro";
 import Home from "./src/telas/Home";
-import Agenda from "./src/telas/Agenda";
-import Formapagamento from "./src/telas/Formapagamento";
+import Agenda from "./src/telas/agenda";
+import Formapagamento from "./src/telas/formapagamento";
 import Chat from "./src/telas/Chat";
-import Historico from "./src/telas/Historico";
-import Perfil from "./src/telas/Perfil";
+import Historico from "./src/telas/historico";
+import Perfil from "./src/telas/perfil";
 
 import Post from "./src/telas/Post";
 import Favoritos from "./src/telas/Favoritos";
