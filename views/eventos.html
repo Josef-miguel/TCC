@@ -4,26 +4,34 @@
 <div class="container">
     <h1 class="my-4">Todos os Eventos</h1>
     
+    {% if eventos %}
     <div class="row">
         {% for evento in eventos %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
-                <img src="{{ evento.imagem_url or url_for('static', filename='img/evento-default.jpg') }}" 
-                     class="card-img-top" alt="{{ evento.nome }}">
+                <!-- Imagem padrão já que não temos campo de imagem no modelo -->
+                <img src="{{ url_for('static', filename='img/evento-default.jpg') }}" 
+                     class="card-img-top" alt="{{ evento.destino }}">
                 <div class="card-body">
-                    <h5 class="card-title">{{ evento.nome }}</h5>
+                    <h5 class="card-title">{{ evento.destino }}</h5>
                     <p class="card-text">
-                        <i class="fas fa-calendar-alt"></i> {{ evento.data_de_saida.strftime('%d/%m/%Y') }}<br>
-                        <i class="fas fa-clock"></i> {{ evento.duracao }} dias
+                        <i class="fas fa-calendar-alt"></i> 
+                        {{ evento.data_de_saida.strftime('%d/%m/%Y') if evento.data_de_saida else 'Data não definida' }}<br>
+                        <i class="fas fa-map-marker-alt"></i> {{ evento.local_saida }}<br>
+                        <i class="fas fa-tag"></i> R$ {{ "%.2f"|format(evento.preco) }}
                     </p>
+                    <p class="card-text">{{ evento.descricao|truncate(100) }}</p>
                 </div>
                 <div class="card-footer">
-                    <a href="{{ url_for('routes.evento_detalhes', id_evento=evento.id_evento) }}" 
+                    <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" 
                        class="btn btn-primary">Detalhes</a>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="alert alert-info">Nenhum evento encontrado.</div>
+    {% endif %}
 </div>
 {% endblock %}
