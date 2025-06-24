@@ -84,7 +84,7 @@ export default function Chat() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA', // Softer background for modern look
+    backgroundColor: '#1a1b21', // Softer background for modern look
     padding: 15,
   },
   header: {
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
-    color: '#1E90FF', // Brighter, modern blue
+    color: '#f37100', // Brighter, modern blue
     letterSpacing: 0.5,
   },
   messagesContainer: {
@@ -111,16 +111,16 @@ const styles = StyleSheet.create({
     elevation: 3, // Subtle shadow for depth
   },
   sent: {
-    backgroundColor: '#1E90FF', // Vibrant blue for sent messages
+    backgroundColor: '#f37100', // Vibrant blue for sent messages
     alignSelf: 'flex-end',
     borderTopRightRadius: 5, // Less rounded for a sleek look
   },
   received: {
-    backgroundColor: '#FFFFFF', // White for received messages
+    backgroundColor: '#363942', // White for received messages
     alignSelf: 'flex-start',
     borderTopLeftRadius: 5,
     borderWidth: 1,
-    borderColor: '#E0E0E0', // Subtle border for received messages
+    borderColor: '#f37100', // Subtle border for received messages
   },
   messageText: {
     color: '#fff',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   messageTextReceived: {
-    color: '#333',
+    color: '#fff',
     fontSize: 16,
     lineHeight: 22,
   },
@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF', // White input container for contrast
+    backgroundColor: '#2b2c33', // White input container for contrast
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#f37100',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.05,
@@ -148,16 +148,16 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: '#F0F2F5', // Slightly darker input background
+    backgroundColor: '#363942', // Slightly darker input background
     borderRadius: 25,
     paddingHorizontal: 15,
     paddingVertical: 12,
     marginRight: 10,
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
   },
   sendButton: {
-    backgroundColor: '#1E90FF',
+    backgroundColor: '#f37100',
     borderRadius: 50,
     width: 45,
     height: 45,
@@ -170,13 +170,13 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   sendButtonText: {
-    color: '#fff',
+    color: '#2b2c33',
     fontSize: 20,
     fontWeight: 'bold',
   },
   returnBtn: {
     marginTop: 40,
-    backgroundColor: '#E0E0E0', // Neutral gray for return button
+    backgroundColor: '#2b2c33', // Neutral gray for return button
     width: 80,
     height: 35,
     alignItems: 'center',
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   returnBtnText: {
-    color: '#333',
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
