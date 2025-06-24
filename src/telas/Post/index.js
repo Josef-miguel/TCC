@@ -1,9 +1,4 @@
-// Nesta seção deverão estar contidas todas as informações da viagem/excrusão como um mapa com a localização da excursão, imagens do destino, sistema de avaliação, um botão para entrar em contato com o organização e um botão de participar da viagem que leva para um modal de confirmação
-// O modal de confirmação devem ter perguntas sobre quem irá viajar e quem vai ir na viagem, que por sua vez leva para um modal de pagamento na qual estão disponíveis opções de pagamento e um botão pagar que abrirá um alerta de pagamento concluído.
-//Modal para o chat
-// Modal de gostos ou algoritomo de recomendação antes da tela de feed em si.
-// A tela de feed deverá conter uma sidebar com os botões Agenda, Minhas viagens. Para o organizador deverá ter um botão extra Criar viagem. Alem de um ícone de perfil que leva para a tela perfil
-// Também deverá conter posts que levam para os mesmos e uma seção de mais populares, além de um sistema de pesquisa
+
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Pressable } from 'react-native';
