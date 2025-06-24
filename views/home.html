@@ -2,9 +2,10 @@
 
 {% block content %}
 <style>
-    /* Estilos específicos para a página home */
+    /* Estilos atualizados para combinar com o tema */
     .hero {
-        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+        background: linear-gradient(rgba(26, 27, 33, 0.8), rgba(26, 27, 33, 0.8)), 
+                    url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
         background-size: cover;
         background-position: center;
         height: 80vh;
@@ -13,77 +14,86 @@
         justify-content: center;
         text-align: center;
         color: white;
-        margin-bottom: 50px;
+        margin-bottom: 3rem;
+        padding: 0 1rem;
     }
 
     .hero-content {
         max-width: 800px;
-        padding: 20px;
+        padding: 2rem;
+        background-color: rgba(54, 57, 66, 0.7);
+        border-radius: 10px;
     }
 
     .hero h1 {
-        font-size: 3.5rem;
-        margin-bottom: 20px;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        color: white;
     }
 
     .hero p {
-        font-size: 1.5rem;
-        margin-bottom: 30px;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        color: var(--text-light);
     }
 
     .btn-explore {
-        background-color: #e74c3c;
+        background-color: var(--secondary-color);
         color: white;
-        padding: 15px 30px;
+        padding: 1rem 2.5rem;
         border: none;
         border-radius: 30px;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
         text-transform: uppercase;
-        font-weight: bold;
         letter-spacing: 1px;
     }
 
     .btn-explore:hover {
-        background-color: #c0392b;
+        background-color: #e05a00;
         transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 10px 20px rgba(243, 113, 0, 0.3);
+    }
+
+    .section-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem;
     }
 
     .section-title {
         text-align: center;
-        margin-bottom: 50px;
-        font-size: 2.5rem;
-        color: #2c3e50;
+        margin-bottom: 3rem;
+        font-size: 2.2rem;
+        color: var(--text-color);
         position: relative;
     }
 
     .section-title:after {
         content: "";
         display: block;
-        width: 100px;
+        width: 80px;
         height: 4px;
-        background: #e74c3c;
-        margin: 15px auto;
+        background: var(--secondary-color);
+        margin: 1rem auto;
+        border-radius: 2px;
     }
 
-    .tours-container {
+    .tours-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 30px;
-        padding: 0 50px;
-        margin-bottom: 80px;
+        gap: 2rem;
+        margin-bottom: 4rem;
     }
 
     .tour-card {
-        background: white;
+        background: var(--light-color);
         border-radius: 10px;
         overflow: hidden;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition: all 0.3s ease;
     }
 
     .tour-card:hover {
@@ -98,108 +108,182 @@
     }
 
     .tour-info {
-        padding: 20px;
+        padding: 1.5rem;
     }
 
     .tour-title {
-        font-size: 1.5rem;
-        margin-bottom: 10px;
-        color: #2c3e50;
+        font-size: 1.4rem;
+        margin-bottom: 0.8rem;
+        color: var(--text-color);
     }
 
     .tour-description {
-        color: #7f8c8d;
-        margin-bottom: 15px;
+        color: var(--text-light);
+        margin-bottom: 1.2rem;
         line-height: 1.6;
-    }
-
-    .tour-price {
-        font-size: 1.3rem;
-        color: #e74c3c;
-        font-weight: bold;
-        margin-bottom: 15px;
+        font-size: 0.95rem;
     }
 
     .tour-meta {
         display: flex;
         justify-content: space-between;
-        color: #7f8c8d;
+        color: var(--text-light);
         font-size: 0.9rem;
-        margin-bottom: 15px;
+        margin-bottom: 1.2rem;
+    }
+
+    .tour-price {
+        font-size: 1.3rem;
+        color: var(--secondary-color);
+        font-weight: bold;
+        margin-bottom: 1.5rem;
     }
 
     .btn-book {
         display: inline-block;
         width: 100%;
-        padding: 12px;
-        background-color: #2c3e50;
+        padding: 0.8rem;
+        background-color: var(--secondary-color);
         color: white;
         text-align: center;
         border: none;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s ease;
+        font-weight: 600;
         text-transform: uppercase;
-        font-weight: bold;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
     }
 
     .btn-book:hover {
-        background-color: #1a252f;
+        background-color: #e05a00;
     }
 
-    .testimonials {
-        background-color: #f8f9fa;
-        padding: 80px 50px;
-        margin-bottom: 80px;
+    .features-section {
+        background-color: var(--light-color);
+        padding: 4rem 1rem;
+        margin-bottom: 4rem;
     }
 
-    .testimonial-grid {
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .feature-card {
+        text-align: center;
+        padding: 2rem 1.5rem;
+        background-color: var(--dark-color);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+    }
+
+    .feature-title {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        color: var(--text-color);
+    }
+
+    .feature-description {
+        color: var(--text-light);
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .testimonials-section {
+        padding: 4rem 1rem;
+        margin-bottom: 4rem;
+    }
+
+    .testimonials-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 30px;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
     }
 
     .testimonial-card {
-        background: white;
-        padding: 30px;
+        background: var(--light-color);
+        padding: 2rem;
         border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .testimonial-text {
         font-style: italic;
-        margin-bottom: 20px;
+        margin-bottom: 1.5rem;
         line-height: 1.6;
-        color: #34495e;
+        color: var(--text-light);
+        position: relative;
+    }
+
+    .testimonial-text:before {
+        content: '"';
+        font-size: 3rem;
+        color: var(--secondary-color);
+        position: absolute;
+        left: -1rem;
+        top: -1rem;
+        opacity: 0.3;
     }
 
     .testimonial-author {
         font-weight: bold;
-        color: #2c3e50;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    .newsletter {
-        background: linear-gradient(rgba(44, 62, 80, 0.9), rgba(44, 62, 80, 0.9)), url('https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    .testimonial-author:before {
+        content: '';
+        display: block;
+        width: 30px;
+        height: 2px;
+        background-color: var(--secondary-color);
+    }
+
+    .newsletter-section {
+        background: linear-gradient(rgba(26, 27, 33, 0.9), rgba(26, 27, 33, 0.9)), 
+                    url('https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
         background-size: cover;
         background-position: center;
-        padding: 80px 20px;
+        padding: 4rem 1rem;
         text-align: center;
         color: white;
-        margin-bottom: 80px;
+        margin-bottom: 100px;
     }
 
-    .newsletter h3 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-    }
-
-    .newsletter p {
-        font-size: 1.2rem;
-        margin-bottom: 30px;
+    .newsletter-content {
         max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
+        margin: 0 auto;
+    }
+
+    .newsletter-title {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        color: white;
+    }
+
+    .newsletter-description {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        color: var(--text-light);
     }
 
     .newsletter-form {
@@ -210,71 +294,53 @@
 
     .newsletter-input {
         flex-grow: 1;
-        padding: 15px;
+        padding: 0.8rem 1.2rem;
         border: none;
         border-radius: 30px 0 0 30px;
         font-size: 1rem;
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .newsletter-input:focus {
+        outline: 2px solid var(--secondary-color);
     }
 
     .newsletter-btn {
-        padding: 15px 30px;
-        background-color: #e74c3c;
+        padding: 0 1.8rem;
+        background-color: var(--secondary-color);
         color: white;
         border: none;
         border-radius: 0 30px 30px 0;
         cursor: pointer;
         font-size: 1rem;
-        text-transform: uppercase;
-        font-weight: bold;
+        font-weight: 600;
         transition: background-color 0.3s ease;
     }
 
     .newsletter-btn:hover {
-        background-color: #c0392b;
+        background-color: #e05a00;
     }
 
-    .features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 30px;
-        padding: 0 50px;
-        margin-bottom: 80px;
-    }
-
-    .feature-card {
-        text-align: center;
-        padding: 30px 20px;
-    }
-
-    .feature-icon {
-        font-size: 3rem;
-        color: #e74c3c;
-        margin-bottom: 20px;
-    }
-
-    .feature-title {
-        font-size: 1.5rem;
-        margin-bottom: 15px;
-        color: #2c3e50;
-    }
-
-    .feature-description {
-        color: #7f8c8d;
-        line-height: 1.6;
-    }
-
+    /* Responsividade */
     @media (max-width: 768px) {
+        .hero {
+            height: 70vh;
+        }
+        
         .hero h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
         }
         
         .hero p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
         
-        .tours-container, .testimonial-grid {
+        .section-title {
+            font-size: 1.8rem;
+        }
+        
+        .tours-grid, .testimonials-grid {
             grid-template-columns: 1fr;
-            padding: 0 20px;
         }
         
         .newsletter-form {
@@ -283,12 +349,12 @@
         
         .newsletter-input {
             border-radius: 30px;
-            margin-bottom: 10px;
+            margin-bottom: 1rem;
         }
         
         .newsletter-btn {
             border-radius: 30px;
-            width: 100%;
+            padding: 0.8rem;
         }
     }
 </style>
@@ -296,149 +362,136 @@
 <!-- Seção Hero -->
 <section class="hero">
     <div class="hero-content">
-        <h1>Descubra o Mundo com a SetJustGo</h1>
-        <p>Experiências únicas, memórias inesquecíveis. Sua próxima aventura começa aqui.</p>
-        <button class="btn-explore">Explorar Destinos</button>
+        <h1>Viva experiências incríveis com a SetJustGo</h1>
+        <p>Descubra os melhores eventos e excursões com roteiros exclusivos e organização impecável.</p>
+        <a href="{{ url_for('routes.eventos') }}" class="btn-explore">Explorar Eventos</a>
     </div>
 </section>
 
 <!-- Destaques -->
-<section>
-    <h2 class="section-title">Nossos Pacotes em Destaque</h2>
-    <div class="tours-container">
+<div class="section-container">
+    <h2 class="section-title">Eventos em Destaque</h2>
+    <div class="tours-grid">
+        {% for evento in eventos_destaque %}
         <div class="tour-card">
-            <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Fernando de Noronha" class="tour-image">
+            <img src="{{ evento.imagem_url or 'https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' }}" 
+                 alt="{{ evento.destino }}" class="tour-image">
             <div class="tour-info">
-                <h3 class="tour-title">Fernando de Noronha</h3>
-                <p class="tour-description">5 dias no paraíso com hospedagem premium, passeios de barco e mergulho com tartarugas marinhas.</p>
+                <h3 class="tour-title">{{ evento.destino }}</h3>
+                <p class="tour-description">{{ evento.descricao|truncate(120) }}</p>
                 <div class="tour-meta">
-                    <span>⏱️ 5 dias</span>
-                    <span>⭐ 4.9 (128 avaliações)</span>
+                    <span><i class="fas fa-calendar-alt"></i> {{ evento.data_de_saida.strftime('%d/%m/%Y') }}</span>
+                    <span><i class="fas fa-users"></i> {{ evento.n_vagas }} vagas</span>
                 </div>
-                <p class="tour-price">R$ 2.499,00</p>
-                <button class="btn-book">Reservar Agora</button>
+                <p class="tour-price">R$ {{ "%.2f"|format(evento.preco) }}</p>
+                <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" class="btn-book">Ver Detalhes</a>
             </div>
         </div>
-        
-        <div class="tour-card">
-            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Chapada Diamantina" class="tour-image">
-            <div class="tour-info">
-                <h3 class="tour-title">Chapada Diamantina</h3>
-                <p class="tour-description">4 dias de aventura com trilhas, cachoeiras e grutas, acompanhado por guias especializados.</p>
-                <div class="tour-meta">
-                    <span>⏱️ 4 dias</span>
-                    <span>⭐ 4.8 (95 avaliações)</span>
-                </div>
-                <p class="tour-price">R$ 1.799,00</p>
-                <button class="btn-book">Reservar Agora</button>
-            </div>
-        </div>
-        
-        <div class="tour-card">
-            <img src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Rio de Janeiro" class="tour-image">
-            <div class="tour-info">
-                <h3 class="tour-title">Rock in Rio 2025</h3>
-                <p class="tour-description">Pacote completo com ingresso para os 3 dias de festival, hospedagem e traslados.</p>
-                <div class="tour-meta">
-                    <span>⏱️ 3 dias</span>
-                    <span>⭐ 4.7 (210 avaliações)</span>
-                </div>
-                <p class="tour-price">R$ 1.999,00</p>
-                <button class="btn-book">Reservar Agora</button>
-            </div>
-        </div>
+        {% endfor %}
     </div>
-</section>
+</div>
 
 <!-- Nossas Vantagens -->
-<section>
-    <h2 class="section-title">Por Que Escolher a SetJustGo?</h2>
-    <div class="features">
-        <div class="feature-card">
-            <div class="feature-icon">✈️</div>
-            <h3 class="feature-title">Viagens Exclusivas</h3>
-            <p class="feature-description">Pacotes cuidadosamente elaborados para oferecer experiências únicas e memoráveis.</p>
-        </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">🛌</div>
-            <h3 class="feature-title">Hospedagem Selecionada</h3>
-            <p class="feature-description">Parcerias com os melhores hotéis e pousadas para garantir seu conforto.</p>
-        </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">👨‍✈️</div>
-            <h3 class="feature-title">Guias Especializados</h3>
-            <p class="feature-description">Profissionais locais que tornam sua experiência mais rica e segura.</p>
-        </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">💯</div>
-            <h3 class="feature-title">Satisfação Garantida</h3>
-            <p class="feature-description">Mais de 10.000 clientes satisfeitos em nossas excursões nos últimos 5 anos.</p>
+<section class="features-section">
+    <div class="section-container">
+        <h2 class="section-title">Por Que Escolher a SetJustGo?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-star"></i></div>
+                <h3 class="feature-title">Experiências Únicas</h3>
+                <p class="feature-description">Eventos cuidadosamente selecionados para oferecer momentos memoráveis.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                <h3 class="feature-title">Segurança Garantida</h3>
+                <p class="feature-description">Todas as excursões com acompanhamento de profissionais qualificados.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-tag"></i></div>
+                <h3 class="feature-title">Melhores Preços</h3>
+                <p class="feature-description">Pacotes completos com excelente custo-benefício.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-headset"></i></div>
+                <h3 class="feature-title">Suporte 24/7</h3>
+                <p class="feature-description">Equipe disponível para ajudar antes, durante e depois dos eventos.</p>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- Depoimentos -->
-<section class="testimonials">
-    <h2 class="section-title">O Que Nossos Clientes Dizem</h2>
-    <div class="testimonial-grid">
-        <div class="testimonial-card">
-            <p class="testimonial-text">"A excursão para Fernando de Noronha superou todas as minhas expectativas. Tudo foi perfeito, desde a organização até os passeios incríveis que fizemos."</p>
-            <p class="testimonial-author">- Ana Clara Silva</p>
-        </div>
-        
-        <div class="testimonial-card">
-            <p class="testimonial-text">"Já viajei com várias agências, mas a SetJustGo foi a melhor experiência que tive. Atendimento personalizado e roteiros fantásticos!"</p>
-            <p class="testimonial-author">- Carlos Eduardo Oliveira</p>
-        </div>
-        
-        <div class="testimonial-card">
-            <p class="testimonial-text">"Fiz a excursão para a Chapada Diamantina e foi transformadora. Os guias eram muito conhecedores e a equipe da SetJustGo estava sempre disponível."</p>
-            <p class="testimonial-author">- Mariana Costa Santos</p>
+<section class="testimonials-section">
+    <div class="section-container">
+        <h2 class="section-title">O Que Nossos Clientes Dizem</h2>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <p class="testimonial-text">Participar do festival através da SetJustGo foi incrível! Toda a organização foi perfeita, desde o transporte até a hospedagem.</p>
+                <p class="testimonial-author">- Ana Clara Silva</p>
+            </div>
+            
+            <div class="testimonial-card">
+                <p class="testimonial-text">Já fui em várias excursões, mas a experiência com a SetJustGo superou todas. Atendimento excepcional e roteiros bem planejados.</p>
+                <p class="testimonial-author">- Carlos Eduardo Oliveira</p>
+            </div>
+            
+            <div class="testimonial-card">
+                <p class="testimonial-text">Recomendo muito! Fiz uma viagem para um evento esportivo e tudo foi perfeito, desde a organização até os detalhes do pacote.</p>
+                <p class="testimonial-author">- Mariana Costa Santos</p>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- Newsletter -->
-<section class="newsletter">
-    <h3>Prepare-se para Sua Próxima Aventura</h3>
-    <p>Cadastre-se para receber nossas ofertas exclusivas e dicas de viagem diretamente no seu e-mail.</p>
-    <form class="newsletter-form">
-        <input type="email" placeholder="Seu melhor e-mail" class="newsletter-input" required>
-        <button type="submit" class="newsletter-btn">Enviar</button>
-    </form>
+<section class="newsletter-section">
+    <div class="newsletter-content">
+        <h3 class="newsletter-title">Não perca nossos próximos eventos!</h3>
+        <p class="newsletter-description">Cadastre-se para receber as melhores ofertas e novidades em primeira mão.</p>
+        <form class="newsletter-form" action="#" method="POST">
+            <input type="email" name="email" placeholder="Seu melhor e-mail" class="newsletter-input" required>
+            <button type="submit" class="newsletter-btn">Cadastrar</button>
+        </form>
+    </div>
 </section>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Efeito de rolagem suave para links internos
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-    });
-
     // Animação dos cards ao aparecer na tela
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = 1;
-                entry.target.style.transform = 'translateY(0)';
+    const animateOnScroll = () => {
+        const cards = document.querySelectorAll('.tour-card, .feature-card, .testimonial-card');
+        
+        cards.forEach(card => {
+            const cardPosition = card.getBoundingClientRect().top;
+            const screenPosition = window.innerHeight / 1.3;
+            
+            if(cardPosition < screenPosition) {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
             }
         });
-    }, { threshold: 0.1 });
+    };
 
+    // Configura os cards inicialmente
     document.querySelectorAll('.tour-card, .feature-card, .testimonial-card').forEach(card => {
-        card.style.opacity = 0;
+        card.style.opacity = '0';
         card.style.transform = 'translateY(20px)';
-        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        observer.observe(card);
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    });
+
+    // Dispara a animação quando a página carrega e no scroll
+    window.addEventListener('load', animateOnScroll);
+    window.addEventListener('scroll', animateOnScroll);
+
+    // Botão do hero redireciona para eventos
+    document.querySelector('.btn-explore').addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = this.getAttribute('href');
     });
 </script>
 {% endblock %}
