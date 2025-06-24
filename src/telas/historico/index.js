@@ -49,7 +49,7 @@ const filtrados = favoritos.filter(item =>
               <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
               {/* Conteúdo textual: rota e informações da excursão */}
               <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.route}</Text>
+                <Text style={styles.cardTitle}>{item.title}</Text>
                 <Text style={styles.cardSubtitle}>{item.excursionInfo}</Text>
               </View>
               {/* Ícone de coração para indicar favorito */}
