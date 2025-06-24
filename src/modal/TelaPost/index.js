@@ -6,15 +6,13 @@ import {
   TouchableOpacity,
   Modal,
   Image,
+  TextInput,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ParticiparPost from "../ParticiparPost";
 import { useNavigation } from "@react-navigation/native";
 
-import Chat from "../../telas/Chat";
-
-// Componente de tela de detalhes de um post de viagem
 const PostScreen = ({
   modalVisible,
   setModalVisible,
@@ -23,38 +21,40 @@ const PostScreen = ({
 }) => {
   const navigation = useNavigation();
 
-  // Estado para controlar abertura do modal de participação
-  const [participationModalVisible, setParticipationModalVisible] =
-    useState(false);
-  // Estado para controlar abertura do modal de chat (não implementado aqui)
+  const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
-  // Estado para avaliação de estrelas (1 a 5), inicia com rating do post se existir
   const [starRating, setStarRating] = useState(selectedPost?.ratingStars || 0);
 
-  // Se não houver post selecionado ou modal principal não estiver visível, não renderiza nada
+  // Novos estados para comentários
+  const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState(selectedPost?.comments || []);
+
   if (selectedPost == null || !modalVisible) return null;
 
-  // Função chamada ao clicar em uma estrela, atualiza o estado
   const handleStarPress = (rating) => {
     setStarRating(rating);
-    // TODO: aqui pode chamar callback para salvar no backend ou atualizar selectedPost
-    // ex: updatePostRating(selectedPost.id, rating);
+    // Aqui pode salvar no backend, se quiser
+  };
+
+  const handleSendComment = () => {
+    if (newComment.trim() === '') return;
+
+    setComments([...comments, newComment.trim()]);
+    setNewComment('');
+    // Aqui também pode salvar no backend
   };
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Modal principal exibindo detalhes do post */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <ScrollView
             style={styles.modalScroll}
             contentContainerStyle={styles.modalInner}
           >
-            {/* Cabeçalho com botão de voltar e título da seção */}
             <View style={styles.modalHeader}>
               <TouchableOpacity
                 onPress={() => {
-                  // Fecha o modal e limpa seleção ao voltar
                   setModalVisible(false);
                   setSelectedPost(null);
                 }}
@@ -64,58 +64,57 @@ const PostScreen = ({
               <Text style={styles.sectionTitle}>Imagens do destino</Text>
             </View>
 
-            {/* Galeria de imagens do destino, rolável horizontalmente */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.imageScroll}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
               {selectedPost.images.map((uri, i) => (
                 <Image key={i} source={{ uri }} style={styles.destImage} />
               ))}
             </ScrollView>
 
-            {/* Seção de trajeto da viagem */}
             <Text style={styles.sectionTitle}>Trajeto da viagem</Text>
             <View style={styles.routeBox}>
-              <Ionicons name="location-sharp" size={24} color= "#fff" />
+              <Ionicons name="location-sharp" size={24} color="#fff" />
               <Text style={styles.routeText}>{selectedPost.route}</Text>
             </View>
 
-            {/* Seção de informações da excursão */}
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
               <Text style={styles.postDesc}>{selectedPost.desc}</Text>
             </View>
 
-            {/* Seção de avaliação com estrelas clicáveis */}
             <Text style={styles.sectionTitle}>Avaliação</Text>
             <View style={styles.starContainer}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => handleStarPress(i)}
-                  style={styles.starButton}
-                >
+                <TouchableOpacity key={i} onPress={() => handleStarPress(i)} style={styles.starButton}>
                   <Ionicons
                     name={i <= starRating ? "star" : "star-outline"}
                     size={30}
-                    color="#f37100" // cor amarela para estrelas
+                    color="#f37100"
                   />
                 </TouchableOpacity>
               ))}
               <Text style={styles.starText}>{starRating} de 5</Text>
             </View>
 
-            {/* Seção de comentários */}
             <Text style={styles.sectionTitle}>Comentários</Text>
             <View style={styles.commentsBox}>
-              {/* {selectedPost.comments.map((c, idx) => (
+              {comments.map((c, idx) => (
                 <Text key={idx} style={styles.commentText}>"{c}"</Text>
-              ))} */}
+              ))}
+
+              <View style={styles.commentInputContainer}>
+                <TextInput
+                  style={styles.commentInput}
+                  placeholder="Digite um comentário..."
+                  placeholderTextColor="#aaa"
+                  value={newComment}
+                  onChangeText={setNewComment}
+                />
+                <TouchableOpacity onPress={handleSendComment}>
+                  <Ionicons name="send" size={24} color="#f37100" />
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {/* Botão para abrir modal de participação */}
             <TouchableOpacity
               style={[styles.modalButton, styles.joinButton]}
               onPress={() => setParticipationModalVisible(true)}
@@ -132,13 +131,11 @@ const PostScreen = ({
         </View>
       </Modal>
 
-      {/* Componente de modal de participação, importado externamente */}
       <ParticiparPost
         participationModalVisible={participationModalVisible}
         setParticipationModalVisible={setParticipationModalVisible}
       />
 
-      {/* Modal de chat (estrutura básica, sem conteúdo) */}
       <Modal visible={chatModalVisible} animationType="slide">
         {/* TODO: implementar componente de chat aqui */}
       </Modal>
@@ -146,7 +143,6 @@ const PostScreen = ({
   );
 };
 
-// Estilos para o componente PostScreen
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
@@ -181,6 +177,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 6,
     alignSelf: "center",
+    marginRight: 10,
   },
   routeBox: {
     flexDirection: "row",
@@ -229,6 +226,23 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontStyle: "italic",
     color: "#fff",
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderColor: '#444',
+    paddingTop: 10,
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#f37100',
+    borderRadius: 6,
+    padding: 8,
+    marginRight: 8,
+    color: '#fff',
   },
   modalButton: {
     padding: 12,

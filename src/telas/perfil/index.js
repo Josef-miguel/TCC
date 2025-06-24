@@ -67,7 +67,7 @@ export default function Perfil() {
             }          
           </TouchableOpacity>
           <Text style={styles.name}>{userData?.userInfo?.nome}</Text>
-          <Text style={styles.level}>Genius Nível 1</Text>
+       
         </View>
 
         {/* Itens de menu: Chamadas de navegação e ações */}
@@ -113,6 +113,15 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#1a1b21',
     flexGrow: 1,
+  },
+   createPostButton: {
+    top: -20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#fff',
   },
   header: {
     marginTop: 50,

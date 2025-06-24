@@ -10,10 +10,10 @@ export default function Historico({ route, navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filtra favoritos com base no texto de busca (rota, tema ou tipo)
-  const filtrados = favoritos.filter(item =>
-    item.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchQuery.toLowerCase())
+const filtrados = favoritos.filter(item =>
+    (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.type !== undefined && item.type.toString().includes(searchQuery))
   );
 
   return (
