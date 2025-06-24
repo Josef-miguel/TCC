@@ -1,3 +1,5 @@
+
+# Importação de todas as bibliotecas que serão usadas 
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, login_required, logout_user, current_user
 from models.database import db, Usuario, Evento, Organizador, Reserva, Favorito
@@ -12,7 +14,7 @@ routes = Blueprint('routes', __name__)
 
 # Home - Lista de Eventos
 
-
+# Defindo a rota inicial
 @routes.route('/')
 def home():
     try:
@@ -25,7 +27,7 @@ def home():
 
 # Login
 
-
+# Rota de login do usuario
 @routes.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -47,7 +49,7 @@ def login():
     
     return render_template('login.html', form=form)
 
-# Logout
+
 
 @routes.route('/reset-password', methods=['GET', 'POST'])
 def reset_password_request():
@@ -67,14 +69,14 @@ def reset_password_request():
     
     return render_template('reset_password_request.html', form=form)
 
-
+# Logout
 @routes.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('routes.home'))
 
-
+# Rota que envia os dados de login
 @routes.route('/login/ajax', methods=['POST'])
 def login_ajax():
     if current_user.is_authenticated:
@@ -98,7 +100,7 @@ def login_ajax():
 
     return jsonify({'success': False, 'message': 'Credenciais inválidas'})
 
-
+# Rota de perfil do usuario
 @routes.route('/perfil', methods=['GET', 'POST'])
 @login_required
 def perfil():
@@ -210,7 +212,7 @@ def atualizar_organizador():
     
     return redirect(url_for('routes.perfil'))
 
-
+# Rota que cadastra o usuario
 @routes.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
@@ -258,6 +260,7 @@ def register():
     
     return render_template('register.html', form=form)
 
+# Rota que envia os dados de registro do usuario
 @routes.route('/register/ajax', methods=['POST'])
 def register_ajax():
     form = RegistrationForm()
@@ -303,14 +306,21 @@ def dashboard():
 
 # Lista de Eventos
 
-
+# Rota que mostra os eventos do site
 @routes.route('/eventos')
 def eventos():
     try:
+        print("Tentando buscar eventos...")  # Debug
         eventos = Evento.query.options(db.joinedload(Evento.organizador))\
             .order_by(Evento.data_de_saida.asc()).all()
+        
+        print(f"Eventos encontrados: {len(eventos)}")  # Debug
+        for evento in eventos:
+            print(f"Evento ID: {evento.id_evento}, Destino: {evento.destino}")
+        
         return render_template('eventos.html', eventos=eventos)
     except Exception as e:
+        print(f"Erro ao buscar eventos: {str(e)}")  # Debug
         flash('Erro ao carregar lista de eventos', 'error')
         return render_template('eventos.html', eventos=[])
 

@@ -1,3 +1,4 @@
+# Importação
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField, SubmitField
 from flask_wtf import FlaskForm
@@ -8,6 +9,7 @@ from wtforms import StringField, TextAreaField, DateField, DecimalField, Integer
 from wtforms.validators import DataRequired, NumberRange, ValidationError
 from datetime import datetime
 from models.database import Usuario
+
 
 class PerfilForm(FlaskForm):
     nome = StringField('Nome Completo', validators=[DataRequired()])
