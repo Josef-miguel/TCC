@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import CriarPagamento from './../../modal/CriarPagamento';
+import CriarPagamento from '../../modal/CriarPagamento';
 
 export default function FormPagamento({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
