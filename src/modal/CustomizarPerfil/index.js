@@ -17,7 +17,7 @@ const CustomizeProfile = ({
   navigation,
   onSave  // callback opcional para enviar os dados pra fora
 }) => {
-  // const { organizerMode, toggleOrganizer } = useContext(appContext);
+  const { organizerMode, toggleOrganizer } = useContext(appContext);
   const {userData} = useAuth();
   const [name, setName] = useState(userData?.userInfo?.nome || "");
   const [surname, setSurname] = useState(userData?.userInfo?.surname || "");
@@ -25,7 +25,7 @@ const CustomizeProfile = ({
   const [isOrganizerMode, setIsOrganizerMode] = useState(userData?.userInfo?.isOrganizer || false);
   const [imageUri, setImageUri] = useState(null);
   
-console.log(userData?.userInfo);
+// console.log(userData?.userInfo);
 
 const pickImage = async () => {
   const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -70,7 +70,6 @@ const pickImage = async () => {
 
   // Reúne os dados e fecha o modal
   async function handleSave () {
-    console.log('rodando');
     const updObj = {
       nome : name ?? '',
       surname : surname ?? '',
@@ -81,9 +80,10 @@ const pickImage = async () => {
 
      try {
       const userRef = doc(db, 'user', userData?.userInfo?.uid);
-      console.log(userData?.userInfo?.userId);
       await updateDoc(userRef, updObj);
       console.log('Dados atualizados com sucesso!');
+      console.log("isOrganizer: " + userData?.isOrganizer);
+      organizerMode();
     } catch (error) {
       console.error('Erro ao atualizar dados:', error);
     }
