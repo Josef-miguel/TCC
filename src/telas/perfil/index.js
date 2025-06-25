@@ -73,7 +73,7 @@ export default function Perfil() {
         {/* Itens de menu: Chamadas de navegação e ações */}
         <MenuItem
           icon="account-outline"
-          label="Minha contas"
+          label="Minha conta"
            // Abre modal de customização
         />
         <MenuItem
@@ -87,8 +87,8 @@ export default function Perfil() {
         <MenuItem icon="account-search-outline" label="Avaliações" onPress={() => { /* implementar ação */ }} />
         <MenuItem
           icon="heart-outline"
-          label="Favoritos"
-          onPress={() => navigation.navigate('Favoritos')} // Navega para tela de favoritos
+          label="Minhas Viagens"
+          onPress={() => navigation.navigate('MinhasViagens')} // Navega para tela de minhas viagens
         />
         <MenuItem
           icon="logout"

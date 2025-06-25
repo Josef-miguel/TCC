@@ -1,104 +1,175 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-// Tela de favoritos do usuário
-export default function Favoritos({ navigation, route }) {
-  // Estado local para lista de favoritos
-  const [favorites, setFavorites] = useState([]);
+// Tela de histórico de viagens favoritas
+export default function Historico({ route, navigation }) {
+  // Recebe lista de favoritos via parâmetros de rota (padrão: array vazio)
+  const favoritos = route.params?.favoritos || [];
+  // Estado para texto de busca
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Atualiza favoritos toda vez que a tela ganha foco (pode receber novos params)
-  useFocusEffect(
-    React.useCallback(() => {
-      // Lê a lista de favoritos enviada pela rota (ou array vazio)
-      const favs = route.params?.favoritos || [];
-      setFavorites(favs);
-    }, [route.params?.favoritos])
-  );
-
-  // Remove header default e configura custom header
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
-
-  // Alterna estado de favorito e filtra removendo itens desfavoritados
-  const toggleFav = (id) => {
-    const updated = favorites
-      .map(item => (item.id === id ? { ...item, fav: !item.fav } : item))
-      .filter(item => item.fav);
-    setFavorites(updated);
-  };
-
-  // Função para renderizar cada item no FlatList
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      {/* Imagem de capa da viagem */}
-      <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
-      {/* Conteúdo: tema, tipo e rota */}
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.theme}</Text>
-        <Text style={styles.cardSubtitle}>{item.type}</Text>
-        <Text style={styles.cardRoute}>{item.route}</Text>
-      </View>
-      {/* Ícone para desfavoritar */}
-      <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="red" />
-      </TouchableOpacity>
-    </View>
+  // Filtra favoritos com base no texto de busca (rota, tema ou tipo)
+  const filtrados = favoritos.filter(
+    (item) =>
+      (item.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (item.theme?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (item.type !== undefined && item.type.toString().includes(searchQuery))
   );
 
   return (
     <View style={styles.container}>
-      {/* Botão de voltar para a tela anterior */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color="#000" />
-        <Text style={styles.backText}>Minhas Viagens</Text>
-      </TouchableOpacity>
+      {/* Header com botão de voltar */}
+      <View style={styles.header}>
+        <Ionicons
+          name="arrow-back"
+          style={styles.flecha}
+          color="#f37100"
+          size={32}
+          onPress={() => navigation.goBack()}
+        ></Ionicons>
+        <Text style={styles.headerText}>Minhas Viagens</Text>
+      </View>
 
-      {/* Se não houver favoritos, mostra mensagem; senão lista em FlatList */}
-      {favorites.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Nenhum favorito.</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={favorites}
-          keyExtractor={item => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+      {/* Campo de busca */}
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={18}
+          color="#999"
+          style={styles.searchIcon}
         />
-      )}
+        <TextInput
+          placeholderTextColor={"#999"}
+          placeholder="Buscar"
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      {/* Lista de cards de viagens */}
+      <ScrollView style={styles.cardsContainer}>
+        {filtrados.length === 0 ? (
+          // Mensagem caso não haja resultados
+          <Text style={styles.emptyText}>
+            Nenhuma viagem favoritada encontrada.
+          </Text>
+        ) : (
+          // Renderiza um card para cada item filtrado
+          filtrados.map((item) => (
+            <View key={item.id} style={styles.card}>
+              {/* Imagem da viagem */}
+              <Image
+                source={{ uri: item.images[0] }}
+                style={styles.cardImage}
+              />
+              {/* Conteúdo textual: rota e informações da excursão */}
+              <View style={styles.cardContent}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardSubtitle}>{item.excursionInfo}</Text>
+              </View>
+              {/* Ícone de coração para indicar favorito */}
+              <Ionicons
+                name="heart"
+                size={22}
+                color="#f37100"
+                style={styles.heartIcon}
+              />
+            </View>
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }
 
-// Estilos da tela de Favoritos
+// Estilos da tela de histórico
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  backButton: { flexDirection: 'row', alignItems: 'center', padding: 10, backgroundColor: '#f2f2f2' },
-  backText: { fontSize: 16, color: '#000', marginLeft: 6 },
-  listContent: { padding: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: "#1a1b21",
+    paddingTop: 50,
+  },
+  header: {
+    marginBottom: 20,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+    color: "#f37100",
+  },
+  flecha: {
+    marginTop: 20,
+  },
+  backButton: {
+    flexDirection: "row",
+  },
+  backText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    margin: 10,
+    backgroundColor: "#2b2c33",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+  },
+  searchIcon: {
+    marginRight: 5,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    color: '#fff',
+  },
+  cardsContainer: {
+    marginHorizontal: 10,
+  },
   card: {
-    flexDirection: 'row',         
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 2,                
-    shadowOffset: { width: 0, height: 1 }, 
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#363942",
+    borderRadius: 6,
+    marginTop: 10,
     padding: 10,
   },
-  cardImage: { width: 60, height: 60, borderRadius: 6 },
-  cardContent: { flex: 1, marginLeft: 10 },
-  cardTitle: { fontSize: 16, fontWeight: 'bold' },
-  cardSubtitle: { fontSize: 14, color: '#666' },
-  cardRoute: { fontSize: 12, color: '#999', marginTop: 4 },
-  cardIcon: { padding: 4 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 16, color: '#666' },
+  cardImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+  },
+  cardContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  cardTitle: {
+    fontWeight: "bold",
+    fontSize: 15,
+    color: "#fff",
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    color: "#a0a4ad",
+  },
+  heartIcon: {
+    marginLeft: 5,
+  },
+  emptyText: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#666",
+  },
 });
