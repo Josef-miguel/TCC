@@ -11,9 +11,8 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import api from '../../../services/api';
+
 import { showMessage } from 'react-native-flash-message';
 import {auth, db} from '../../../services/firebase';
 import {signInWithEmailAndPassword} from 'firebase/auth';

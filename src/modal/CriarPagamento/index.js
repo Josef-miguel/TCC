@@ -27,7 +27,7 @@ const CriarPagamento = ({ visible, onClose }) => {
         <View style={styles.modalBox}>
           {/* Botão de voltar/fechar */}
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color="#e4e4e4" />
           </TouchableOpacity>
 
           <Text style={styles.title}>Tipo de pagamento</Text>
@@ -72,10 +72,10 @@ export default CriarPagamento;
 
 const styles = StyleSheet.create({
   container: {
-      flex: 1,
-      backgroundColor: '#1a1b21',
-      paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    },
+    flex: 1,
+    backgroundColor: '#2B2C33', // fundo principal
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   },
   modalBox: {
     width: '85%',
-    backgroundColor: '#fff',
+    backgroundColor: '#363942', // segunda cor de fundo
     borderRadius: 10,
     padding: 20,
     position: 'relative',
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     marginBottom: 12,
-    color: '#111827',
+    color: '#e4e4e4', // fonte clara
     marginTop: 30,
     textAlign: 'center',
   },
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#4b5563',
+    borderColor: '#f37100', // cor principal
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -121,21 +121,21 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#4b5563',
+    backgroundColor: '#f37100', // cor principal
   },
   optionText: {
     marginLeft: 10,
-    color: '#1f2937',
+    color: '#e4e4e4', // fonte clara
   },
   confirmButton: {
     marginTop: 20,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#f37100', // cor principal
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',
   },
   confirmText: {
-    color: '#fff',
+    color: '#e4e4e4', // fonte clara
     fontWeight: 'bold',
     fontSize: 16,
   },
