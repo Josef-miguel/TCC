@@ -8,6 +8,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { showMessage } from 'react-native-flash-message';
 
 import { Feather } from '@expo/vector-icons';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import axios from 'axios';
+
 
 import { collection, addDoc } from "firebase/firestore";
 import {db} from '../../../services/firebase'
@@ -29,6 +32,10 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [showExitDate, setShowExitDate] = useState(false);
   const [showReturnDate, setShowReturnDate] = useState(false);
 
+  const [mapStart, setMapStart] = useState(null);
+  const [mapEnd, setMapEnd] = useState(null);
+  const [routeCoords, setRouteCoords] = useState([]);
+
 
   function limparCampos(){
     setPostName("");
@@ -37,7 +44,9 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
     setImageUri([]);
     setTripPrice(0);
     setNumSlots(0);
-    
+    setMapStart(null);
+    setMapEnd(null);
+    setRouteCoords([]);
   }
 
   async function saveData() {
@@ -63,6 +72,12 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
         price: tripPrice || 1,
         exit_date: exit_date || '',
         return_date: return_date || '',
+        route: {
+          start: mapStart,
+          end: mapEnd,
+          coordinates: routeCoords
+        }
+
       });
 
       showMessage({
@@ -129,6 +144,53 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   };
 
 
+  // FUNÇÃO PARA TRAÇAR A ROTA
+  const getRouteFromAPI = async (startCoord, endCoord) => {
+    try {
+      const response = await axios.post(
+        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+        {
+          coordinates: [
+            [startCoord.longitude, startCoord.latitude],
+            [endCoord.longitude, endCoord.latitude],
+          ],
+        },
+        {
+          headers: {
+            // BASE_KEY -> lembrar de retirar
+            Authorization: '5b3ce3597851110001cf6248391ebde1fc8d4266ab1f2b4264a64558',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const coords = response.data.features[0].geometry.coordinates.map(([lng, lat]) => ({
+        latitude: lat,
+        longitude: lng,
+      }));
+
+      setRouteCoords(coords);
+    } catch (error) {
+      console.log('Erro ao traçar rota:', error);
+      showMessage({
+        message: 'Erro ao traçar rota',
+        description: 'Verifique sua conexão ou chave da API.',
+        type: 'danger',
+      });
+    }
+  };
+  // FUNÇÃO PARA MARCAR OS PONTOS NO MAPA
+  const handleMapPress = (e) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+
+    if (!mapStart) {
+      setMapStart({ latitude, longitude });
+    } else if (!mapEnd) {
+      const endCoord = { latitude, longitude };
+      setMapEnd(endCoord);
+      getRouteFromAPI(mapStart, endCoord);
+    }
+  };
 
 
   return (
@@ -328,11 +390,27 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
             />
 
             {/* Placeholder para mapa/trajeto da viagem */}
-            <Text style={styles.label}>Trajeto da viagem</Text>
-            <View style={styles.mapPlaceholder}>
-              <Ionicons name="location" size={24} color="black" />
+            {/* SUBSTITUA AQUI */}
+            <View style={{ height: 200, marginBottom: 15, borderRadius: 8, overflow: 'hidden' }}>
+              <MapView
+                style={{ flex: 1 }}
+                initialRegion={{
+                  latitude: -23.55052,
+                  longitude: -46.633308,
+                  latitudeDelta: 0.1,
+                  longitudeDelta: 0.1,
+                }}
+                onPress={handleMapPress}
+              >
+                {mapStart && <Marker coordinate={mapStart} title="Início" pinColor="green" />}
+                {mapEnd && <Marker coordinate={mapEnd} title="Destino" pinColor="red" />}
+                {routeCoords.length > 0 && (
+                  <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="blue" />
+                )}
+              </MapView>
             </View>
-
+              
+            {/* SUBISTITUA ACIMA */}
             {/* Texto de termos de uso com link */}
             <Text style={styles.termsText}>
               Ao criar uma publicação no aplicativo, você concorda com os{' '}
