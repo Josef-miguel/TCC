@@ -76,7 +76,6 @@ function Tabs() {
 
   // Mostra botão só se for organizador
   const activeOrganizerPost = () => {
-    console.log(userData?.isOrganizer)
     if (userData?.isOrganizer) {
       return (
         <TouchableOpacity
@@ -234,7 +233,14 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "#2b2c33",
     borderWidth: 1,
-    borderColor: "#f37100"
+    borderColor: "#f37100",
+  
+    // Sombras
+    shadowColor: "#f37100",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8, // necessário no Android
   },
   modalOverlay: {
     flex: 1,
