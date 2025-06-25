@@ -39,43 +39,45 @@ import { Provider as PaperProvider } from 'react-native-paper';
 
 
 const Tab = createBottomTabNavigator();
-const organizerMode = () => {
-  // tudo o que vai ser exclusivo do organizador. Ex: tema diferenciado e os caraio
-};
 
 function Tabs() {
   const { userData, setUserData } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(userData?.isOrganizer || false);
-
+  
+  const organizerMode = () => {
+    activeOrganizerPost();
+  };
   // Atualiza valor no Firestore
-  const changeOrganizerStatus = async (newStatus) => {
-    try {
-      const userRef = doc(db, 'user', userData.uid);
-      await updateDoc(userRef, { isOrganizer: newStatus });
+  // const changeOrganizerStatus = async (newStatus) => {
+  //   try {
+  //     const userRef = doc(db, 'user', userData.uid);
+  //     await updateDoc(userRef, { isOrganizer: newStatus });
 
-      // Atualiza localmente também, se quiser resposta instantânea
-      setUserData((prev) => ({
-        ...prev,
-        isOrganizer: newStatus,
-      }));
-      setIsOrganizer(newStatus);
-    } catch (e) {
-      console.error('Erro ao atualizar isOrganizer:', e);
-    }
-  };
+  //     // Atualiza localmente também, se quiser resposta instantânea
+  //     setUserData((prev) => ({
+  //       ...prev,
+  //       isOrganizer: newStatus,
+  //     }));
+  //     console.log(isOrganizer);
+  //     setIsOrganizer(newStatus);
+  //   } catch (e) {
+  //     console.error('Erro ao atualizar isOrganizer:', e);
+  //   }
+  // };
 
-  // Alterna entre organizador e não-organizador
-  const toggleOrganizer = () => {
-    if (userData?.isOrganizer !== undefined) {
-      const newStatus = !userData.isOrganizer;
-      changeOrganizerStatus(newStatus);
-    }
-  };
+  // // Alterna entre organizador e não-organizador
+  // const toggleOrganizer = () => {
+  //   if (userData?.isOrganizer !== undefined) {
+  //     const newStatus = !userData.isOrganizer;
+  //     changeOrganizerStatus(newStatus);
+  //   }
+  // };
 
   // Mostra botão só se for organizador
   const activeOrganizerPost = () => {
-    if (isOrganizer) {
+    console.log(userData?.isOrganizer)
+    if (userData?.isOrganizer) {
       return (
         <TouchableOpacity
           style={styles.createPostButton}
@@ -90,7 +92,7 @@ function Tabs() {
 
   return (
     <>
-      <appContext.Provider value={{ organizerMode, toggleOrganizer, isOrganizer }}>
+      <appContext.Provider value={{ organizerMode, isOrganizer }}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
