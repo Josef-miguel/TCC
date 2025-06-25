@@ -128,10 +128,10 @@ export default function Home({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
           const favoritos = [...posts, ...popularPosts].filter(p => p.fav);
-          navigation.navigate('Historico', { favoritos });
+          navigation.navigate('Favoritos', { favoritos });
           toggleSidebar();
         }}>
-          <Text style={styles.sidebarText}>Minhas Viagens</Text>
+          <Text style={styles.sidebarText}>Favoritos</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#f37100' }]} onPress={toggleSidebar}>
           <Text style={{ color: 'black', textAlign: 'center' }}>Fechar</Text>
