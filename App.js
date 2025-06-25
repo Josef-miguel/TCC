@@ -23,7 +23,7 @@ import Home from "./src/telas/Home";
 import Agenda from "./src/telas/Agenda";
 import Formapagamento from "./src/telas/Formapagamento";
 import Chat from "./src/telas/Chat";
-import Historico from "./src/telas/Historico";
+import MinhasViagens from "./src/telas/MinhasViagens";
 import Perfil from "./src/telas/Perfil";
 
 import Post from "./src/telas/Post";
@@ -177,8 +177,8 @@ export default function App() {
                 options={{ headerShown: false }}
               ></Stack.Screen>
               <Stack.Screen
-                name="Historico"
-                component={Historico}
+                name="MinhasViagens"
+                component={MinhasViagens}
                 options={{ headerShown: false }}
               ></Stack.Screen>
               <Stack.Screen
