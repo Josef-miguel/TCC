@@ -268,6 +268,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={styles.input}
               placeholder="Viagem para Miracatu, SP..."
+              placeholderTextColor="#a9a9a9"
               value={postName}
               onChangeText={setPostName}    // Atualiza estado postName
             />
@@ -329,7 +330,7 @@ const reverseGeocode = async (latitude, longitude) => {
                   onPress={() => setShowExitDate(true)}
                   
                 >
-                  <Text style={{ color: '#333', fontSize: 16 }}>
+                  <Text style={{ color: '#a9a9a9', fontSize: 16 }}>
                     {exit_date.toLocaleDateString()}
                   </Text>
                 </TouchableOpacity>
@@ -340,6 +341,7 @@ const reverseGeocode = async (latitude, longitude) => {
                   value={exit_date}
                   mode="date"
                   display="default"
+                  style={styles.input}
                   onChange={(event, selectedDate) => {
                     setShowExitDate(false);
                     if (selectedDate) setExitDate(selectedDate);
@@ -355,7 +357,7 @@ const reverseGeocode = async (latitude, longitude) => {
                 style={styles.input}
                 onPress={() => setShowReturnDate(true)}
               >
-                <Text style={{ color: '#333', fontSize: 16 }}>
+                <Text style={{ color: '#a9a9a9', fontSize: 16 }}>
                   {return_date.toLocaleDateString()}
                 </Text>
               </TouchableOpacity>
@@ -380,6 +382,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={styles.input}
               placeholder="Quantidade de pessoas"
+              placeholderTextColor="#a9a9a9"
               value={numSlots}
               onChangeText={setNumSlots}
               keyboardType="numeric"          // Tipo numérico
@@ -389,6 +392,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={styles.input}
               placeholder="R$00,00"
+              placeholderTextColor="#a9a9a9"
               value={tripPrice}
               onChangeText={setTripPrice}
               keyboardType="numeric"          // Tipo numérico
@@ -399,6 +403,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={[styles.input, styles.descriptionInput]}
               placeholder="Vamos nos divertir pela cidade!"
+              placeholderTextColor="#a9a9a9"
               value={description}
               onChangeText={setDescription}    // Atualiza estado description
               multiline                         // Permite múltiplas linhas

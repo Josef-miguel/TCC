@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import ParticiparPost from "../ParticiparPost";
 import { useNavigation } from "@react-navigation/native";
+import MapView, { Marker, Polyline } from "react-native-maps";
 
 const PostScreen = ({
   modalVisible,
@@ -79,6 +80,39 @@ const PostScreen = ({
                 <Text style={styles.routeText}>Início: {selectedPost.route?.display_start}</Text>
                 <Text style={styles.routeText}>Destino: {selectedPost.route?.display_end}</Text>
               </View>
+            </View>
+
+            <View style={styles.routeBox}>
+              {selectedPost.route?.start && selectedPost.route?.end && (
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    initialRegion={{
+                      latitude: selectedPost.route.start.latitude,
+                      longitude: selectedPost.route.start.longitude,
+                      latitudeDelta: 0.2,
+                      longitudeDelta: 0.2,
+                    }}
+                  >
+                    <Marker
+                      coordinate={selectedPost.route.start}
+                      title="Início"
+                      pinColor="green"
+                    />
+                    <Marker
+                      coordinate={selectedPost.route.end}
+                      title="Destino"
+                      pinColor="red"
+                    />
+                    <Polyline
+                      coordinates={selectedPost.route.coordinates}
+                      strokeColor="#f37100"
+                      strokeWidth={4}
+                    />
+                  </MapView>
+                </View>
+              )}
+              
             </View>
 
             {/* Informações */}
@@ -198,11 +232,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderColor: "#fff",
     backgroundColor: "#2a2a2a",
+    flexWrap: 'wrap', // permite quebrar linha
+    width: '100%',
   },
+  
   routeText: {
     color: "#fff",
     fontSize: 14,
     marginBottom: 4,
+    flexShrink: 1, // evita overflow
+    flexWrap: 'wrap', // quebra linha se necessário
   },
   infoBox: {
     padding: 10,
@@ -272,6 +311,18 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  mapContainer: {
+    height: 200,
+    width: '100%',
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 12,
+    borderColor: "#fff",
+    borderWidth: 1,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
 });
 
