@@ -154,7 +154,13 @@ const [mapMarker, setMapMarker] = useState(null);
   };
 
 const handleSearch = async () => {
-  console.log("buscando por" + searchText );
+  console.log("Buscando por" + searchText + "...");
+  showMessage({
+        message: "Pesquisando...",
+        description: "Buscando por: " + searchText + "...",
+        type: "notice",
+        duration: 2000,
+      });
   const response = await fetch(
   `https://nominatim.openstreetmap.org/search?format=json&q=${searchText}`,
   {
@@ -239,6 +245,7 @@ const handleMapPress = (e) => {
 
 const reverseGeocode = async (latitude, longitude) => {
   try {
+    
     const response = await axios.get(
       `https://nominatim.openstreetmap.org/reverse`,
       {

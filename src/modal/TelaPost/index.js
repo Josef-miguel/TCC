@@ -118,7 +118,12 @@ const PostScreen = ({
             {/* Informações */}
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
+              {/* <Text style={styles.postDesc}>{selectedPost.title || 'Sem título.'}</Text>
               <Text style={styles.postDesc}>{selectedPost.desc || 'Sem descrição.'}</Text>
+              <Text style={styles.postDesc}>{selectedPost.numSlots || 'Sem mais vagas disponíveis.'}</Text>
+              <Text style={styles.postDesc}>{selectedPost.exit_date || 'Sem data de partida disponível.'}</Text>
+              <Text style={styles.postDesc}>{selectedPost.return_date || 'Sem data de retorno disponível.'}</Text>
+              <Text style={styles.postDesc}>{"R$" + selectedPost.price || 'Sem preço disponível para essa viagem'}</Text> */}
             </View>
 
             {/* Avaliação */}
