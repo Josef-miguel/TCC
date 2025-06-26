@@ -26,9 +26,19 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [numSlots, setNumSlots] = useState(0);
   const [exit_date, setExitDate] = useState(new Date());
   const [return_date, setReturnDate] = useState(new Date());
+  const [searchText, setSearchText] = useState("");
   
   const [showExitDate, setShowExitDate] = useState(false);
   const [showReturnDate, setShowReturnDate] = useState(false);
+
+  const [mapRegion, setMapRegion] = useState({
+  latitude: -23.55052,
+  longitude: -46.633308,
+  latitudeDelta: 0.1,
+  longitudeDelta: 0.1,
+});
+
+const [mapMarker, setMapMarker] = useState(null);
 
   const [mapStart, setMapStart] = useState(null);
   const [mapEnd, setMapEnd] = useState(null);
@@ -142,6 +152,32 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
       console.log('Error picking image: ', error);
     }
   };
+
+const handleSearch = async () => {
+  console.log("buscando por" + searchText );
+  const response = await fetch(
+  `https://nominatim.openstreetmap.org/search?format=json&q=${searchText}`,
+  {
+    headers: {
+      'User-Agent': 'JSG/1.0 (jubscrebis@gmail.com)' // ou outro seu
+    }
+  }
+);
+  const results = await response.json();
+  if (results.length > 0) {
+    const { lat, lon } = results[0];
+    setMapRegion({
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lon),
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
+    setMapMarker({
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lon),
+    });
+  }
+};
 
 const handleMapPress = (e) => {
   const { latitude, longitude } = e.nativeEvent.coordinate;
@@ -268,6 +304,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={styles.input}
               placeholder="Viagem para Miracatu, SP..."
+              placeholderTextColor="#a9a9a9"
               value={postName}
               onChangeText={setPostName}    // Atualiza estado postName
             />
@@ -329,7 +366,7 @@ const reverseGeocode = async (latitude, longitude) => {
                   onPress={() => setShowExitDate(true)}
                   
                 >
-                  <Text style={{ color: '#333', fontSize: 16 }}>
+                  <Text style={{ color: '#a9a9a9', fontSize: 16 }}>
                     {exit_date.toLocaleDateString()}
                   </Text>
                 </TouchableOpacity>
@@ -340,6 +377,7 @@ const reverseGeocode = async (latitude, longitude) => {
                   value={exit_date}
                   mode="date"
                   display="default"
+                  style={styles.input}
                   onChange={(event, selectedDate) => {
                     setShowExitDate(false);
                     if (selectedDate) setExitDate(selectedDate);
@@ -355,7 +393,7 @@ const reverseGeocode = async (latitude, longitude) => {
                 style={styles.input}
                 onPress={() => setShowReturnDate(true)}
               >
-                <Text style={{ color: '#333', fontSize: 16 }}>
+                <Text style={{ color: '#a9a9a9', fontSize: 16 }}>
                   {return_date.toLocaleDateString()}
                 </Text>
               </TouchableOpacity>
@@ -380,6 +418,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={styles.input}
               placeholder="Quantidade de pessoas"
+              placeholderTextColor="#a9a9a9"
               value={numSlots}
               onChangeText={setNumSlots}
               keyboardType="numeric"          // Tipo numérico
@@ -389,6 +428,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={styles.input}
               placeholder="R$00,00"
+              placeholderTextColor="#a9a9a9"
               value={tripPrice}
               onChangeText={setTripPrice}
               keyboardType="numeric"          // Tipo numérico
@@ -399,6 +439,7 @@ const reverseGeocode = async (latitude, longitude) => {
             <TextInput
               style={[styles.input, styles.descriptionInput]}
               placeholder="Vamos nos divertir pela cidade!"
+              placeholderTextColor="#a9a9a9"
               value={description}
               onChangeText={setDescription}    // Atualiza estado description
               multiline                         // Permite múltiplas linhas
@@ -407,14 +448,20 @@ const reverseGeocode = async (latitude, longitude) => {
             {/* Placeholder para mapa/trajeto da viagem */}
             {/* SUBSTITUA AQUI */}
             <View style={{ height: 200, marginBottom: 15, borderRadius: 8, overflow: 'hidden' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Buscar lugar..."
+                  value={searchText}
+                  onChangeText={setSearchText}
+                />
+                <TouchableOpacity onPress={handleSearch} style={{ marginLeft: 10 }}>
+                  <Feather name="search" size={24} color="#f37100" />
+                </TouchableOpacity>
+              </View>
               <MapView
                 style={{ flex: 1 }}
-                initialRegion={{
-                  latitude: -23.55052,
-                  longitude: -46.633308,
-                  latitudeDelta: 0.1,
-                  longitudeDelta: 0.1,
-                }}
+                region={mapRegion}
                 onPress={handleMapPress}
               >
               
