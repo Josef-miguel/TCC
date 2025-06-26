@@ -1,37 +1,200 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <h1 class="my-4">Todos os Eventos</h1>
+<style>
+    /* Estilos anteriores mantidos e adicionamos os novos para as categorias */
+    .categories-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
     
-    {% if eventos %}
-    <div class="row">
-        {% for evento in eventos %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <!-- Imagem padrão já que não temos campo de imagem no modelo -->
-                <img src="{{ url_for('static', filename='img/evento-default.jpg') }}" 
-                     class="card-img-top" alt="{{ evento.destino }}">
-                <div class="card-body">
-                    <h5 class="card-title">{{ evento.destino }}</h5>
-                    <p class="card-text">
-                        <i class="fas fa-calendar-alt"></i> 
-                        {{ evento.data_de_saida.strftime('%d/%m/%Y') if evento.data_de_saida else 'Data não definida' }}<br>
-                        <i class="fas fa-map-marker-alt"></i> {{ evento.local_saida }}<br>
-                        <i class="fas fa-tag"></i> R$ {{ "%.2f"|format(evento.preco) }}
-                    </p>
-                    <p class="card-text">{{ evento.descricao|truncate(100) }}</p>
+    .category-tab {
+        padding: 0.8rem 1.5rem;
+        background: var(--light-color);
+        color: var(--text-light);
+        border-radius: 30px;
+        cursor: pointer;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .category-tab:hover {
+        background: rgba(243, 113, 0, 0.2);
+        color: var(--secondary-color);
+    }
+    
+    .category-tab.active {
+        background: var(--secondary-color);
+        color: var(--text-color);
+    }
+    
+    .category-content {
+        display: none;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .category-content.active {
+        display: block;
+    }
+    
+    /* Adicionando animação */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Melhorando a responsividade */
+    @media (max-width: 768px) {
+        .categories-tabs {
+            gap: 0.5rem;
+        }
+        
+        .category-tab {
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<div class="eventos-container">
+    <h1 class="page-title">Nossos Pacotes de Viagem</h1>
+    
+    <!-- Abas de Categorias -->
+    <div class="categories-tabs">
+        <button class="category-tab active" data-category="all">Todos</button>
+        <button class="category-tab" data-category="nacional">Nacional</button>
+        <button class="category-tab" data-category="internacional">Internacional</button>
+        <button class="category-tab" data-category="aventura">Aventura</button>
+        <button class="category-tab" data-category="praia">Praia</button>
+        <button class="category-tab" data-category="romantico">Romântico</button>
+        <button class="category-tab" data-category="familiar">Familiar</button>
+    </div>
+    
+    <!-- Conteúdo das Categorias -->
+    <div class="category-content active" id="all-category">
+        {% if eventos %}
+        <div class="eventos-grid">
+            {% for evento in eventos %}
+            <div class="evento-card" data-categories="{{ evento.categorias|join(',') }}">
+                <!-- Card de evento (mesmo conteúdo anterior) -->
+                <div class="evento-image-container">
+                    <img src="{{ url_for('static', filename='img/cananeia.jpg') }}" 
+                         class="evento-image" alt="{{ evento.destino }}">
+                    <span class="evento-badge">{{ evento.categorias[0] if evento.categorias else 'Viagem' }}</span>
                 </div>
-                <div class="card-footer">
+                
+                <div class="evento-content">
+                    <h3 class="evento-title">{{ evento.destino }}</h3>
+                    <div class="evento-location">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ evento.local_saida }}
+                    </div>
+                    
+                    <div class="evento-meta">
+                        <span class="evento-meta-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            {{ evento.data_de_saida.strftime('%d/%m/%Y') if evento.data_de_saida else 'Data flexível' }}
+                        </span>
+                        <span class="evento-meta-item">
+                            <i class="fas fa-clock"></i>
+                            {{ evento.duracao }} dias
+                        </span>
+                    </div>
+                    
+                    <p class="evento-description">
+                        {{ evento.descricao|truncate(120) }}
+                    </p>
+                    
+                    <div class="evento-price">
+                        R$ {{ "%.2f"|format(evento.preco) }} <small>por pessoa</small>
+                    </div>
+                </div>
+                
+                <div class="evento-footer">
                     <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" 
-                       class="btn btn-primary">Detalhes</a>
+                       class="btn-details">
+                        Ver Detalhes
+                    </a>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-suitcase-rolling"></i>
+            <h4>Nenhum pacote encontrado</h4>
+            <p>No momento não temos pacotes disponíveis. Volte em breve para novas ofertas!</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="alert alert-info">Nenhum evento encontrado.</div>
-    {% endif %}
+    
+    <!-- Categorias individuais (serão filtradas via JavaScript) -->
+    {% for categoria in ['nacional', 'internacional', 'aventura', 'praia', 'romantico', 'familiar'] %}
+    <div class="category-content" id="{{ categoria }}-category">
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h4>Carregando pacotes {{ categoria }}...</h4>
+            <p>Estamos preparando as melhores opções para você.</p>
+        </div>
+    </div>
+    {% endfor %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Controle das abas de categoria
+        const categoryTabs = document.querySelectorAll('.category-tab');
+        
+        categoryTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove a classe active de todas as abas
+                categoryTabs.forEach(t => t.classList.remove('active'));
+                // Adiciona a classe active apenas na aba clicada
+                tab.classList.add('active');
+                
+                // Esconde todos os conteúdos de categoria
+                document.querySelectorAll('.category-content').forEach(c => {
+                    c.classList.remove('active');
+                });
+                
+                // Mostra o conteúdo da categoria selecionada
+                const categoryId = tab.getAttribute('data-category');
+                document.getElementById(`${categoryId}-category`).classList.add('active');
+                
+                // Se for "Todos", mostra todos os cards
+                if (categoryId === 'all') {
+                    document.querySelectorAll('.evento-card').forEach(card => {
+                        card.style.display = 'flex';
+                    });
+                } else {
+                    // Filtra os cards pela categoria selecionada
+                    document.querySelectorAll('.evento-card').forEach(card => {
+                        const cardCategories = card.getAttribute('data-categories');
+                        if (cardCategories && cardCategories.includes(categoryId)) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Pré-filtro para categorias específicas
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoriaParam = urlParams.get('categoria');
+        
+        if (categoriaParam) {
+            const tabToActivate = document.querySelector(`.category-tab[data-category="${categoriaParam}"]`);
+            if (tabToActivate) {
+                tabToActivate.click();
+            }
+        }
+    });
+</script>
 {% endblock %}

@@ -69,6 +69,7 @@ class Evento(db.Model):
     n_favoritos = db.Column(db.Integer, default=0)
     n_acessos = db.Column(db.Integer, default=0)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    categorias = db.Column(db.JSON)
     
     # Chave estrangeira para Organizador
     id_organizador = db.Column(db.Integer, db.ForeignKey('organizador.id_organizador'))
@@ -83,6 +84,8 @@ class Evento(db.Model):
         secondary='favoritos',
         back_populates='eventos_favoritos'
     )
+    
+
     
     
 class Favorito(db.Model):

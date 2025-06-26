@@ -324,11 +324,14 @@ def eventos():
         flash('Erro ao carregar lista de eventos', 'error')
         return render_template('eventos.html', eventos=[])
 
+
+
+@routes.route('/eventos/<categoria>')
+def eventos_por_categoria(categoria):
+    eventos = Evento.query.filter(Evento.categorias.contains([categoria])).all()
+    return render_template('eventos.html', eventos=eventos)
+
 # Criar Novo Evento
-
-
-
-
 @routes.route('/eventos/novo', methods=['GET', 'POST'])
 @login_required
 def nova_excursao():
