@@ -2,199 +2,242 @@
 
 {% block content %}
 <style>
-    /* Estilos anteriores mantidos e adicionamos os novos para as categorias */
-    .categories-tabs {
-        display: flex;
-        gap: 1rem;
+    .eventos-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+        color: var(--text-color);
         margin-bottom: 2rem;
-        overflow-x: auto;
+        position: relative;
         padding-bottom: 0.5rem;
     }
     
-    .category-tab {
-        padding: 0.8rem 1.5rem;
-        background: var(--light-color);
-        color: var(--text-light);
-        border-radius: 30px;
-        cursor: pointer;
-        font-weight: 500;
-        white-space: nowrap;
-        transition: all 0.3s ease;
-        border: none;
-    }
-    
-    .category-tab:hover {
-        background: rgba(243, 113, 0, 0.2);
-        color: var(--secondary-color);
-    }
-    
-    .category-tab.active {
+    .page-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 80px;
+        height: 4px;
         background: var(--secondary-color);
+        border-radius: 2px;
+    }
+    
+    .eventos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .evento-card {
+        background: var(--light-color);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .evento-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .evento-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        position: relative;
+    }
+    
+    .evento-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--secondary-color);
+        color: var(--text-color);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .evento-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .evento-title {
+        font-size: 1.3rem;
+        margin: 0 0 0.5rem 0;
         color: var(--text-color);
     }
     
-    .category-content {
-        display: none;
-        animation: fadeIn 0.5s ease;
+    .evento-location {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--secondary-color);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
     }
     
-    .category-content.active {
+    .evento-meta {
+        display: flex;
+        gap: 1rem;
+        margin: 0.5rem 0;
+        flex-wrap: wrap;
+    }
+    
+    .evento-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-light);
+    }
+    
+    .evento-description {
+        color: var(--text-light);
+        margin: 1rem 0;
+        flex: 1;
+    }
+    
+    .evento-price {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin: 0.5rem 0;
+    }
+    
+    .evento-price small {
+        font-size: 0.9rem;
+        font-weight: 400;
+        color: var(--text-light);
+    }
+    
+    .evento-footer {
+        padding: 0 1.5rem 1.5rem;
+    }
+    
+    .btn-details {
+        background: var(--secondary-color);
+        color: var(--text-color);
+        border: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 5px;
+        font-weight: 600;
+        width: 100%;
+        text-align: center;
+        transition: all 0.3s ease;
+        text-decoration: none;
         display: block;
     }
     
-    /* Adicionando animação */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+    .btn-details:hover {
+        background: #c35a00;
+        color: var(--text-color);
     }
     
-    /* Melhorando a responsividade */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: var(--light-color);
+        border-radius: 10px;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+        color: var(--text-light);
+    }
+    
+    /* Responsividade */
     @media (max-width: 768px) {
-        .categories-tabs {
-            gap: 0.5rem;
+        .eventos-grid {
+            grid-template-columns: 1fr;
         }
         
-        .category-tab {
-            padding: 0.6rem 1rem;
-            font-size: 0.9rem;
+        .evento-card {
+            max-width: 400px;
+            margin: 0 auto;
         }
     }
 </style>
 
 <div class="eventos-container">
-    <h1 class="page-title">Nossos Pacotes de Viagem</h1>
+    <h1 class="page-title">Pacotes de Viagem</h1>
     
-    <!-- Abas de Categorias -->
-    <div class="categories-tabs">
-        <button class="category-tab active" data-category="all">Todos</button>
-        <button class="category-tab" data-category="nacional">Nacional</button>
-        <button class="category-tab" data-category="internacional">Internacional</button>
-        <button class="category-tab" data-category="aventura">Aventura</button>
-        <button class="category-tab" data-category="praia">Praia</button>
-        <button class="category-tab" data-category="romantico">Romântico</button>
-        <button class="category-tab" data-category="familiar">Familiar</button>
-    </div>
-    
-    <!-- Conteúdo das Categorias -->
-    <div class="category-content active" id="all-category">
-        {% if eventos %}
-        <div class="eventos-grid">
-            {% for evento in eventos %}
-            <div class="evento-card" data-categories="{{ evento.categorias|join(',') }}">
-                <!-- Card de evento (mesmo conteúdo anterior) -->
-                <div class="evento-image-container">
-                    <img src="{{ url_for('static', filename='img/cananeia.jpg') }}" 
-                         class="evento-image" alt="{{ evento.destino }}">
-                    <span class="evento-badge">{{ evento.categorias[0] if evento.categorias else 'Viagem' }}</span>
+    {% if eventos %}
+    <div class="eventos-grid">
+        {% for evento in eventos %}
+        <div class="evento-card">
+            <!-- Imagem do evento -->
+            <div class="evento-image-container">
+                <img src="{{ url_for('static', filename='img/cananeia.jpg') }}" 
+                     class="evento-image" alt="{{ evento.destino }}">
+                <span class="evento-badge">Promoção</span>
+            </div>
+            
+            <div class="evento-content">
+                <h3 class="evento-title">{{ evento.destino }}</h3>
+                <div class="evento-location">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ evento.local_saida }}
                 </div>
                 
-                <div class="evento-content">
-                    <h3 class="evento-title">{{ evento.destino }}</h3>
-                    <div class="evento-location">
-                        <i class="fas fa-map-marker-alt"></i>
-                        {{ evento.local_saida }}
-                    </div>
-                    
-                    <div class="evento-meta">
-                        <span class="evento-meta-item">
-                            <i class="fas fa-calendar-alt"></i>
-                            {{ evento.data_de_saida.strftime('%d/%m/%Y') if evento.data_de_saida else 'Data flexível' }}
-                        </span>
-                        <span class="evento-meta-item">
-                            <i class="fas fa-clock"></i>
-                            {{ evento.duracao }} dias
-                        </span>
-                    </div>
-                    
-                    <p class="evento-description">
-                        {{ evento.descricao|truncate(120) }}
-                    </p>
-                    
-                    <div class="evento-price">
-                        R$ {{ "%.2f"|format(evento.preco) }} <small>por pessoa</small>
-                    </div>
+                <div class="evento-meta">
+                    <span class="evento-meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ evento.data_de_saida.strftime('%d/%m/%Y') if evento.data_de_saida else 'Data flexível' }}
+                    </span>
+                    <span class="evento-meta-item">
+                        <i class="fas fa-clock"></i>
+                        {{ evento.duracao }} dias
+                    </span>
                 </div>
                 
-                <div class="evento-footer">
-                    <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" 
-                       class="btn-details">
-                        Ver Detalhes
-                    </a>
+                <p class="evento-description">
+                    {{ evento.descricao|truncate(120) }}
+                </p>
+                
+                <div class="evento-price">
+                    R$ {{ "%.2f"|format(evento.preco) }} <small>por pessoa</small>
                 </div>
             </div>
-            {% endfor %}
+            
+            <div class="evento-footer">
+                <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" 
+                   class="btn-details">
+                    Ver Detalhes
+                </a>
+            </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-suitcase-rolling"></i>
-            <h4>Nenhum pacote encontrado</h4>
-            <p>No momento não temos pacotes disponíveis. Volte em breve para novas ofertas!</p>
-        </div>
-        {% endif %}
+        {% endfor %}
     </div>
-    
-    <!-- Categorias individuais (serão filtradas via JavaScript) -->
-    {% for categoria in ['nacional', 'internacional', 'aventura', 'praia', 'romantico', 'familiar'] %}
-    <div class="category-content" id="{{ categoria }}-category">
-        <div class="empty-state">
-            <i class="fas fa-search"></i>
-            <h4>Carregando pacotes {{ categoria }}...</h4>
-            <p>Estamos preparando as melhores opções para você.</p>
-        </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-suitcase-rolling"></i>
+        <h4>Nenhum pacote encontrado</h4>
+        <p>No momento não temos pacotes disponíveis. Volte em breve para novas ofertas!</p>
     </div>
-    {% endfor %}
+    {% endif %}
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Controle das abas de categoria
-        const categoryTabs = document.querySelectorAll('.category-tab');
-        
-        categoryTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Remove a classe active de todas as abas
-                categoryTabs.forEach(t => t.classList.remove('active'));
-                // Adiciona a classe active apenas na aba clicada
-                tab.classList.add('active');
-                
-                // Esconde todos os conteúdos de categoria
-                document.querySelectorAll('.category-content').forEach(c => {
-                    c.classList.remove('active');
-                });
-                
-                // Mostra o conteúdo da categoria selecionada
-                const categoryId = tab.getAttribute('data-category');
-                document.getElementById(`${categoryId}-category`).classList.add('active');
-                
-                // Se for "Todos", mostra todos os cards
-                if (categoryId === 'all') {
-                    document.querySelectorAll('.evento-card').forEach(card => {
-                        card.style.display = 'flex';
-                    });
-                } else {
-                    // Filtra os cards pela categoria selecionada
-                    document.querySelectorAll('.evento-card').forEach(card => {
-                        const cardCategories = card.getAttribute('data-categories');
-                        if (cardCategories && cardCategories.includes(categoryId)) {
-                            card.style.display = 'flex';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                }
-            });
-        });
-        
-        // Pré-filtro para categorias específicas
-        const urlParams = new URLSearchParams(window.location.search);
-        const categoriaParam = urlParams.get('categoria');
-        
-        if (categoriaParam) {
-            const tabToActivate = document.querySelector(`.category-tab[data-category="${categoriaParam}"]`);
-            if (tabToActivate) {
-                tabToActivate.click();
-            }
-        }
-    });
-</script>
 {% endblock %}
