@@ -24,34 +24,34 @@ const PostScreen = ({
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [starRating, setStarRating] = useState(selectedPost?.ratingStars || 0);
-
-  // Novos estados para comentários
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState(selectedPost?.comments || []);
 
-  if (selectedPost == null || !modalVisible) return null;
+  if (!selectedPost || !modalVisible) return null;
 
   const handleStarPress = (rating) => {
     setStarRating(rating);
-    // Aqui pode salvar no backend, se quiser
+    // Aqui pode salvar no backend futuramente
   };
 
   const handleSendComment = () => {
     if (newComment.trim() === '') return;
-
     setComments([...comments, newComment.trim()]);
     setNewComment('');
-    // Aqui também pode salvar no backend
+  };
+
+  const formatCoordinate = (coord) => {
+    if (!coord) return 'Não definido';
+    return `${coord.latitude?.toFixed(4)}, ${coord.longitude?.toFixed(4)}`;
   };
 
   return (
     <View style={{ flex: 1 }}>
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
-          <ScrollView
-            style={styles.modalScroll}
-            contentContainerStyle={styles.modalInner}
-          >
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
+            
+            {/* Header */}
             <View style={styles.modalHeader}>
               <TouchableOpacity
                 onPress={() => {
@@ -64,23 +64,30 @@ const PostScreen = ({
               <Text style={styles.sectionTitle}>Imagens do destino</Text>
             </View>
 
+            {/* Imagens */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-              {selectedPost.images.map((uri, i) => (
+              {selectedPost.images?.map((uri, i) => (
                 <Image key={i} source={{ uri }} style={styles.destImage} />
               ))}
             </ScrollView>
 
+            {/* Rota */}
             <Text style={styles.sectionTitle}>Trajeto da viagem</Text>
             <View style={styles.routeBox}>
               <Ionicons name="location-sharp" size={24} color="#fff" />
-              <Text style={styles.routeText}>{selectedPost.route}</Text>
+              <View style={{ marginLeft: 10 }}>
+                <Text style={styles.routeText}>Início: {selectedPost.route?.display_start}</Text>
+                <Text style={styles.routeText}>Destino: {selectedPost.route?.display_end}</Text>
+              </View>
             </View>
 
+            {/* Informações */}
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
-              <Text style={styles.postDesc}>{selectedPost.desc}</Text>
+              <Text style={styles.postDesc}>{selectedPost.desc || 'Sem descrição.'}</Text>
             </View>
 
+            {/* Avaliação */}
             <Text style={styles.sectionTitle}>Avaliação</Text>
             <View style={styles.starContainer}>
               {[1, 2, 3, 4, 5].map((i) => (
@@ -95,12 +102,12 @@ const PostScreen = ({
               <Text style={styles.starText}>{starRating} de 5</Text>
             </View>
 
+            {/* Comentários */}
             <Text style={styles.sectionTitle}>Comentários</Text>
             <View style={styles.commentsBox}>
               {comments.map((c, idx) => (
                 <Text key={idx} style={styles.commentText}>"{c}"</Text>
               ))}
-
               <View style={styles.commentInputContainer}>
                 <TextInput
                   style={styles.commentInput}
@@ -115,6 +122,7 @@ const PostScreen = ({
               </View>
             </View>
 
+            {/* Botões de ação */}
             <TouchableOpacity
               style={[styles.modalButton, styles.joinButton]}
               onPress={() => setParticipationModalVisible(true)}
@@ -131,13 +139,15 @@ const PostScreen = ({
         </View>
       </Modal>
 
+      {/* Modal de Participação */}
       <ParticiparPost
         participationModalVisible={participationModalVisible}
         setParticipationModalVisible={setParticipationModalVisible}
       />
 
+      {/* Modal de Chat (placeholder) */}
       <Modal visible={chatModalVisible} animationType="slide">
-        {/* TODO: implementar componente de chat aqui */}
+        {/* Colocar o componente de chat aqui depois */}
       </Modal>
     </View>
   );
@@ -181,26 +191,28 @@ const styles = StyleSheet.create({
   },
   routeBox: {
     flexDirection: "row",
-    alignItems: "center",
-    padding: 8,
+    alignItems: "flex-start",
+    padding: 10,
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
     borderColor: "#fff",
+    backgroundColor: "#2a2a2a",
   },
   routeText: {
-    marginLeft: 8,
     color: "#fff",
+    fontSize: 14,
+    marginBottom: 4,
   },
   infoBox: {
-    padding: 8,
+    padding: 10,
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
     borderColor: "#fff",
   },
   postDesc: {
-    color: "#fff"
+    color: "#fff",
   },
   starContainer: {
     flexDirection: "row",
@@ -216,7 +228,7 @@ const styles = StyleSheet.create({
     color: '#fff'
   },
   commentsBox: {
-    padding: 8,
+    padding: 10,
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
