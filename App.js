@@ -207,8 +207,8 @@ export default function App() {
                 options={{ headerShown: false }}
               />
             </Stack.Navigator>
-            <FlashMessage position="top" />
           </NavigationContainer>
+            <FlashMessage position="top" style={{paddingVertical: 10}}/>
           </PaperProvider>
         </SafeAreaProvider>
       </AuthProvider>
