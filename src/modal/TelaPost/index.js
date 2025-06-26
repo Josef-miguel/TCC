@@ -1,97 +1,128 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Image, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import ParticiparPost from '../ParticiparPost';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  Image,
+  TextInput,
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import ParticiparPost from "../ParticiparPost";
+import { useNavigation } from "@react-navigation/native";
 
-import Chat from '../../telas/Chat';
-
-
-// Componente de tela de detalhes de um post de viagem
-const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPost }) => {
+const PostScreen = ({
+  modalVisible,
+  setModalVisible,
+  selectedPost,
+  setSelectedPost,
+}) => {
   const navigation = useNavigation();
 
-  // Estado para controlar abertura do modal de participação
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
-  // Estado para controlar abertura do modal de chat (não implementado aqui)
   const [chatModalVisible, setChatModalVisible] = useState(false);
-  // Estado para avaliação de estrelas (1 a 5), inicia com rating do post se existir
   const [starRating, setStarRating] = useState(selectedPost?.ratingStars || 0);
+  const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState(selectedPost?.comments || []);
 
-  // Se não houver post selecionado ou modal principal não estiver visível, não renderiza nada
-  if (selectedPost == null || !modalVisible) return null;
+  if (!selectedPost || !modalVisible) return null;
 
-  // Função chamada ao clicar em uma estrela, atualiza o estado
   const handleStarPress = (rating) => {
     setStarRating(rating);
-    // TODO: aqui pode chamar callback para salvar no backend ou atualizar selectedPost
-    // ex: updatePostRating(selectedPost.id, rating);
+    // Aqui pode salvar no backend futuramente
+  };
+
+  const handleSendComment = () => {
+    if (newComment.trim() === '') return;
+    setComments([...comments, newComment.trim()]);
+    setNewComment('');
+  };
+
+  const formatCoordinate = (coord) => {
+    if (!coord) return 'Não definido';
+    return `${coord.latitude?.toFixed(4)}, ${coord.longitude?.toFixed(4)}`;
   };
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Modal principal exibindo detalhes do post */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
-            {/* Cabeçalho com botão de voltar e título da seção */}
+            
+            {/* Header */}
             <View style={styles.modalHeader}>
               <TouchableOpacity
                 onPress={() => {
-                  // Fecha o modal e limpa seleção ao voltar
                   setModalVisible(false);
                   setSelectedPost(null);
                 }}
               >
-                <Ionicons name="arrow-back" size={24} color="black" />
+                <Ionicons name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
               <Text style={styles.sectionTitle}>Imagens do destino</Text>
             </View>
 
-            {/* Galeria de imagens do destino, rolável horizontalmente */}
+            {/* Imagens */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-              {selectedPost.images.map((uri, i) => (
+              {selectedPost.images?.map((uri, i) => (
                 <Image key={i} source={{ uri }} style={styles.destImage} />
               ))}
             </ScrollView>
 
-            {/* Seção de trajeto da viagem */}
+            {/* Rota */}
             <Text style={styles.sectionTitle}>Trajeto da viagem</Text>
             <View style={styles.routeBox}>
-              <Ionicons name="location-sharp" size={24} />
-              <Text style={styles.routeText}>{selectedPost.route}</Text>
+              <Ionicons name="location-sharp" size={24} color="#fff" />
+              <View style={{ marginLeft: 10 }}>
+                <Text style={styles.routeText}>Início: {selectedPost.route?.display_start}</Text>
+                <Text style={styles.routeText}>Destino: {selectedPost.route?.display_end}</Text>
+              </View>
             </View>
 
-            {/* Seção de informações da excursão */}
+            {/* Informações */}
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
-              <Text>{selectedPost.desc}</Text>
+              <Text style={styles.postDesc}>{selectedPost.desc || 'Sem descrição.'}</Text>
             </View>
 
-            {/* Seção de avaliação com estrelas clicáveis */}
+            {/* Avaliação */}
             <Text style={styles.sectionTitle}>Avaliação</Text>
             <View style={styles.starContainer}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <TouchableOpacity key={i} onPress={() => handleStarPress(i)} style={styles.starButton}>
                   <Ionicons
-                    name={i <= starRating ? 'star' : 'star-outline'}
+                    name={i <= starRating ? "star" : "star-outline"}
                     size={30}
-                    color="#FFD700" // cor amarela para estrelas
+                    color="#f37100"
                   />
                 </TouchableOpacity>
               ))}
               <Text style={styles.starText}>{starRating} de 5</Text>
             </View>
 
-            {/* Seção de comentários */}
+            {/* Comentários */}
             <Text style={styles.sectionTitle}>Comentários</Text>
             <View style={styles.commentsBox}>
-              {/* {selectedPost.comments.map((c, idx) => (
+              {comments.map((c, idx) => (
                 <Text key={idx} style={styles.commentText}>"{c}"</Text>
-              ))} */}
+              ))}
+              <View style={styles.commentInputContainer}>
+                <TextInput
+                  style={styles.commentInput}
+                  placeholder="Digite um comentário..."
+                  placeholderTextColor="#aaa"
+                  value={newComment}
+                  onChangeText={setNewComment}
+                />
+                <TouchableOpacity onPress={handleSendComment}>
+                  <Ionicons name="send" size={24} color="#f37100" />
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {/* Botão para abrir modal de participação */}
+            {/* Botões de ação */}
             <TouchableOpacity
               style={[styles.modalButton, styles.joinButton]}
               onPress={() => setParticipationModalVisible(true)}
@@ -100,53 +131,53 @@ const PostScreen = ({ modalVisible, setModalVisible, selectedPost, setSelectedPo
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.chatButton, styles.modalButton]}
-              onPress={() => navigation.navigate('Chat')
-              }>
+              onPress={() => navigation.navigate("Chat")}
+            >
               <Text style={styles.buttonText}>Conversar com o organizador</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
       </Modal>
 
-      {/* Componente de modal de participação, importado externamente */}
+      {/* Modal de Participação */}
       <ParticiparPost
         participationModalVisible={participationModalVisible}
         setParticipationModalVisible={setParticipationModalVisible}
       />
 
-      {/* Modal de chat (estrutura básica, sem conteúdo) */}
+      {/* Modal de Chat (placeholder) */}
       <Modal visible={chatModalVisible} animationType="slide">
-        {/* TODO: implementar componente de chat aqui */}
+        {/* Colocar o componente de chat aqui depois */}
       </Modal>
     </View>
   );
 };
 
-// Estilos para o componente PostScreen
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', 
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalScroll: {
     margin: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#1a1b21",
     borderRadius: 8,
   },
   modalInner: {
     padding: 16,
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 15,
-    gap: 10, 
+    gap: 10,
   },
   sectionTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 12,
     marginBottom: 6,
     fontSize: 16,
+    color: "#fff",
   },
   imageScroll: {
     marginBottom: 12,
@@ -155,28 +186,37 @@ const styles = StyleSheet.create({
     width: 150,
     height: 100,
     borderRadius: 6,
-    alignSelf: 'center'
+    alignSelf: "center",
+    marginRight: 10,
   },
   routeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 10,
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
+    borderColor: "#fff",
+    backgroundColor: "#2a2a2a",
   },
   routeText: {
-    marginLeft: 8,
+    color: "#fff",
+    fontSize: 14,
+    marginBottom: 4,
   },
   infoBox: {
-    padding: 8,
+    padding: 10,
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
+    borderColor: "#fff",
+  },
+  postDesc: {
+    color: "#fff",
   },
   starContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   starButton: {
@@ -185,34 +225,53 @@ const styles = StyleSheet.create({
   starText: {
     marginLeft: 8,
     fontSize: 16,
+    color: '#fff'
   },
   commentsBox: {
-    padding: 8,
+    padding: 10,
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
+    borderColor: "#fff",
   },
   commentText: {
     marginBottom: 4,
-    fontStyle: 'italic',
+    fontStyle: "italic",
+    color: "#fff",
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderColor: '#444',
+    paddingTop: 10,
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#f37100',
+    borderRadius: 6,
+    padding: 8,
+    marginRight: 8,
+    color: '#fff',
   },
   modalButton: {
     padding: 12,
-    backgroundColor: '#2196f3',
+    backgroundColor: "#f37100",
     borderRadius: 6,
     marginBottom: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   joinButton: {
-    backgroundColor: '#4caf50', 
+    backgroundColor: "#f37100",
   },
   chatButton: {
-    backgroundColor: '#f65a65', 
-    
+    backgroundColor: "#f65a65",
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import CriarPagamento from './../../modal/CriarPagamento';
+import CriarPagamento from '../../modal/CriarPagamento';
 
 export default function FormPagamento({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -11,7 +11,7 @@ export default function FormPagamento({ navigation }) {
       {/* Cabeçalho */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#111827" />
+          <Ionicons name="arrow-back" size={24} color="#e4e4e4" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Minhas formas de pagamento</Text>
       </View>
@@ -47,7 +47,11 @@ export default function FormPagamento({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa', padding: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#2B2C33', // fundo principal
+    padding: 20,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -57,12 +61,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 12,
-    color: '#1f2937',
+    color: '#e4e4e4', // fonte clara
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#363942', // segunda cor de fundo
     padding: 14,
     borderRadius: 12,
     marginBottom: 12,
@@ -75,19 +79,19 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 16,
-    color: '#1f2937',
+    color: '#e4e4e4', // fonte clara
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#f37100', // cor principal
     padding: 14,
     borderRadius: 12,
     marginTop: 24,
     justifyContent: 'center',
   },
   addButtonText: {
-    color: '#fff',
+    color: '#e4e4e4', // fonte clara
     fontSize: 16,
     marginLeft: 8,
   },

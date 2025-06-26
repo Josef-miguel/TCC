@@ -23,8 +23,8 @@ import Home from "./src/telas/Home";
 import Agenda from "./src/telas/agenda";
 import Formapagamento from "./src/telas/formapagamento";
 import Chat from "./src/telas/Chat";
-import Historico from "./src/telas/historico";
-import Perfil from "./src/telas/perfil";
+import MinhasViagens from "./src/telas/MinhasViagens";
+import Perfil from "./src/telas/Perfil";
 
 import Post from "./src/telas/Post";
 import Favoritos from "./src/telas/Favoritos";
@@ -39,43 +39,44 @@ import { Provider as PaperProvider } from 'react-native-paper';
 
 
 const Tab = createBottomTabNavigator();
-const organizerMode = () => {
-  // tudo o que vai ser exclusivo do organizador. Ex: tema diferenciado e os caraio
-};
 
 function Tabs() {
   const { userData, setUserData } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(userData?.isOrganizer || false);
-
+  
+  const organizerMode = () => {
+    activeOrganizerPost();
+  };
   // Atualiza valor no Firestore
-  const changeOrganizerStatus = async (newStatus) => {
-    try {
-      const userRef = doc(db, 'user', userData.uid);
-      await updateDoc(userRef, { isOrganizer: newStatus });
+  // const changeOrganizerStatus = async (newStatus) => {
+  //   try {
+  //     const userRef = doc(db, 'user', userData.uid);
+  //     await updateDoc(userRef, { isOrganizer: newStatus });
 
-      // Atualiza localmente também, se quiser resposta instantânea
-      setUserData((prev) => ({
-        ...prev,
-        isOrganizer: newStatus,
-      }));
-      setIsOrganizer(newStatus);
-    } catch (e) {
-      console.error('Erro ao atualizar isOrganizer:', e);
-    }
-  };
+  //     // Atualiza localmente também, se quiser resposta instantânea
+  //     setUserData((prev) => ({
+  //       ...prev,
+  //       isOrganizer: newStatus,
+  //     }));
+  //     console.log(isOrganizer);
+  //     setIsOrganizer(newStatus);
+  //   } catch (e) {
+  //     console.error('Erro ao atualizar isOrganizer:', e);
+  //   }
+  // };
 
-  // Alterna entre organizador e não-organizador
-  const toggleOrganizer = () => {
-    if (userData?.isOrganizer !== undefined) {
-      const newStatus = !userData.isOrganizer;
-      changeOrganizerStatus(newStatus);
-    }
-  };
+  // // Alterna entre organizador e não-organizador
+  // const toggleOrganizer = () => {
+  //   if (userData?.isOrganizer !== undefined) {
+  //     const newStatus = !userData.isOrganizer;
+  //     changeOrganizerStatus(newStatus);
+  //   }
+  // };
 
   // Mostra botão só se for organizador
   const activeOrganizerPost = () => {
-    if (isOrganizer) {
+    if (userData?.isOrganizer) {
       return (
         <TouchableOpacity
           style={styles.createPostButton}
@@ -90,7 +91,7 @@ function Tabs() {
 
   return (
     <>
-      <appContext.Provider value={{ organizerMode, toggleOrganizer, isOrganizer }}>
+      <appContext.Provider value={{ organizerMode, isOrganizer }}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
@@ -176,8 +177,8 @@ export default function App() {
                 options={{ headerShown: false }}
               ></Stack.Screen>
               <Stack.Screen
-                name="Historico"
-                component={Historico}
+                name="MinhasViagens"
+                component={MinhasViagens}
                 options={{ headerShown: false }}
               ></Stack.Screen>
               <Stack.Screen
@@ -232,7 +233,14 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "#2b2c33",
     borderWidth: 1,
-    borderColor: "#f37100"
+    borderColor: "#f37100",
+  
+    // Sombras
+    shadowColor: "#f37100",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8, // necessário no Android
   },
   modalOverlay: {
     flex: 1,
