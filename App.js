@@ -20,7 +20,7 @@ import { db } from "./services/firebase";
 import Login from "./src/telas/Login";
 import Cadastro from "./src/telas/Cadastro";
 import Home from "./src/telas/Home";
-import Agenda from "./src/telas/agenda";
+import Agenda from "./src/telas/Agenda";
 import Formapagamento from "./src/telas/formapagamento";
 import Chat from "./src/telas/Chat";
 import MinhasViagens from "./src/telas/MinhasViagens";
