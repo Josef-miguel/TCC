@@ -40,7 +40,7 @@
     "react-native-gesture-handler": "~2.20.2",
     "react-native-gifted-chat": "^2.8.1",
     "react-native-linear-gradient": "^2.8.3",
-    "react-native-maps": "^1.24.3",
+    "react-native-maps": "1.18.0",
     "react-native-mask-text": "^0.14.2",
     "react-native-paper": "^5.14.5",
     "react-native-paper-dropdown": "^2.3.1",
