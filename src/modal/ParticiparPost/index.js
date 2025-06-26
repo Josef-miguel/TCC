@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   partContent: {
     width: '80%',
-    backgroundColor: '#fff',
+    backgroundColor: '#363942', // fundo caixa
     borderRadius: 8,
     padding: 16,
   },
@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     marginBottom: 12,
+    color: '#e4e4e4', // texto claro
   },
   partOption: {
     flexDirection: 'row',
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#666',
+    borderColor: '#f37100', // cor principal
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -118,20 +119,21 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#666',
+    backgroundColor: '#f37100', // cor principal
   },
   partOptionText: {
     marginLeft: 10,
+    color: '#e4e4e4', // texto claro
   },
   partButton: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: '#4caf50',
+    backgroundColor: '#f37100', // botão principal
     borderRadius: 6,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: '#e4e4e4', // texto claro
     fontWeight: 'bold',
   },
 });

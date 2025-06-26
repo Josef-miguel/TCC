@@ -8,6 +8,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { showMessage } from 'react-native-flash-message';
 
 import { Feather } from '@expo/vector-icons';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import axios from 'axios';
+
 
 import { collection, addDoc } from "firebase/firestore";
 import {db} from '../../../services/firebase'
@@ -18,8 +21,6 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [postName, setPostName] = useState('');
   const [tripType, setTripType] = useState(1);
   const [description, setDescription] = useState('');
-  const [route, setRoute] = useState('');
-  const [route_exit, setRouteExit] = useState('');
   const [imageUri, setImageUri] = useState([]);
   const [tripPrice, setTripPrice] = useState(0);
   const [numSlots, setNumSlots] = useState(0);
@@ -29,6 +30,11 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [showExitDate, setShowExitDate] = useState(false);
   const [showReturnDate, setShowReturnDate] = useState(false);
 
+  const [mapStart, setMapStart] = useState(null);
+  const [mapEnd, setMapEnd] = useState(null);
+  const [MapDisplayName, setMapDisplayName] = useState([]);
+  const [routeCoords, setRouteCoords] = useState([]);
+
 
   function limparCampos(){
     setPostName("");
@@ -37,7 +43,9 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
     setImageUri([]);
     setTripPrice(0);
     setNumSlots(0);
-    
+    setMapStart(null);
+    setMapEnd(null);
+    setRouteCoords([]);
   }
 
   async function saveData() {
@@ -57,12 +65,19 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
         title: postName || '',
         desc: description || '',
         type: tripType || '',
-        exit_route: route_exit || '',
         images: imageUri || [],
         numSlots: numSlots || '',
         price: tripPrice || 1,
         exit_date: exit_date || '',
         return_date: return_date || '',
+        route: {
+          start: mapStart,
+          end: mapEnd,
+          coordinates: routeCoords,
+          display_start: MapDisplayName[0],
+          display_end: MapDisplayName[1]
+        }
+
       });
 
       showMessage({
@@ -128,6 +143,88 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
     }
   };
 
+const handleMapPress = (e) => {
+  const { latitude, longitude } = e.nativeEvent.coordinate;
+
+  if (!mapStart) {
+    setMapStart({ latitude, longitude });
+  } else if (!mapEnd) {
+    const endCoord = { latitude, longitude };
+    setMapEnd(endCoord);
+    getRouteFromAPI(mapStart, endCoord);
+  }
+};
+
+    // FUNÇÃO PARA TRAÇAR A ROTA
+  const getRouteFromAPI = async (startCoord, endCoord) => {
+    try {
+      const response = await axios.post(
+        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+        {
+          coordinates: [
+            [startCoord.longitude, startCoord.latitude],
+            [endCoord.longitude, endCoord.latitude],
+          ],
+        },
+        {
+          headers: {
+            Authorization: '5b3ce3597851110001cf6248391ebde1fc8d4266ab1f2b4264a64558',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const coords = response.data.features[0].geometry.coordinates.map(([lng, lat]) => ({
+        latitude: lat,
+        longitude: lng,
+      }));
+
+      setRouteCoords(coords);
+
+      // Geocodifica início e fim da rota
+      const first = coords[0];
+      const last = coords[coords.length - 1];
+
+      reverseGeocode(first.latitude, first.longitude);
+      reverseGeocode(last.latitude, last.longitude);
+
+      
+    } catch (error) {
+      console.log('Erro ao traçar rota:', error);
+      showMessage({
+        message: 'Erro ao traçar rota',
+        description: 'Verifique sua conexão ou chave da API.',
+        type: 'danger',
+      });
+    }
+    console.log(MapDisplayName);
+  };
+
+
+const reverseGeocode = async (latitude, longitude) => {
+  try {
+    const response = await axios.get(
+      `https://nominatim.openstreetmap.org/reverse`,
+      {
+        params: {
+          format: 'json',
+          lat: latitude,
+          lon: longitude,
+        },
+        headers: {
+          'User-Agent': 'JSG/1.0 (jubscrebis@gmail.com)', 
+        }
+      }
+    );
+
+    const displayName = response.data.display_name;
+    setMapDisplayName(prev => [...prev, displayName]);
+    console.log('Endereço obtido:', displayName);
+  } catch (error) {
+    console.error('Erro na geocodificação reversa:', error);
+  }
+};
+
 
 
 
@@ -146,7 +243,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
 
             {/* Cabeçalho do modal com botão de voltar e título */}
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <TouchableOpacity onPress={() => {setModalVisible(false); limparCampos()}}>
                 <Ionicons name="arrow-back" size={32} color="#f37100" />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Criar post</Text>
@@ -175,27 +272,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
               onChangeText={setPostName}    // Atualiza estado postName
             />
 
-            {/* Para onde vai ir */}
-            <Text style={styles.label}>Rota de chegada</Text>
-            <View>
-              <TextInput
-                style={styles.input}
-                value={route}
-                placeholder="Para onde vamos?"
-                onChangeText={setRoute}
-              ></TextInput>
-            </View>
-            {/* De onde vai sair */}
-            <Text style={styles.label}>Rota de saída</Text>
-            <View>
-              <TextInput
-                style={styles.input}
-                value={route_exit}
-                placeholder="De onde vamos sair?"
-                onChangeText={setRouteExit}
-              ></TextInput>
-            </View>
-
+      
             {/* Seleção de tipo de viagem */}
             <Text style={styles.label}>Tipo de viagem</Text>
             <View style={styles.tripTypeContainer}>
@@ -328,11 +405,28 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
             />
 
             {/* Placeholder para mapa/trajeto da viagem */}
-            <Text style={styles.label}>Trajeto da viagem</Text>
-            <View style={styles.mapPlaceholder}>
-              <Ionicons name="location" size={24} color="black" />
+            {/* SUBSTITUA AQUI */}
+            <View style={{ height: 200, marginBottom: 15, borderRadius: 8, overflow: 'hidden' }}>
+              <MapView
+                style={{ flex: 1 }}
+                initialRegion={{
+                  latitude: -23.55052,
+                  longitude: -46.633308,
+                  latitudeDelta: 0.1,
+                  longitudeDelta: 0.1,
+                }}
+                onPress={handleMapPress}
+              >
+              
+                {mapStart && <Marker coordinate={mapStart} title="Início" pinColor="green" />}
+                {mapEnd && <Marker coordinate={mapEnd} title="Destino" pinColor="red" />}
+                {routeCoords.length > 0 && (
+                  <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="blue" />
+                )}
+              </MapView>
             </View>
-
+              
+            {/* SUBISTITUA ACIMA */}
             {/* Texto de termos de uso com link */}
             <Text style={styles.termsText}>
               Ao criar uma publicação no aplicativo, você concorda com os{' '}
@@ -360,6 +454,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)', 

@@ -67,13 +67,13 @@ export default function Perfil() {
             }          
           </TouchableOpacity>
           <Text style={styles.name}>{userData?.userInfo?.nome}</Text>
-          <Text style={styles.level}>Genius Nível 1</Text>
+       
         </View>
 
         {/* Itens de menu: Chamadas de navegação e ações */}
         <MenuItem
           icon="account-outline"
-          label="Minha contas"
+          label="Minha conta"
            // Abre modal de customização
         />
         <MenuItem
@@ -87,8 +87,8 @@ export default function Perfil() {
         <MenuItem icon="account-search-outline" label="Avaliações" onPress={() => { /* implementar ação */ }} />
         <MenuItem
           icon="heart-outline"
-          label="Favoritos"
-          onPress={() => navigation.navigate('Favoritos')} // Navega para tela de favoritos
+          label="Minhas Viagens"
+          onPress={() => navigation.navigate('MinhasViagens')} // Navega para tela de minhas viagens
         />
         <MenuItem
           icon="logout"
@@ -113,6 +113,15 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#1a1b21',
     flexGrow: 1,
+  },
+   createPostButton: {
+    top: -20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#fff',
   },
   header: {
     marginTop: 50,
