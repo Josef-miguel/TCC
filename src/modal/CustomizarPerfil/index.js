@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   background: {
     width: '90%',
-    backgroundColor: '#2b2c33',
+    backgroundColor: '#1a1b21',
     borderRadius: 8,
     padding: 20,
   },
@@ -221,16 +221,16 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5, color: "#e4e4e4" },
   input: {
     borderWidth: 1, borderColor: '#f37100', borderRadius: 8,
-    padding: 10, marginBottom: 15, backgroundColor: '#363942', color: "#fff" 
+    padding: 10, marginBottom: 15, backgroundColor: '#2b2c33', color: "#fff" 
   },
   descriptionInput: { height: 80, textAlignVertical: 'top' },
   switchContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   switchLabel: { marginLeft: 10, fontSize: 14, color: '#e4e4e4' },
   button: { padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 10 },
-  paymentButton: { backgroundColor: '#a0a4ad', borderWidth: 1, borderColor: "#f37100" },
-  verificationButton: { backgroundColor: '#a0a4ad', borderWidth: 1, borderColor: "#f37100" },
-  saveButton: { backgroundColor: '#a0a4ad' }, // verde para Salvar
-  buttonText: { color: '#f37100', fontWeight: 'bold', fontSize: 16 },
+  paymentButton: { backgroundColor: '#363942', borderWidth: 1, borderColor: "#f37100" },
+  verificationButton: { backgroundColor: '#363942', borderWidth: 1, borderColor: "#f37100" },
+  saveButton: { backgroundColor: '#363942', borderWidth: 1, borderColor: '#f37100'}, // verde para Salvar
+  buttonText: { color: '#ffff', fontWeight: 'bold', fontSize: 16 },
 });
 
 export default CustomizeProfile;
