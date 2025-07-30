@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Animated } from 'react-native';
-import { db } from '../../../services/firebase';
+import { auth, db } from '../../../services/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useNavigation } from '@react-navigation/native';
 
@@ -30,7 +30,8 @@ export default function Chat() {
 
     await addDoc(collection(db, 'messages'), {
       text: input,
-      timestamp: serverTimestamp()
+      timestamp: serverTimestamp(),
+      userId : auth.currentUser.uid
     });
 
     setInput('');
