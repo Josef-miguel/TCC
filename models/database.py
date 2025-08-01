@@ -3,9 +3,7 @@ from flask_login import UserMixin
 from datetime import datetime
 
 db = SQLAlchemy()
-from flask_login import UserMixin
 
-# Classe de usuario que cria os campos dos dados a serem eveiados ao bd
 class Usuario(db.Model, UserMixin):
     __tablename__ = 'usuario'
     
@@ -18,25 +16,22 @@ class Usuario(db.Model, UserMixin):
     tipo = db.Column(db.String(50))  # 'comum' ou 'organizador'
 
     # Relacionamentos
-    organizador = db.relationship('Organizador', back_populates='usuario', uselist=False)
-    reservas = db.relationship('Reserva', back_populates='usuario')
-    avaliacoes = db.relationship('Avaliacao', back_populates='usuario')
-    mensagens = db.relationship('ChatSuporte', back_populates='usuario')
+    organizador = db.relationship('Organizador', back_populates='usuario', uselist=False, cascade='all, delete-orphan')
+    reservas = db.relationship('Reserva', back_populates='usuario', cascade='all, delete-orphan')
+    avaliacoes = db.relationship('Avaliacao', back_populates='usuario', cascade='all, delete-orphan')
+    mensagens = db.relationship('ChatSuporte', back_populates='usuario', cascade='all, delete-orphan')
+    
+    # Relacionamento com eventos favoritos (usando a tabela Favorito)
+    favoritos = db.relationship('Favorito', back_populates='usuario', cascade='all, delete-orphan')
 
-    eventos_favoritos = db.relationship(
-        'Evento',
-        secondary='favoritos',
-        back_populates='usuarios_favoritos'
-    )
-
-    # ✅ ESSA FUNÇÃO RESOLVE O SEU ERRO:
     def get_id(self):
         return str(self.id_usuario)
 
-    
+    # Propriedade para acessar eventos favoritos diretamente
+    @property
+    def eventos_favoritos(self):
+        return [favorito.evento for favorito in self.favoritos]
 
-    
-# Organizador (extensão de Usuario)
 class Organizador(db.Model):
     __tablename__ = 'organizador'
 
@@ -46,15 +41,11 @@ class Organizador(db.Model):
     endereco = db.Column(db.String(255), nullable=False)
     descricao = db.Column(db.Text)
     
-    # Chave estrangeira para Usuario
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'), unique=True, nullable=False)
-    # ... outros campos ...
 
     usuario = db.relationship('Usuario', back_populates='organizador')
-    eventos = db.relationship('Evento', back_populates='organizador')
+    eventos = db.relationship('Evento', back_populates='organizador', cascade='all, delete-orphan')
 
-
-# Evento (Excursão)
 class Evento(db.Model):
     __tablename__ = 'evento'
     
@@ -69,41 +60,35 @@ class Evento(db.Model):
     n_favoritos = db.Column(db.Integer, default=0)
     n_acessos = db.Column(db.Integer, default=0)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-
     
-    # Chave estrangeira para Organizador
     id_organizador = db.Column(db.Integer, db.ForeignKey('organizador.id_organizador'))
     
-    # Relacionamentos
     organizador = db.relationship('Organizador', back_populates='eventos')
     reservas = db.relationship('Reserva', back_populates='evento', cascade='all, delete-orphan')
     
-    # Relação muitos-para-muitos com Usuario (favoritos)
-    usuarios_favoritos = db.relationship(
-        'Usuario',
-        secondary='favoritos',
-        back_populates='eventos_favoritos'
-    )
-    
+    # Relacionamento com usuários que favoritaram (usando a tabela Favorito)
+    favoritos = db.relationship('Favorito', back_populates='evento', cascade='all, delete-orphan')
 
-    
-    
+    # Propriedade para acessar usuários que favoritaram diretamente
+    @property
+    def usuarios_favoritos(self):
+        return [favorito.usuario for favorito in self.favoritos]
+
 class Favorito(db.Model):
     __tablename__ = 'favoritos'
     
-    id_favorito = db.Column(db.Integer, primary_key=True)
+    id_favorito = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'), nullable=False)
     id_evento = db.Column(db.Integer, db.ForeignKey('evento.id_evento'), nullable=False)
     data_adicionado = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Adicione os relacionamentos diretos (opcional, se precisar acessar diretamente)
-    usuario = db.relationship('Usuario', backref=db.backref('favoritos_rel', lazy='dynamic'))
-    evento = db.relationship('Evento', backref=db.backref('favoritos_rel', lazy='dynamic'))
+    # Relacionamentos diretos
+    usuario = db.relationship('Usuario', back_populates='favoritos')
+    evento = db.relationship('Evento', back_populates='favoritos')
     
     __table_args__ = (
         db.UniqueConstraint('id_usuario', 'id_evento', name='unique_favorito'),
     )
-
     
 # Reserva
 class Reserva(db.Model):

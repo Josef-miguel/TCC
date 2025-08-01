@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from forms import RegistrationForm
 from forms import LoginForm  # Ou o caminho correto para seu arquivo forms.py
 from flask_login import UserMixin
+from flask import current_app
 
 routes = Blueprint('routes', __name__)
 
@@ -309,20 +310,12 @@ def dashboard():
 # Rota que mostra os eventos do site
 @routes.route('/eventos')
 def eventos():
-    try:
-        print("Tentando buscar eventos...")  # Debug
-        eventos = Evento.query.options(db.joinedload(Evento.organizador))\
-            .order_by(Evento.data_de_saida.asc()).all()
-        
-        print(f"Eventos encontrados: {len(eventos)}")  # Debug
-        for evento in eventos:
-            print(f"Evento ID: {evento.id_evento}, Destino: {evento.destino}")
-        
-        return render_template('eventos.html', eventos=eventos)
-    except Exception as e:
-        print(f"Erro ao buscar eventos: {str(e)}")  # Debug
-        flash('Erro ao carregar lista de eventos', 'error')
-        return render_template('eventos.html', eventos=[])
+    print("Tentando buscar eventos...")
+    eventos = Evento.query.all()
+    print(f"Eventos encontrados: {len(eventos)}")
+    for evento in eventos:
+        print(f"Evento ID: {evento.id_evento}, Destino: {evento.destino}")
+    return render_template('lista_eventos.html', eventos=eventos)
 
 # Criar Novo Evento
 
@@ -371,26 +364,21 @@ def nova_excursao():
 # Detalhes do Evento
 
 
-@routes.route('/evento/<int:id>')  # Note que mudei de 'eventos' para 'evento'
+@routes.route('/evento/<int:id>')
 def detalhes_evento(id):
     try:
         evento = Evento.query.options(
             db.joinedload(Evento.organizador)
         ).get_or_404(id)
         
-        # Incrementa contador de acessos
-        if evento.n_acessos is None:
-            evento.n_acessos = 0
-        evento.n_acessos += 1
+        evento.n_acessos = evento.n_acessos + 1 if evento.n_acessos else 1
         db.session.commit()
         
         return render_template('detalhes_evento.html', evento=evento)
-        
     except Exception as e:
-        #current_app.logger.error(f"Erro ao carregar evento {id}: {str(e)}")
+        current_app.logger.error(f"Erro ao carregar evento {id}: {str(e)}")
         flash('Erro ao carregar detalhes do evento', 'error')
-        return redirect(url_for('routes.home'))  # Redireciona para lista de eventos
-# Editar Evento
+        return redirect(url_for('routes.eventos'))  # Mude para o nome correto da sua rota de listagem
 
 
 @routes.route('/eventos/<int:id>/editar', methods=['GET', 'POST'])

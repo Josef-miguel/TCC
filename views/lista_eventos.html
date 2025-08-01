@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Lista de Eventos</h1>
+
+{% if eventos %}
+<ul>
+    {% for evento in eventos %}
+    <li>
+        <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}">
+            {{ evento.destino }} - {{ evento.data_de_saida }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>Nenhum evento encontrado.</p>
+{% endif %}
+{% endblock %}

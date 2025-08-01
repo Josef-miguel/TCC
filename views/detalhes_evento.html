@@ -5,28 +5,24 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card shadow">
-                <!-- Cabeçalho com título -->
                 <div class="card-header bg-primary text-white">
                     <h2 class="mb-0">{{ evento.destino }}</h2>
                     <small class="text-white-50">Visualizações: {{ evento.n_acessos }}</small>
                 </div>
 
-                <!-- Corpo do card com detalhes do evento -->
                 <div class="card-body">
                     <!-- Imagem do evento -->
                     <div class="text-center mb-4">
-                        <!-- Imagem do evento com fallback para imagem genérica da internet -->
                         <img src="{{ url_for('static', filename='img/eventos/' + evento.id_evento|string + '.jpg') }}"
                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'"
                             class="img-fluid rounded" alt="{{ evento.destino }}"
                             style="max-height: 300px; object-fit: cover;">
                     </div>
-                    <!-- Informações principais -->
+
+                    <!-- Informações básicas -->
                     <div class="mb-4">
                         <div class="row">
                             <div class="col-md-6">
-                                <p><strong><i class="fas fa-building"></i> Organizador:</strong>
-                                    {{ evento.organizador.nome_empresa if evento.organizador else 'Não informado' }}</p>
                                 <p><strong><i class="fas fa-map-marker-alt"></i> Local de Saída:</strong>
                                     {{ evento.local_saida }}</p>
                             </div>
@@ -34,9 +30,6 @@
                                 <p><strong><i class="fas fa-calendar-day"></i> Data de Saída:</strong>
                                     {{ evento.data_de_saida.strftime('%d/%m/%Y às %H:%M') if evento.data_de_saida else
                                     'Não definida' }}</p>
-                                <p><strong><i class="fas fa-calendar-check"></i> Data de Retorno:</strong>
-                                    {{ evento.data_de_retorno.strftime('%d/%m/%Y às %H:%M') if evento.data_de_retorno
-                                    else 'Não definida' }}</p>
                             </div>
                         </div>
 
@@ -47,8 +40,7 @@
                             </div>
                             <div class="col-md-6">
                                 <p><strong><i class="fas fa-users"></i> Vagas:</strong>
-                                    {{ evento.n_vagas - evento.reservas|length if evento.n_vagas else '0' }}/{{
-                                    evento.n_vagas }}</p>
+                                    {{ evento.n_vagas }}</p>
                             </div>
                         </div>
 
@@ -62,75 +54,13 @@
                         {% endif %}
                     </div>
 
-                    <!-- BOTÕES DE AÇÃO -->
+                    <!-- Botão Voltar -->
                     <div class="mt-4 border-top pt-3">
-                        {% if current_user.is_authenticated %}
-                        {% if current_user.tipo == 'organizador' and evento.organizador and
-                        evento.organizador.id_usuario == current_user.id_usuario %}
-                        <!-- Botões para organizador -->
-                        <a href="{{ url_for('routes.home) }}"
-                            class="btn btn-primary me-2">
-                            <i class="fas fa-edit"></i> Editar Evento
+                        <a href="{{ url_for('routes.eventos') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar
                         </a>
-                        <form method="POST" action="{{ url_for('routes.home') }}"
-                            class="d-inline">
-                            <button type="submit" class="btn btn-danger"
-                                onclick="return confirm('Tem certeza que deseja excluir este evento?');">
-                                <i class="fas fa-trash"></i> Excluir
-                            </button>
-                        </form>
-                        {% elif current_user.tipo == 'usuario' %}
-                        <!-- Botão de reserva para usuários comuns -->
-                        <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#reservaModal">
-                            <i class="fas fa-ticket-alt"></i> Reservar Agora
-                        </button>
-
-                        <!-- Botão de favoritos -->
-                        {% if evento in current_user.eventos_favoritos %}
-                        <a href="{{ url_for('routes.home) }}"
-                            class="btn btn-warning">
-                            <i class="fas fa-heart"></i> Remover dos Favoritos
-                        </a>
-                        {% else %}
-                        <a href="{{ url_for('routes.home) }}"
-                            class="btn btn-outline-warning">
-                            <i class="far fa-heart"></i> Adicionar aos Favoritos
-                        </a>
-                        {% endif %}
-                        {% endif %}
-                        {% else %}
-                        <a href="{{ url_for('routes.login') }}" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt"></i> Faça login para reservar
-                        </a>
-                        {% endif %}
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Reserva -->
-<div class="modal fade" id="reservaModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Reservar: {{ evento.destino }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="{{ url_for('routes.home) }}">
-                    <div class="mb-3">
-                        <label class="form-label">Quantidade de Vagas</label>
-                        <input type="number" class="form-control" name="quantidade" min="1"
-                            max="{{ evento.n_vagas - evento.reservas|length }}" value="1" required>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-check"></i> Confirmar Reserva
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
