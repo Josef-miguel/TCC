@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, Switch, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function Configuracoes({ modalVisible, setModalVisible }) {
@@ -12,33 +12,75 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
         <View style={styles.modal}>
           <Text style={styles.title}>Configurações</Text>
 
-          <View style={styles.item}>
-            <View style={styles.left}>
-              <Icon name="bell-ring-outline" size={24} color="#f37100" />
-              <Text style={styles.label}>Notificações</Text>
-            </View>
-            <Switch
-              value={notificacoes}
-              onValueChange={setNotificacoes}
-              thumbColor={notificacoes ? '#f37100' : '#888'}
-            />
-          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
 
-          <View style={styles.item}>
-            <View style={styles.left}>
-              <Icon name="theme-light-dark" size={24} color="#f37100" />
-              <Text style={styles.label}>Modo escuro</Text>
+            {/* Notificações */}
+            <View style={styles.item}>
+              <View style={styles.left}>
+                <Icon name="bell-ring-outline" size={24} color="#f37100" />
+                <Text style={styles.label}>Notificações</Text>
+              </View>
+              <Switch
+                value={notificacoes}
+                onValueChange={setNotificacoes}
+                thumbColor={notificacoes ? '#f37100' : '#888'}
+              />
             </View>
-            <Switch
-              value={modoEscuro}
-              onValueChange={setModoEscuro}
-              thumbColor={modoEscuro ? '#f37100' : '#888'}
-            />
-          </View>
 
-          <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
-            <Text style={styles.closeText}>Fechar</Text>
-          </TouchableOpacity>
+            {/* Modo Escuro */}
+            <View style={styles.item}>
+              <View style={styles.left}>
+                <Icon name="theme-light-dark" size={24} color="#f37100" />
+                <Text style={styles.label}>Modo escuro</Text>
+              </View>
+              <Switch
+                value={modoEscuro}
+                onValueChange={setModoEscuro}
+                thumbColor={modoEscuro ? '#f37100' : '#888'}
+              />
+            </View>
+
+            {/* Idioma */}
+            <TouchableOpacity style={styles.item}>
+              <View style={styles.left}>
+                <Icon name="translate" size={24} color="#f37100" />
+                <Text style={styles.label}>Idioma</Text>
+              </View>
+              <Icon name="chevron-right" size={24} color="#ccc" />
+            </TouchableOpacity>
+
+            {/* Alterar Senha */}
+            <TouchableOpacity style={styles.item}>
+              <View style={styles.left}>
+                <Icon name="lock-reset" size={24} color="#f37100" />
+                <Text style={styles.label}>Alterar senha</Text>
+              </View>
+              <Icon name="chevron-right" size={24} color="#ccc" />
+            </TouchableOpacity>
+
+            {/* Excluir Conta */}
+            <TouchableOpacity style={styles.item}>
+              <View style={styles.left}>
+                <Icon name="delete-outline" size={24} color="red" />
+                <Text style={[styles.label, { color: 'red' }]}>Excluir conta</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Termos e Suporte */}
+            <TouchableOpacity style={styles.item}>
+              <View style={styles.left}>
+                <Icon name="file-document-outline" size={24} color="#f37100" />
+                <Text style={styles.label}>Termos e Suporte</Text>
+              </View>
+              <Icon name="chevron-right" size={24} color="#ccc" />
+            </TouchableOpacity>
+
+            {/* Botão Fechar */}
+            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+              <Text style={styles.closeText}>Fechar</Text>
+            </TouchableOpacity>
+
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -57,6 +99,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     width: '85%',
+    maxHeight: '90%',
   },
   title: {
     fontSize: 20,
@@ -80,7 +123,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   closeBtn: {
-    alignSelf: 'flex-end',
+    alignSelf: 'center',
+    marginTop: 10,
   },
   closeText: {
     color: '#f37100',
