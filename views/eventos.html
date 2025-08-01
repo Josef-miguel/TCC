@@ -7,7 +7,7 @@
         margin: 2rem auto;
         padding: 0 1rem;
     }
-    
+
     .page-title {
         font-size: 2rem;
         color: var(--text-color);
@@ -15,7 +15,7 @@
         position: relative;
         padding-bottom: 0.5rem;
     }
-    
+
     .page-title::after {
         content: '';
         position: absolute;
@@ -26,13 +26,13 @@
         background: var(--secondary-color);
         border-radius: 2px;
     }
-    
+
     .eventos-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 2rem;
     }
-    
+
     .evento-card {
         background: var(--light-color);
         border-radius: 10px;
@@ -43,19 +43,19 @@
         flex-direction: column;
         height: 100%;
     }
-    
+
     .evento-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
-    
+
     .evento-image {
         width: 100%;
         height: 200px;
         object-fit: cover;
         position: relative;
     }
-    
+
     .evento-badge {
         position: absolute;
         top: 1rem;
@@ -67,20 +67,20 @@
         font-size: 0.8rem;
         font-weight: 600;
     }
-    
+
     .evento-content {
         padding: 1.5rem;
         flex: 1;
         display: flex;
         flex-direction: column;
     }
-    
+
     .evento-title {
         font-size: 1.3rem;
         margin: 0 0 0.5rem 0;
         color: var(--text-color);
     }
-    
+
     .evento-location {
         display: flex;
         align-items: center;
@@ -89,14 +89,14 @@
         font-weight: 500;
         margin-bottom: 0.5rem;
     }
-    
+
     .evento-meta {
         display: flex;
         gap: 1rem;
         margin: 0.5rem 0;
         flex-wrap: wrap;
     }
-    
+
     .evento-meta-item {
         display: flex;
         align-items: center;
@@ -104,30 +104,30 @@
         font-size: 0.9rem;
         color: var(--text-light);
     }
-    
+
     .evento-description {
         color: var(--text-light);
         margin: 1rem 0;
         flex: 1;
     }
-    
+
     .evento-price {
         font-size: 1.3rem;
         font-weight: 700;
         color: var(--secondary-color);
         margin: 0.5rem 0;
     }
-    
+
     .evento-price small {
         font-size: 0.9rem;
         font-weight: 400;
         color: var(--text-light);
     }
-    
+
     .evento-footer {
         padding: 0 1.5rem 1.5rem;
     }
-    
+
     .btn-details {
         background: var(--secondary-color);
         color: var(--text-color);
@@ -141,40 +141,40 @@
         text-decoration: none;
         display: block;
     }
-    
+
     .btn-details:hover {
         background: #c35a00;
         color: var(--text-color);
     }
-    
+
     .empty-state {
         text-align: center;
         padding: 3rem;
         background: var(--light-color);
         border-radius: 10px;
     }
-    
+
     .empty-state i {
         font-size: 3rem;
         color: var(--secondary-color);
         margin-bottom: 1rem;
     }
-    
+
     .empty-state h4 {
         color: var(--text-color);
         margin-bottom: 0.5rem;
     }
-    
+
     .empty-state p {
         color: var(--text-light);
     }
-    
+
     /* Responsividade */
     @media (max-width: 768px) {
         .eventos-grid {
             grid-template-columns: 1fr;
         }
-        
+
         .evento-card {
             max-width: 400px;
             margin: 0 auto;
@@ -184,25 +184,25 @@
 
 <div class="eventos-container">
     <h1 class="page-title">Pacotes de Viagem</h1>
-    
+
     {% if eventos %}
     <div class="eventos-grid">
         {% for evento in eventos %}
         <div class="evento-card">
             <!-- Imagem do evento -->
             <div class="evento-image-container">
-                <img src="{{ url_for('static', filename='img/cananeia.jpg') }}" 
-                     class="evento-image" alt="{{ evento.destino }}">
+                <img src="{{ url_for('static', filename='img/cananeia.jpg') }}" class="evento-image"
+                    alt="{{ evento.destino }}">
                 <span class="evento-badge">Promoção</span>
             </div>
-            
+
             <div class="evento-content">
                 <h3 class="evento-title">{{ evento.destino }}</h3>
                 <div class="evento-location">
                     <i class="fas fa-map-marker-alt"></i>
                     {{ evento.local_saida }}
                 </div>
-                
+
                 <div class="evento-meta">
                     <span class="evento-meta-item">
                         <i class="fas fa-calendar-alt"></i>
@@ -213,19 +213,19 @@
                         {{ evento.duracao }} dias
                     </span>
                 </div>
-                
+
                 <p class="evento-description">
                     {{ evento.descricao|truncate(120) }}
                 </p>
-                
+
                 <div class="evento-price">
                     R$ {{ "%.2f"|format(evento.preco) }} <small>por pessoa</small>
                 </div>
             </div>
-            
+
             <div class="evento-footer">
-                <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" 
-                   class="btn-details">
+                <!-- Altere o href para combinar com a rota -->
+                <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" class="btn-details">
                     Ver Detalhes
                 </a>
             </div>

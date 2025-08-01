@@ -68,11 +68,11 @@
                         {% if current_user.tipo == 'organizador' and evento.organizador and
                         evento.organizador.id_usuario == current_user.id_usuario %}
                         <!-- Botões para organizador -->
-                        <a href="{{ url_for('routes.editar_evento', id=evento.id_evento) }}"
+                        <a href="{{ url_for('routes.home) }}"
                             class="btn btn-primary me-2">
                             <i class="fas fa-edit"></i> Editar Evento
                         </a>
-                        <form method="POST" action="{{ url_for('routes.excluir_evento', id=evento.id_evento) }}"
+                        <form method="POST" action="{{ url_for('routes.home') }}"
                             class="d-inline">
                             <button type="submit" class="btn btn-danger"
                                 onclick="return confirm('Tem certeza que deseja excluir este evento?');">
@@ -87,12 +87,12 @@
 
                         <!-- Botão de favoritos -->
                         {% if evento in current_user.eventos_favoritos %}
-                        <a href="{{ url_for('routes.remover_favorito', id_evento=evento.id_evento) }}"
+                        <a href="{{ url_for('routes.home) }}"
                             class="btn btn-warning">
                             <i class="fas fa-heart"></i> Remover dos Favoritos
                         </a>
                         {% else %}
-                        <a href="{{ url_for('routes.adicionar_favorito', id_evento=evento.id_evento) }}"
+                        <a href="{{ url_for('routes.home) }}"
                             class="btn btn-outline-warning">
                             <i class="far fa-heart"></i> Adicionar aos Favoritos
                         </a>
@@ -119,7 +119,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="{{ url_for('routes.fazer_reserva', id_evento=evento.id_evento) }}">
+                <form method="POST" action="{{ url_for('routes.home) }}">
                     <div class="mb-3">
                         <label class="form-label">Quantidade de Vagas</label>
                         <input type="number" class="form-control" name="quantidade" min="1"

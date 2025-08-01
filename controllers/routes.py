@@ -371,18 +371,25 @@ def nova_excursao():
 # Detalhes do Evento
 
 
-@routes.route('/eventos/<int:id>')
+@routes.route('/evento/<int:id>')  # Note que mudei de 'eventos' para 'evento'
 def detalhes_evento(id):
     try:
         evento = Evento.query.options(
-            db.joinedload(Evento.organizador)).get_or_404(id)
+            db.joinedload(Evento.organizador)
+        ).get_or_404(id)
+        
+        # Incrementa contador de acessos
+        if evento.n_acessos is None:
+            evento.n_acessos = 0
         evento.n_acessos += 1
         db.session.commit()
+        
         return render_template('detalhes_evento.html', evento=evento)
+        
     except Exception as e:
+        #current_app.logger.error(f"Erro ao carregar evento {id}: {str(e)}")
         flash('Erro ao carregar detalhes do evento', 'error')
-        return redirect(url_for('routes.home'))
-
+        return redirect(url_for('routes.home'))  # Redireciona para lista de eventos
 # Editar Evento
 
 
@@ -470,7 +477,6 @@ def excluir_evento(id):
         flash(f'Erro ao excluir evento: {str(e)}', 'error')
 
     return redirect(url_for('routes.dashboard'))
-
 
 
 # Favoritos
