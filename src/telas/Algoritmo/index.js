@@ -3,9 +3,10 @@ import { View, ScrollView, StyleSheet, Alert, TouchableOpacity } from 'react-nat
 import { Text, Button, Card, Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../../../services/firebase'; // ajuste praonde seu Firestore é exportado
 import { useAuth } from '../../../services/AuthContext';
+import { get } from 'lodash';
 
 
 // Componente de Card de seleção
@@ -19,9 +20,42 @@ const SelectableCard = ({ label, value, selected, onPress }) => (
   </TouchableOpacity>
 );
 
+const steps = [
+  { key: 'tripType', title: 'Tipo de viagem favorita' },
+  { key: 'budget', title: 'Faixa de preço' },
+  { key: 'duration', title: 'Duração preferida' },
+  { key: 'tags', title: 'Quais sensações você gostaria de experimentar?' },
+];
+
+const optionsMap = {
+  tripType: [
+    { label: 'Excursões', value: 'excursion' },
+    { label: 'Viagens', value: 'trip' },
+    { label: 'Shows', value: 'show' },
+  ],
+  budget: [
+    { label: 'Baixo (até R$50)', value: 'low' },
+    { label: 'Médio (R$50-R$200)', value: 'medium' },
+    { label: 'Alto (acima de R$200)', value: 'high' },
+  ],
+  duration: [
+    { label: 'Curta (1-3 dias)', value: 'short' },
+    { label: 'Média (4-7 dias)', value: 'medium' },
+    { label: 'Longa (mais de 7 dias)', value: 'long' },
+  ],
+  tags: [
+    { label: 'Ação', value: 'action' },
+    { label: 'Aventura', value: 'adventure' },
+    { label: 'Radical', value: 'radical' },
+    { label: 'Relaxante', value: 'relax' },
+    { label: 'Tranquilo', value: 'chill' },
+  ],
+};
+
 const TravelPreferencesScreen = () => {
-    const {userData, loading} = useAuth()
+  const {userData, loading} = useAuth()
   const navigation = useNavigation();
+  const [step, setStep] = useState(0);
 
   // Agora todos os estados são arrays para multi seleção
   const [tripType, setTripType] = useState([]);
@@ -55,6 +89,8 @@ const TravelPreferencesScreen = () => {
     
   ];
 
+  
+
   // Função genérica para toggle de seleção
   const toggleSelection = (value, selectedArray, setSelectedArray) => {
     if (selectedArray.includes(value)) {
@@ -83,7 +119,10 @@ const TravelPreferencesScreen = () => {
     console.log(auth.currentUser?.uid);
     await updateDoc(userRef, { preferences }); // atualiza só o campo 'preferences'
 
-    console.log('Dados atualizados com sucesso!');
+    const userSnap = await getDoc(userRef);
+    const updatedUserData = userSnap.data();
+
+    console.log('Dados atualizados: ', updatedUserData);
     Alert.alert('Sucesso', 'Preferências salvas com sucesso!');
     navigation.replace('Home');
   } catch (error) {
@@ -97,86 +136,96 @@ const TravelPreferencesScreen = () => {
     navigation.replace('Home');
   };
 
-useEffect(() => {
-  console.log("loading:", loading);
-  console.log("userData:", userData);
+  const stepStateMap = {
+    tripType: [tripType, setTripType],
+    budget: [budget, setBudget],
+    duration: [duration, setDuration],
+    tags: [tags, setTags],
+  };
 
-  if (!loading && !userData) {
-    navigation.replace('Login');
-  }
-}, [loading, userData]);
+  const handleNext = () => {
+    if (step < steps.length - 1) {
+      setStep(step + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (step > 0) {
+      setStep(step - 1);
+    }
+  };
+
+  useEffect(() => {
+    const verificar = async () => {
+      console.log("loading:", loading);
+      console.log("userData:", userData);
+
+      // Espera 1 segundo
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (!loading && !userData) {
+        navigation.replace('Login');
+      }
+    };
+
+    verificar();
+  }, [loading, userData]);
+
 
     if (loading || !userData) {
-        console.log("carregou");
-    return <Text style={{ color: '#fff', textAlign: 'center', marginTop: 40 }}>Carregando usuário...</Text>;
+      return <Text style={{ color: '#fff', textAlign: 'center', marginTop: 40 }}>Carregando usuário...</Text>;
     }
 
+  const currentStep = steps[step];
+  const [selected, setSelected] = stepStateMap[currentStep.key];
+  const options = optionsMap[currentStep.key];
 
   return (
     <PaperProvider>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
           <Text style={styles.title}>Conte-nos sobre suas preferências de viagem!</Text>
-
-          <Text style={styles.subTitle}>Tipo de viagem favorita</Text>
-          <View style={styles.cardGroup}>
-            {tripOptions.map(option => (
+          <Text style={styles.subTitle}>{currentStep.title}</Text>
+          <ScrollView contentContainerStyle={styles.cardGroup}>
+            {options.map(option => (
               <SelectableCard
                 key={option.value}
                 label={option.label}
                 value={option.value}
-                selected={Array.isArray(tripType) && tripType.includes(option.value)}
-                onPress={value => toggleSelection(value, tripType, setTripType)}
+                selected={Array.isArray(selected) && selected.includes(option.value)}
+                onPress={value => toggleSelection(value, selected, setSelected)}
               />
             ))}
-          </View>
+          </ScrollView>
 
-          <Text style={styles.subTitle}>Faixa de preço</Text>
-          <View style={styles.cardGroup}>
-            {budgetOptions.map(option => (
-              <SelectableCard
-                key={option.value}
-                label={option.label}
-                value={option.value}
-                selected={Array.isArray(budget) && budget.includes(option.value)}
-                onPress={value => toggleSelection(value, budget, setBudget)}
-              />
-            ))}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 }}>
+            {step > 0 && (
+              <Button mode="outlined" onPress={handleBack} style={{ flex: 1, marginRight: 10 }}>
+                Voltar
+              </Button>
+            )}
+            {step < steps.length - 1 ? (
+              <Button
+                mode="contained"
+                onPress={handleNext}
+                style={{ flex: 1, backgroundColor: '#f37100', borderRadius: 12 }}
+                labelStyle={styles.buttonText}
+                disabled={selected.length === 0}
+              >
+                Próximo
+              </Button>
+            ) : (
+              <Button
+                mode="contained"
+                onPress={savePreferences}
+                style={{ flex: 1, backgroundColor: '#f37100', borderRadius: 12 }}
+                labelStyle={styles.buttonText}
+                disabled={selected.length === 0}
+              >
+                Salvar Preferências
+              </Button>
+            )}
           </View>
-
-          <Text style={styles.subTitle}>Duração preferida</Text>
-          <View style={styles.cardGroup}>
-            {durationOptions.map(option => (
-              <SelectableCard
-                key={option.value}
-                label={option.label}
-                value={option.value}
-                selected={Array.isArray(duration) && duration.includes(option.value)}
-                onPress={value => toggleSelection(value, duration, setDuration)}
-              />
-            ))}
-          </View>
-          <Text style={styles.subTitle}>Quais sensações você gostaria de experimentar?</Text>
-          <View style={styles.cardGroup}>
-            {tagOptions.map(option => (
-              <SelectableCard
-                key={option.value}
-                label={option.label}
-                value={option.value}
-                selected={Array.isArray(tags) && tags.includes(option.value)}
-                onPress={value => toggleSelection(value, tags, setTags)}
-              />
-            ))}
-          </View>
-
-          <Button
-            mode="contained"
-            onPress={savePreferences}
-            style={styles.button}
-            labelStyle={styles.buttonText}
-          >
-            Salvar Preferências
-          </Button>
 
           <Button
             onPress={skipPreferences}
@@ -185,7 +234,7 @@ useEffect(() => {
           >
             Pular
           </Button>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </PaperProvider>
   );

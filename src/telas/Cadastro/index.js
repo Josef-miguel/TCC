@@ -11,7 +11,6 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { showMessage } from "react-native-flash-message";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -255,6 +254,14 @@ export default function Cadastro({ navigation }) {
             <TouchableOpacity onPress={() => navigation.navigate("Login")}>
               <Text style={styles.linkText}>Já possui conta? Faça login</Text>
             </TouchableOpacity>
+            
+            
+            {/* Link para ir ao login */}
+            <TouchableOpacity onPress={() => navigation.navigate("Algoritmo")}>
+              <Text style={styles.linkText}>Algoritmo</Text>
+            </TouchableOpacity>
+
+
           </Animated.View>
         </KeyboardAvoidingView>
       </ScrollView>
