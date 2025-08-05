@@ -3,10 +3,8 @@
    1. Tornar funcional a tela minha conta, adicionando a ela informações pertinentes a seção  
   
    2. Tornar funcional a tela de avaliações, mostrando as avaliações de viagens feitas pelo usuário  
-  
-   3. Habilitar a tela minhas viagens mostrando as viagens salvas e curtidas/favoritadas  
-  
-   4. Dentro do customizar perfil  
+
+   3. Dentro do customizar perfil  
     * Criar uma verificação de identidade para o usuário se habilitar como organizador  
   * Adicionar mais informações na tela de pagamento  
   
@@ -32,11 +30,14 @@
 
 > [!question]+ Miguel José  
 > * Criar uma tela de configurações( Substituir a tela de preferencias pela de configurações) *Migas josé*
+> * Habilitar a tela minhas viagens mostrando as viagens salvas e curtidas/favoritadas  
+  
 
 > [!info]+  
->  * Incluir o projeto web no firebase *Miguel Isack*  
->  * Arrumar a tela de algoritmo *Miguel Isack*  
->    * Subdividir a customização para que não fique extensivo ao usuário
+>  * Incluir o projeto web no firebase *Miguel Isack*
+>  * Dentro do customizar perfil  
+>  * Criar uma verificação de identidade para o usuário se habilitar como organizador  
+>  * Adicionar mais informações na tela de pagamento  
 
 > [!warning]+ Rafael  
->  * Remover seções incompatíveis com o mobile *Rafaels*
+>  * _Incluir o projeto web no firebase_ *Rafaels*
