@@ -176,9 +176,7 @@ const pickImage = async () => {
 
           <TouchableOpacity
             style={[styles.button, styles.verificationButton]}
-            onPress={() => {
-              /* lógica futura */
-            }}
+            onPress={() => navigation.navigate('VerificacaoIdentidade')}
           >
             <Text style={styles.buttonText}>Verificação de identidade</Text>
           </TouchableOpacity>

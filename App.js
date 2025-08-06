@@ -31,6 +31,7 @@ import Favoritos from "./src/telas/Favoritos";
 import Algoritmo from "./src/telas/Algoritmo";
 
 import CriarPost from "./src/modal/CriarPost";
+import VerificacaoIdentidade from "./src/modal/VerificacaoIdentidade";
 
 export const appContext = createContext();
 
@@ -174,6 +175,11 @@ export default function App() {
               <Stack.Screen
                 name="Formapagamento"
                 component={Formapagamento}
+                options={{ headerShown: false }}
+              ></Stack.Screen>
+              <Stack.Screen
+                name="VerificacaoIdentidade"
+                component={VerificacaoIdentidade}
                 options={{ headerShown: false }}
               ></Stack.Screen>
               <Stack.Screen
