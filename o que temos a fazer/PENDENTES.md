@@ -26,6 +26,10 @@
   
 3. Adicionar seções que existem no mobile
 
+## FRONT DO PROJETO
+1. Deixar bonito 
+
+
 ## METAS
 
 > [!question]+ Miguel José  
@@ -41,3 +45,5 @@
 
 > [!warning]+ Rafael  
 >  * _Incluir o projeto web no firebase_ *Rafaels*
+
+
