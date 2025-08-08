@@ -1,0 +1,4 @@
+branco
+laranja
+
+ponto
