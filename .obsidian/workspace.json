@@ -4,25 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "95cf15f0a51367cb",
+        "id": "a68a95324873bb91",
         "type": "tabs",
         "children": [
           {
-            "id": "8c155fbad0bafebf",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "o que temos a fazer/PENDENTES.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "PENDENTES"
-            }
-          },
-          {
-            "id": "cee1a163645163d0",
+            "id": "890e0d1c998f193f",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -33,80 +19,9 @@
               },
               "icon": "lucide-file",
               "title": "o que fazer"
-            }
-          },
-          {
-            "id": "c196d0617d702b35",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "MiguelIsack/Customizar o perfil/o que fazer.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "o que fazer"
-            }
-          },
-          {
-            "id": "d3920e5844efcd1f",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "README.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "README"
-            }
-          },
-          {
-            "id": "f24a406fef284a97",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "o que temos a fazer/PENDENTES.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "PENDENTES"
-            }
-          },
-          {
-            "id": "57b6a6920695b035",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Tema.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Tema"
-            }
-          },
-          {
-            "id": "a6251dbe592daad8",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "FIGMA.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "FIGMA"
             }
           }
-        ],
-        "currentTab": 6
+        ]
       }
     ],
     "direction": "vertical"
@@ -225,13 +140,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "FIGMA.md",
+                "file": "Excalidraw/Drawing 2025-08-05 14.33.23.excalidraw.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of FIGMA"
+              "title": "Outline of Drawing 2025-08-05 14.33.23.excalidraw"
             }
           },
           {
@@ -273,20 +188,20 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "2bcf48fcc3d1805b",
+  "active": "890e0d1c998f193f",
   "lastOpenFiles": [
-    "Tema.md",
+    "Excalidraw/Drawing 2025-08-05 14.33.23.excalidraw.md",
     "FIGMA.md",
+    "README.md",
+    "MiguelIsack/Customizar o perfil/o que fazer.md",
+    "Tema.md",
     "LI",
     "o que temos a fazer/PENDENTES.md",
     "CALENDAR/2025-09-15.md",
     "LINKS/MIGUEL ISACK.md",
     "CALENDAR",
     "2025-08-08.md",
-    "README.md",
-    "MiguelIsack/Customizar o perfil/o que fazer.md",
     "LINKS",
-    "Excalidraw/Drawing 2025-08-05 14.33.23.excalidraw.md",
     "Excalidraw",
     "MiguelIsack/Customizar o perfil",
     "MiguelIsack",
