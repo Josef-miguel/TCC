@@ -31,7 +31,7 @@ import Favoritos from "./src/telas/Favoritos";
 import Algoritmo from "./src/telas/Algoritmo";
 
 import CriarPost from "./src/modal/CriarPost";
-import VerificacaoIdentidade from "./src/modal/VerificacaoIdentidade";
+import VerificacaoIdentidade from "./src/telas/VerificacaoIdentidade";
 
 export const appContext = createContext();
 
