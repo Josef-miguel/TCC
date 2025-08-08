@@ -254,12 +254,6 @@ export default function Cadastro({ navigation }) {
             <TouchableOpacity onPress={() => navigation.navigate("Login")}>
               <Text style={styles.linkText}>Já possui conta? Faça login</Text>
             </TouchableOpacity>
-            
-            
-            {/* Link para ir ao login */}
-            <TouchableOpacity onPress={() => navigation.navigate("Algoritmo")}>
-              <Text style={styles.linkText}>Algoritmo</Text>
-            </TouchableOpacity>
 
 
           </Animated.View>
