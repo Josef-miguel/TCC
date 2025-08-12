@@ -165,8 +165,8 @@
             "state": {
               "type": "calendar",
               "state": {},
-              "icon": "calendar-with-checkmark",
-              "title": "Calendar"
+              "icon": "lucide-file",
+              "title": "Plugin no longer active"
             }
           }
         ],
@@ -184,15 +184,19 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "obsidian-git:Open Git source control": false,
-      "obsidian-excalidraw-plugin:New drawing": false
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "890e0d1c998f193f",
+  "active": "6f91738d5004670f",
   "lastOpenFiles": [
+    "nossos pensamentos",
+    "nossos pensamentos/rafaelFerrete",
+    "nossos pensamentos/vitorTelles",
+    "nossos pensamentos/miguelJose",
     "Excalidraw/Drawing 2025-08-05 14.33.23.excalidraw.md",
     "o que temos a fazer/PENDENTES.md",
-    "MiguelIsack/Customizar o perfil/o que fazer.md",
+    "nossos pensamentos/miguelJose/Customizar o perfil/o que fazer.md",
     "Tema.md",
     "FIGMA.md",
     "README.md",
@@ -203,8 +207,8 @@
     "2025-08-08.md",
     "LINKS",
     "Excalidraw",
-    "MiguelIsack/Customizar o perfil",
-    "MiguelIsack",
+    "nossos pensamentos/miguelJose/Customizar o perfil",
+    "nossos pensamentos/MiguelIsack",
     "o que temos a fazer"
   ]
 }
