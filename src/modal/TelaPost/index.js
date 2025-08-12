@@ -32,7 +32,6 @@ const PostScreen = ({
 
   const handleStarPress = (rating) => {
     setStarRating(rating);
-    // Aqui pode salvar no backend futuramente
   };
 
   const handleSendComment = () => {
@@ -41,17 +40,12 @@ const PostScreen = ({
     setNewComment('');
   };
 
-  const formatCoordinate = (coord) => {
-    if (!coord) return 'Não definido';
-    return `${coord.latitude?.toFixed(4)}, ${coord.longitude?.toFixed(4)}`;
-  };
-
   return (
     <View style={{ flex: 1 }}>
-      <Modal visible={modalVisible} transparent animationType="slide">
+      <Modal visible={modalVisible} animationType="slide">
         <View style={styles.modalContainer}>
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
-            
+
             {/* Header */}
             <View style={styles.modalHeader}>
               <TouchableOpacity
@@ -112,18 +106,12 @@ const PostScreen = ({
                   </MapView>
                 </View>
               )}
-              
             </View>
 
             {/* Informações */}
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
-              {/* <Text style={styles.postDesc}>{selectedPost.title || 'Sem título.'}</Text>
-              <Text style={styles.postDesc}>{selectedPost.desc || 'Sem descrição.'}</Text>
-              <Text style={styles.postDesc}>{selectedPost.numSlots || 'Sem mais vagas disponíveis.'}</Text>
-              <Text style={styles.postDesc}>{selectedPost.exit_date || 'Sem data de partida disponível.'}</Text>
-              <Text style={styles.postDesc}>{selectedPost.return_date || 'Sem data de retorno disponível.'}</Text>
-              <Text style={styles.postDesc}>{"R$" + selectedPost.price || 'Sem preço disponível para essa viagem'}</Text> */}
+              {/* Exibir detalhes se necessário */}
             </View>
 
             {/* Avaliação */}
@@ -184,9 +172,9 @@ const PostScreen = ({
         setParticipationModalVisible={setParticipationModalVisible}
       />
 
-      {/* Modal de Chat (placeholder) */}
+      {/* Modal de Chat */}
       <Modal visible={chatModalVisible} animationType="slide">
-        {/* Colocar o componente de chat aqui depois */}
+        {/* Coloque o componente de chat aqui depois */}
       </Modal>
     </View>
   );
@@ -195,12 +183,10 @@ const PostScreen = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "#1a1b21", // cor de fundo sólida
   },
   modalScroll: {
-    margin: 20,
-    backgroundColor: "#1a1b21",
-    borderRadius: 8,
+    flex: 1,
   },
   modalInner: {
     padding: 16,
@@ -237,16 +223,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderColor: "#fff",
     backgroundColor: "#2a2a2a",
-    flexWrap: 'wrap', // permite quebrar linha
+    flexWrap: 'wrap',
     width: '100%',
   },
-  
   routeText: {
     color: "#fff",
     fontSize: 14,
     marginBottom: 4,
-    flexShrink: 1, // evita overflow
-    flexWrap: 'wrap', // quebra linha se necessário
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   infoBox: {
     padding: 10,
