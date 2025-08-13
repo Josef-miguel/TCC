@@ -6,8 +6,7 @@ import {
   Modal,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
-  Platform,
+  Dimensions
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
@@ -40,6 +39,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 
 
 const Tab = createBottomTabNavigator();
+const { width, height } = Dimensions.get("window");
 
 function Tabs() {
   const { userData, setUserData } = useAuth();
@@ -144,7 +144,7 @@ export default function App() {
   return (
     <>
       <AuthProvider>
-        <SafeAreaProvider>
+        <SafeAreaProvider style={{ flex: 1 }}>
           <PaperProvider>
             <NavigationContainer>
             <Stack.Navigator
@@ -224,6 +224,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: {
+    height: height,
     flex: 1,
     backgroundColor: "#fff",
     alignItems: "center",
