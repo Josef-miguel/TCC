@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -28,22 +28,37 @@ const PostScreen = ({
 
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
-  const [starRating, setStarRating] = useState(selectedPost?.ratingStars || 0);
-  const [newComment, setNewComment] = useState('');
+  const [starRating, setStarRating] = useState(0);
+  const [newText, setNewText] = useState("");
   const [comments, setComments] = useState(selectedPost?.comments || []);
 
-  if (!selectedPost || !modalVisible) return null;
-
+  
   const handleStarPress = (rating) => {
     setStarRating(rating);
   };
 
   const handleSendComment = () => {
-    if (newComment.trim() === '') return;
-    setComments([...comments, newComment.trim()]);
-    setNewComment('');
-  };
+    if (newText.trim() === '') return;
+    const commentObj = {
+      user_id: "",
+      username : "",
+      comment_text: newText.trim(),
+      created_at: new Date().toISOString(),
+      numStars: starRating,
+    }
 
+    setComments([...comments, commentObj]);
+    setNewText("");
+  };
+  
+  useEffect(() => {
+    // Atualiza a avaliação e comentários do post selecionado
+    if (selectedPost) {
+      selectedPost.comments = comments;
+    }
+  })
+  if (!selectedPost || !modalVisible) return null;
+  
   return (
     <View style={{ flex: 1 }}>
       <Modal visible={modalVisible} animationType="slide" transparent={false}>
@@ -148,21 +163,26 @@ const PostScreen = ({
             <Text style={styles.sectionTitle}>Comentários</Text>
             <View style={styles.commentsBox}>
               {comments.map((c, idx) => (
-                <Text key={idx} style={styles.commentText}>"{c}"</Text>
+                <View key={idx} style={{ marginBottom: 8 }}>
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>{c.username}</Text>
+                  <Text style={styles.commentText}>"{c.comment_text}"</Text>
+                </View>
               ))}
+            
               <View style={styles.commentInputContainer}>
                 <TextInput
                   style={styles.commentInput}
                   placeholder="Digite um comentário..."
                   placeholderTextColor="#aaa"
-                  value={newComment}
-                  onChangeText={setNewComment}
+                  value={newText}
+                  onChangeText={setNewText}
                 />
                 <TouchableOpacity onPress={handleSendComment}>
                   <Ionicons name="send" size={24} color="#f37100" />
                 </TouchableOpacity>
               </View>
             </View>
+
 
             {/* Botões de ação */}
             <TouchableOpacity
