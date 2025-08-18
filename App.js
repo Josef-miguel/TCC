@@ -37,6 +37,7 @@ export const appContext = createContext();
 
 import { Ionicons } from "@expo/vector-icons";
 import { Provider as PaperProvider } from 'react-native-paper';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 
 const Tab = createBottomTabNavigator();
@@ -79,19 +80,21 @@ function Tabs() {
   const activeOrganizerPost = () => {
     if (userData?.isOrganizer) {
       return (
+        <ThemeProvider>
         <TouchableOpacity
           style={styles.createPostButton}
           onPress={() => setModalVisible(true)}
         >
           <Ionicons name="add-circle" size={50} color="#f37100" />
         </TouchableOpacity>
+        </ThemeProvider>
       );
     }
     return null;
   };
 
   return (
-    <>
+    <ThemeProvider>
       <appContext.Provider value={{ organizerMode, isOrganizer }}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
@@ -134,7 +137,7 @@ function Tabs() {
           setModalVisible={setModalVisible}
         />
       </appContext.Provider>
-    </>
+    </ThemeProvider>
   );
 }
 
@@ -142,7 +145,7 @@ function Tabs() {
 export default function App() {
   const Stack = createStackNavigator();
   return (
-    <>
+    <ThemeProvider>
       <AuthProvider>
         <SafeAreaProvider>
           <PaperProvider>
@@ -218,7 +221,7 @@ export default function App() {
           </PaperProvider>
         </SafeAreaProvider>
       </AuthProvider>
-    </>
+    </ThemeProvider>
   );
 }
 

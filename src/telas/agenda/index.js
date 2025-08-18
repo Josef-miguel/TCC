@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
+import colors from '../../styles/colors'; // Ajuste o caminho conforme sua estrutura
+
 
 export default function TravelAgenda({navigation}) {
   const [selectedDate, setSelectedDate] = useState(null);
