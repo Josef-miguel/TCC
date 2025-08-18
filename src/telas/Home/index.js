@@ -1,11 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, ScrollView, SafeAreaView, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, ScrollView, SafeAreaView, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 
 import TelaPost from '../../modal/TelaPost';
 import { db, auth } from '../../../services/firebase';
+import { platform } from 'os';
 
 export default function Home({ navigation }) {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -19,24 +20,26 @@ export default function Home({ navigation }) {
   useEffect(() => {
     if (!auth.currentUser) {
       signInAnonymously(auth)
-        .then(() => console.log('Usuário logado anonimamente:', auth.currentUser?.uid))
-        .catch(error => console.error('Erro ao logar anonimamente:', error));
+      .then(() => console.log('Usuário logado anonimamente:', auth.currentUser?.uid))
+      .catch(error => console.error('Erro ao logar anonimamente:', error));
     }
   }, []);
-
-
+  
+  
+  const { width, height } = Dimensions.get("window");
+  
   const filteredRecommended = posts.filter(item =>
     (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.type !== undefined && item.type.toString().includes(searchQuery))
   );
-
+  
   const filteredPopular = posts.filter(item =>
     (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (item.type !== undefined && item.type.toString().includes(searchQuery))
   );
-
+  
   useEffect(() => {
     const q = query(collection(db, 'events'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -54,19 +57,19 @@ export default function Home({ navigation }) {
     });
     return () => unsubscribe();
   }, []);
-
-
+  
+  
   // Log para verificar atualizações no estado
   useEffect(() => {
   }, [posts, popularPosts]);
-
+  
   // Alterna o estado de favorito de um post (Ajustar o id para o firebase)
-
+  
   const toggleFav = (id) => {
     setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
   };
-
+  
   const toggleSidebar = () => {
     Animated.timing(sidebarAnimation, {
       toValue: sidebarVisible ? -250 : 30,
@@ -75,18 +78,18 @@ export default function Home({ navigation }) {
     }).start();
     setSidebarVisible(!sidebarVisible);
   };
-
+  
   const openModal = (post) => {
     setSelectedPost(post);
     setModalVisible(true);
   };
-
+  
   const renderCard = (item) => (
     <TouchableOpacity key={item.id} onPress={() => openModal(item)} style={styles.card}>
       <Image
         source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/60' }}
         style={styles.cardImage}
-      />
+        />
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.title || 'Sem título'}</Text>
         <Text style={styles.cardSubtitle}>
@@ -100,7 +103,7 @@ export default function Home({ navigation }) {
       </TouchableOpacity>
     </TouchableOpacity>
   );
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
@@ -113,7 +116,7 @@ export default function Home({ navigation }) {
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#a9a9a9"
-        />
+          />
         <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
           <Ionicons name="person-circle-outline" size={32} color="#f37100" />
         </TouchableOpacity>
@@ -168,9 +171,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1b21',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   topBar: {
+    paddingTop: 40,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,

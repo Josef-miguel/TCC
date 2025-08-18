@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,11 +8,15 @@ import {
   Image,
   TextInput,
   StyleSheet,
+  FlatList,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ParticiparPost from "../ParticiparPost";
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+
+const { width, height } = Dimensions.get("window");
 
 const PostScreen = ({
   modalVisible,
@@ -24,47 +28,66 @@ const PostScreen = ({
 
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
-  const [starRating, setStarRating] = useState(selectedPost?.ratingStars || 0);
-  const [newComment, setNewComment] = useState('');
+  const [starRating, setStarRating] = useState(0);
+  const [newText, setNewText] = useState("");
   const [comments, setComments] = useState(selectedPost?.comments || []);
 
-  if (!selectedPost || !modalVisible) return null;
-
+  
   const handleStarPress = (rating) => {
     setStarRating(rating);
   };
 
   const handleSendComment = () => {
-    if (newComment.trim() === '') return;
-    setComments([...comments, newComment.trim()]);
-    setNewComment('');
-  };
+    if (newText.trim() === '') return;
+    const commentObj = {
+      user_id: "",
+      username : "",
+      comment_text: newText.trim(),
+      created_at: new Date().toISOString(),
+      numStars: starRating,
+    }
 
+    setComments([...comments, commentObj]);
+    setNewText("");
+  };
+  
+  useEffect(() => {
+    // Atualiza a avaliação e comentários do post selecionado
+    if (selectedPost) {
+      selectedPost.comments = comments;
+    }
+  })
+  if (!selectedPost || !modalVisible) return null;
+  
   return (
     <View style={{ flex: 1 }}>
-      <Modal visible={modalVisible} animationType="slide">
+      <Modal visible={modalVisible} animationType="slide" transparent={false}>
         <View style={styles.modalContainer}>
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
 
-            {/* Header */}
-            <View style={styles.modalHeader}>
+            {/* Carrossel fullscreen */}
+            <View style={{ position: "relative" }}>
+              <FlatList
+                data={selectedPost.images || []}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(_, i) => i.toString()}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item }} style={styles.fullscreenImage} resizeMode="cover" />
+                )}
+              />
+              {/* Botão de voltar flutuante */}
               <TouchableOpacity
+                style={styles.backButton}
                 onPress={() => {
                   setModalVisible(false);
                   setSelectedPost(null);
                 }}
               >
-                <Ionicons name="arrow-back" size={24} color="#fff" />
+                <Ionicons name="arrow-back" size={28} color="#fff" />
               </TouchableOpacity>
-              <Text style={styles.sectionTitle}>Imagens do destino</Text>
             </View>
-
-            {/* Imagens */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-              {selectedPost.images?.map((uri, i) => (
-                <Image key={i} source={{ uri }} style={styles.destImage} />
-              ))}
-            </ScrollView>
 
             {/* Rota */}
             <Text style={styles.sectionTitle}>Trajeto da viagem</Text>
@@ -111,7 +134,14 @@ const PostScreen = ({
             {/* Informações */}
             <Text style={styles.sectionTitle}>Informações da excursão</Text>
             <View style={styles.infoBox}>
-              {/* Exibir detalhes se necessário */}
+              <Text style={styles.commentTitle}>Descrição: </Text>
+              <Text style={styles.commentText}>{selectedPost?.desc}</Text>
+              {/* <Text style={styles.commentText}>Vamos sair em: {selectedPost?.exit_date}</Text>
+              <Text style={styles.commentText}>Vamos voltar em: {selectedPost?.return_date}</Text> */}
+              <Text style={styles.commentTitle}>Quantas vagas estão disponíveis: </Text>
+              <Text style={styles.commentText}>{selectedPost?.numSlots}</Text>
+              <Text style={styles.commentTitle}>Essa viagem é uma: </Text>
+              <Text style={styles.commentText}>{(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}</Text>
             </View>
 
             {/* Avaliação */}
@@ -133,21 +163,26 @@ const PostScreen = ({
             <Text style={styles.sectionTitle}>Comentários</Text>
             <View style={styles.commentsBox}>
               {comments.map((c, idx) => (
-                <Text key={idx} style={styles.commentText}>"{c}"</Text>
+                <View key={idx} style={{ marginBottom: 8 }}>
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>{c.username}</Text>
+                  <Text style={styles.commentText}>"{c.comment_text}"</Text>
+                </View>
               ))}
+            
               <View style={styles.commentInputContainer}>
                 <TextInput
                   style={styles.commentInput}
                   placeholder="Digite um comentário..."
                   placeholderTextColor="#aaa"
-                  value={newComment}
-                  onChangeText={setNewComment}
+                  value={newText}
+                  onChangeText={setNewText}
                 />
                 <TouchableOpacity onPress={handleSendComment}>
                   <Ionicons name="send" size={24} color="#f37100" />
                 </TouchableOpacity>
               </View>
             </View>
+
 
             {/* Botões de ação */}
             <TouchableOpacity
@@ -183,7 +218,7 @@ const PostScreen = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: "#1a1b21", // cor de fundo sólida
+    backgroundColor: "#1a1b21",
   },
   modalScroll: {
     flex: 1,
@@ -191,11 +226,17 @@ const styles = StyleSheet.create({
   modalInner: {
     padding: 16,
   },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-    gap: 10,
+  fullscreenImage: {
+    width: width,
+    height: height * 0.4,
+  },
+  backButton: {
+    position: "absolute",
+    top: 40,
+    left: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 8,
+    borderRadius: 50,
   },
   sectionTitle: {
     fontWeight: "bold",
@@ -204,15 +245,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
   },
-  imageScroll: {
-    marginBottom: 12,
-  },
-  destImage: {
-    width: 150,
-    height: 100,
-    borderRadius: 6,
-    alignSelf: "center",
-    marginRight: 10,
+  commentTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#fff",
+    paddingBottom: 4,
   },
   routeBox: {
     flexDirection: "row",
@@ -239,9 +276,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 12,
     borderColor: "#fff",
-  },
-  postDesc: {
-    color: "#fff",
   },
   starContainer: {
     flexDirection: "row",
