@@ -92,7 +92,7 @@ async function handleLogin(obj) {
   } catch (error) {
     console.error('Erro no login:', error.message);
     showMessage({
-      message: 'Erro ao logar',
+      message: 'Erro ao logar e-mail ou senha inválidos',
       description: error.message,
       type: 'danger',
     });
