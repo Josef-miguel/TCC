@@ -16,6 +16,9 @@ import ParticiparPost from "../ParticiparPost";
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { ThemeContext } from "../../context/ThemeContext";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../../../services/firebase";
+
 
 const { width, height } = Dimensions.get("window");
 
@@ -53,14 +56,18 @@ const PostScreen = ({
     setComments([...comments, commentObj]);
     setNewText("");
   };
-  
   useEffect(() => {
-    // Atualiza a avaliação e comentários do post selecionado
-    if (selectedPost) {
-      selectedPost.comments = comments;
-    }
-  })
-  if (!selectedPost || !modalVisible) return null;
+    if (!selectedPost?.id) return;
+
+    const unsub = onSnapshot(doc(db, "events", selectedPost.id), (docSnap) => {
+      if (docSnap.exists()) {
+        setComments(docSnap.data().comments || []);
+      }
+    });
+
+    return () => unsub();
+  }, [selectedPost]);
+    if (!selectedPost || !modalVisible) return null;
   
   return (
     <View style={{ flex: 1 }}>
