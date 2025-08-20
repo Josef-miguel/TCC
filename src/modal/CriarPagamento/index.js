@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,12 @@ import {
   StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeContext } from '../../context/ThemeContext';
 
 const CriarPagamento = ({ visible, onClose }) => {
   const [tipoPagamento, setTipoPagamento] = useState('Cartão de crédito');
   const [metodo, setMetodo] = useState('Débito automático');
+  const { theme } = useContext(ThemeContext);
 
   const handleSalvar = () => {
     onClose(); // Fecha o modal após salvar
@@ -21,45 +23,45 @@ const CriarPagamento = ({ visible, onClose }) => {
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme?.background }]}>
 
-      <View style={styles.overlay}>
-        <View style={styles.modalBox}>
+      <View style={[styles.overlay, { backgroundColor: theme?.overlay }]}>
+        <View style={[styles.modalBox, { backgroundColor: theme?.backgroundSecondary }]}>
           {/* Botão de voltar/fechar */}
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
-            <Ionicons name="arrow-back" size={24} color="#e4e4e4" />
+            <Ionicons name="arrow-back" size={24} color={theme?.primary || '#f37100'} />
           </TouchableOpacity>
 
-          <Text style={styles.title}>Tipo de pagamento</Text>
+          <Text style={[styles.title, { color: theme?.textPrimary }]}>Tipo de pagamento</Text>
           {['Cartão de crédito', 'Pix', 'Boleto bancário'].map((tipo) => (
             <TouchableOpacity
               key={tipo}
               style={styles.option}
               onPress={() => setTipoPagamento(tipo)}
             >
-              <View style={styles.radioOuter}>
-                {tipoPagamento === tipo && <View style={styles.radioInner} />}
+              <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
+                {tipoPagamento === tipo && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
               </View>
-              <Text style={styles.optionText}>{tipo}</Text>
+              <Text style={[styles.optionText, { color: theme?.textSecondary }]}>{tipo}</Text>
             </TouchableOpacity>
           ))}
 
-          <Text style={[styles.title, { marginTop: 20 }]}>Método</Text>
+          <Text style={[styles.title, { marginTop: 20, color: theme?.textPrimary }]}>Método</Text>
           {['Débito automático', 'Pagamento manual'].map((opt) => (
             <TouchableOpacity
               key={opt}
               style={styles.option}
               onPress={() => setMetodo(opt)}
             >
-              <View style={styles.radioOuter}>
-                {metodo === opt && <View style={styles.radioInner} />}
+              <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
+                {metodo === opt && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
               </View>
-              <Text style={styles.optionText}>{opt}</Text>
+              <Text style={[styles.optionText, { color: theme?.textSecondary }]}>{opt}</Text>
             </TouchableOpacity>
           ))}
 
-          <TouchableOpacity style={styles.confirmButton} onPress={handleSalvar}>
-            <Text style={styles.confirmText}>Salvar</Text>
+          <TouchableOpacity style={[styles.confirmButton, { backgroundColor: theme?.primary }]} onPress={handleSalvar}>
+            <Text style={[styles.confirmText, { color: theme?.textInverted }]}>Salvar</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -73,18 +75,15 @@ export default CriarPagamento;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2B2C33', // fundo principal
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalBox: {
     width: '85%',
-    backgroundColor: '#363942', // segunda cor de fundo
     borderRadius: 10,
     padding: 20,
     position: 'relative',
@@ -99,7 +98,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     marginBottom: 12,
-    color: '#e4e4e4', // fonte clara
     marginTop: 30,
     textAlign: 'center',
   },
@@ -113,7 +111,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#f37100', // cor principal
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -121,21 +118,17 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#f37100', // cor principal
   },
   optionText: {
     marginLeft: 10,
-    color: '#e4e4e4', // fonte clara
   },
   confirmButton: {
     marginTop: 20,
-    backgroundColor: '#f37100', // cor principal
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',
   },
   confirmText: {
-    color: '#e4e4e4', // fonte clara
     fontWeight: 'bold',
     fontSize: 16,
   },

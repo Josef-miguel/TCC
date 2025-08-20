@@ -22,19 +22,21 @@ export function AuthProvider({ children }) {
           if (docSnapshot.exists()) {
             const data = docSnapshot.data();
 
-            // Define os dados iniciais, sem o isOrganizer
+            // Define dados iniciais padronizados
             setUserData({
               uid: user.uid,
               email: user.email,
-              ...data,
+              userInfo: data || {},
+              isOrganizer: !!data?.isOrganizer,
             });
 
-            // Escuta apenas o campo isOrganizer em tempo real
+            // Escuta atualizações do doc do usuário em tempo real
             unsubscribeIsOrganizer = onSnapshot(userRef, (snap) => {
-              const newData = snap.data();
+              const newData = snap.data() || {};
               setUserData(prev => ({
                 ...prev,
-                isOrganizer: !!newData?.isOrganizer,
+                userInfo: newData,
+                isOrganizer: !!newData.isOrganizer,
               }));
             });
 
@@ -43,6 +45,7 @@ export function AuthProvider({ children }) {
             setUserData({
               uid: user.uid,
               email: user.email,
+              userInfo: {},
               isOrganizer: false,
             });
           }

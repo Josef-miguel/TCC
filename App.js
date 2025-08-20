@@ -36,13 +36,14 @@ export const appContext = createContext();
 
 import { Ionicons } from "@expo/vector-icons";
 import { Provider as PaperProvider } from 'react-native-paper';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { ThemeProvider, ThemeContext } from './src/context/ThemeContext';
 
 
 const Tab = createBottomTabNavigator();
 const { width, height } = Dimensions.get("window");
 
 function Tabs() {
+  const { theme } = useContext(ThemeContext);
   const { userData, setUserData } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(userData?.isOrganizer || false);
@@ -80,22 +81,19 @@ function Tabs() {
   const activeOrganizerPost = () => {
     if (userData?.isOrganizer) {
       return (
-        <ThemeProvider>
         <TouchableOpacity
-          style={styles.createPostButton}
+          style={[styles.createPostButton, { backgroundColor: theme?.cardBackground, borderColor: theme?.primary }]}
           onPress={() => setModalVisible(true)}
         >
-          <Ionicons name="add-circle" size={50} color="#f37100" />
+          <Ionicons name="add-circle" size={50} color={theme?.primary} />
         </TouchableOpacity>
-        </ThemeProvider>
       );
     }
     return null;
   };
 
   return (
-    <ThemeProvider>
-      <appContext.Provider value={{ organizerMode, isOrganizer }}>
+      <appContext.Provider value={{ organizerMode, isOrganizer, toggleOrganizer: () => {} }}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
@@ -106,12 +104,12 @@ function Tabs() {
               return <Ionicons name={iconName} size={size} color={color} />;
             },
             tabBarStyle: {
-              backgroundColor: "#2b2c33",
+              backgroundColor: theme?.backgroundSecondary || "#2b2c33",
               borderTopWidth: 1,
-              borderColor: "#f37100",
+              borderColor: theme?.primary || "#f37100",
             },
-            tabBarActiveTintColor: "#f37100",
-            tabBarInactiveTintColor: "#999999",
+            tabBarActiveTintColor: theme?.primary || "#f37100",
+            tabBarInactiveTintColor: theme?.textTertiary || "#999999",
           })}
         >
           <Tab.Screen
@@ -137,7 +135,6 @@ function Tabs() {
           setModalVisible={setModalVisible}
         />
       </appContext.Provider>
-    </ThemeProvider>
   );
 }
 
@@ -241,9 +238,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 50,
-    backgroundColor: "#2b2c33",
     borderWidth: 1,
-    borderColor: "#f37100",
   
     // Sombras
     shadowColor: "#f37100",

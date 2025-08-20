@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../styles/colors'; // Ajuste o caminho conforme sua estrutura
-
+import { ThemeContext } from '../../context/ThemeContext';
 
 export default function TravelAgenda({navigation}) {
+  const { theme } = useContext(ThemeContext);
   const [selectedDate, setSelectedDate] = useState(null);
   const travels = [
     { id: '1', date: '2025-05-15', title: 'Viagens atuas...' },
@@ -28,7 +28,7 @@ export default function TravelAgenda({navigation}) {
     markedDates[selectedDate] = {
       ...markedDates[selectedDate],
       selected: true,
-      selectedColor: '#b0b0b0',
+      selectedColor: theme?.primary,
     };
   }
 
@@ -39,39 +39,41 @@ export default function TravelAgenda({navigation}) {
   const selectedTravel = travels.find(t => t.date === selectedDate);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme?.background }]}>
       <View style={styles.header}>
-        <Ionicons name="arrow-back" style={styles.flecha} color="#f37100" size={32} onPress={() => navigation.goBack()}></Ionicons>
-        <Text style={styles.headerText}>Agenda</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" style={styles.flecha} color={theme?.primary} size={32} />
+        </TouchableOpacity>
+        <Text style={[styles.headerText, { color: theme?.primary }]}>Agenda</Text>
       </View>
-      <View style={styles.calendar}>
+      <View style={[styles.calendar, { borderBottomColor: theme?.primary }]}>
         <Calendar
-          style={{ backgroundColor: '#363942' }}
+          style={{ backgroundColor: theme?.cardBackground }}
           current="2025-05-01"
           markedDates={markedDates}
           onDayPress={handleDayPress}
           markingType="custom"
           renderCustomMarked={(date) => {
             if (markedDates[date]) {
-              return <Text style={styles.star}>★</Text>;
+              return <Text style={[styles.star, { color: theme?.star }]}>★</Text>;
             }
             return null;
           }}
           theme={{
-            backgroundColor: '#2b2c33',
-            calendarBackground: '#363942',
-            dayTextColor: '#fff',
-            textDisabledColor: '#888',
-            todayTextColor: '#f37100',
-            selectedDayBackgroundColor: '#f37100',
-            monthTextColor: '#fff',
-            arrowColor: '#f37100',
-            textSectionTitleColor: '#fff',
+            backgroundColor: theme?.background,
+            calendarBackground: theme?.cardBackground,
+            dayTextColor: theme?.textPrimary,
+            textDisabledColor: theme?.textTertiary,
+            todayTextColor: theme?.primary,
+            selectedDayBackgroundColor: theme?.primary,
+            monthTextColor: theme?.textPrimary,
+            arrowColor: theme?.primary,
+            textSectionTitleColor: theme?.textPrimary,
           }}
         />
       </View>
-      <View style={styles.travelView}>
-        <Text style={styles.travelTitle}>
+      <View style={[styles.travelView, { backgroundColor: theme?.cardBackground }]}>
+        <Text style={[styles.travelTitle, { color: theme?.textPrimary }]}>
           {selectedTravel ? selectedTravel.title : 'Selecione uma data'}
         </Text>
       </View>
@@ -82,13 +84,15 @@ export default function TravelAgenda({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1b21',
   },
   header:{
     marginBottom: 30,
   },
   headerText:{
-    fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center', color: "#f37100"
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    flex: 1, 
+    textAlign: 'center'
   },
   flecha: {
     marginTop: 70,
@@ -96,23 +100,19 @@ const styles = StyleSheet.create({
   calendar: {
     flex: 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#f37100'
   },
   star: {
     position: 'absolute',
     fontSize: 12,
-    color: '#800080',
     top: 2,
   },
   travelView: {
     flex: 1,
-    backgroundColor: '#2b2c33',
     justifyContent: 'center',
     alignItems: 'center',
   },
   travelTitle: {
     fontSize: 18,
-    color: '#fff',
     textAlign: 'center',
   },
 });

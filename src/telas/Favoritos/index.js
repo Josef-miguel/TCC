@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
@@ -9,9 +9,13 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { ThemeContext } from "../../context/ThemeContext";
 
 // Tela de histórico de viagens favoritas
 export default function Historico({ route, navigation }) {
+  const themeContext = useContext(ThemeContext);
+  const theme = themeContext?.theme;
+  
   // Recebe lista de favoritos via parâmetros de rota (padrão: array vazio)
   const favoritos = route.params?.favoritos || [];
   // Estado para texto de busca
@@ -26,31 +30,31 @@ export default function Historico({ route, navigation }) {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme?.background }]}>
       {/* Header com botão de voltar */}
       <View style={styles.header}>
         <Ionicons
           name="arrow-back"
           style={styles.flecha}
-          color="#f37100"
+          color={theme?.primary || "#f37100"}
           size={32}
           onPress={() => navigation.goBack()}
         ></Ionicons>
-        <Text style={styles.headerText}>Minhas Viagens</Text>
+        <Text style={[styles.headerText, { color: theme?.primary }]}>Minhas Viagens</Text>
       </View>
 
       {/* Campo de busca */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: theme?.backgroundSecondary }]}>
         <Ionicons
           name="search"
           size={18}
-          color="#999"
+          color={theme?.textTertiary || "#999"}
           style={styles.searchIcon}
         />
         <TextInput
-          placeholderTextColor={"#999"}
+          placeholderTextColor={theme?.textTertiary || "#999"}
           placeholder="Buscar"
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: theme?.textPrimary }]}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -60,13 +64,13 @@ export default function Historico({ route, navigation }) {
       <ScrollView style={styles.cardsContainer}>
         {filtrados.length === 0 ? (
           // Mensagem caso não haja resultados
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>
             Nenhuma viagem favoritada encontrada.
           </Text>
         ) : (
           // Renderiza um card para cada item filtrado
           filtrados.map((item) => (
-            <View key={item.id} style={styles.card}>
+            <View key={item.id} style={[styles.card, { backgroundColor: theme?.cardBackground }]}>
               {/* Imagem da viagem */}
               <Image
                 source={{ uri: item.images[0] }}
@@ -74,14 +78,14 @@ export default function Historico({ route, navigation }) {
               />
               {/* Conteúdo textual: rota e informações da excursão */}
               <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardSubtitle}>{item.excursionInfo}</Text>
+                <Text style={[styles.cardTitle, { color: theme?.textPrimary }]}>{item.title}</Text>
+                <Text style={[styles.cardSubtitle, { color: theme?.textTertiary }]}>{item.excursionInfo}</Text>
               </View>
               {/* Ícone de coração para indicar favorito */}
               <Ionicons
                 name="heart"
                 size={22}
-                color="#f37100"
+                color={theme?.primary || "#f37100"}
                 style={styles.heartIcon}
               />
             </View>
@@ -96,7 +100,6 @@ export default function Historico({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1a1b21",
     paddingTop: 50,
   },
   header: {
@@ -107,7 +110,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     flex: 1,
     textAlign: "center",
-    color: "#f37100",
   },
   flecha: {
     marginTop: 20,
@@ -123,7 +125,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     margin: 10,
-    backgroundColor: "#2b2c33",
     borderRadius: 10,
     paddingHorizontal: 10,
   },
@@ -133,7 +134,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    color: '#fff',
   },
   cardsContainer: {
     marginHorizontal: 10,
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#363942",
     borderRadius: 6,
     marginTop: 10,
     padding: 10,
@@ -158,11 +157,9 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontWeight: "bold",
     fontSize: 15,
-    color: "#fff",
   },
   cardSubtitle: {
     fontSize: 13,
-    color: "#a0a4ad",
   },
   heartIcon: {
     marginLeft: 5,
@@ -170,6 +167,5 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 20,
     textAlign: "center",
-    color: "#666",
   },
 });

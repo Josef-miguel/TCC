@@ -1,7 +1,7 @@
 // miguel isack tentou arrumar em casa pelo web, mas ainda não sei se está a funcionar. Caso tenha erro, volte a versão anterior
 
-import { useState } from "react";
-import { Text, TextInput, Modal, View, TouchableOpacity, ScrollView, StyleSheet, Image, Linking } from "react-native";
+import { useState, useContext } from "react";
+import { Text, TextInput, Modal, View, TouchableOpacity, ScrollView, StyleSheet, Image, Linking, Alert } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -14,10 +14,12 @@ import axios from 'axios';
 
 import { collection, addDoc } from "firebase/firestore";
 import {db} from '../../../services/firebase'
-
+import { ThemeContext } from '../../context/ThemeContext';
 
 
 const CreatePost = ({ modalVisible, setModalVisible }) => {
+  const { theme } = useContext(ThemeContext);
+  
   const [postName, setPostName] = useState('');
   const [tripType, setTripType] = useState(1);
   const [description, setDescription] = useState('');
@@ -48,7 +50,7 @@ const [mapMarker, setMapMarker] = useState(null);
 
   function limparCampos(){
     setPostName("");
-    setTripType("");
+    setTripType(1);
     setDescription("");
     setImageUri([]);
     setTripPrice(0);
@@ -76,8 +78,8 @@ const [mapMarker, setMapMarker] = useState(null);
         desc: description || '',
         type: tripType || '',
         images: imageUri || [],
-        numSlots: numSlots || '',
-        price: tripPrice || 1,
+        numSlots: Number(numSlots) || 0,
+        price: Number(tripPrice) || 0,
         exit_date: exit_date || '',
         return_date: return_date || '',
         route: {
@@ -96,8 +98,8 @@ const [mapMarker, setMapMarker] = useState(null);
         type: "success",
         duration: 1800,
       });
-
-
+      setModalVisible(false);
+      limparCampos();
     } catch (error) {
       showMessage({
         message: "Ocorreu algum erro: " + error,
@@ -106,12 +108,10 @@ const [mapMarker, setMapMarker] = useState(null);
         duration: 2000
       });
       console.log(error);
-      setSuccess(false);
     }
 
     console.log("rodando");
   }
-
 
 
 
@@ -270,7 +270,6 @@ const reverseGeocode = async (latitude, longitude) => {
 
 
 
-
   return (
     <>
       {/* Modal que aparece ao acionar a criação de post */}
@@ -280,56 +279,62 @@ const reverseGeocode = async (latitude, longitude) => {
         visible={modalVisible}           // Controla visibilidade via prop
         onRequestClose={() => setModalVisible(false)} // Fecha modal ao solicitar
       >
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, { backgroundColor: theme?.overlay }]}>
           {/* ScrollView permite rolagem quando o conteúdo ultrapassa a tela */}
-          <ScrollView contentContainerStyle={styles.modalContent}>
+          <ScrollView contentContainerStyle={[styles.modalContent, { backgroundColor: theme?.backgroundSecondary }]}>
 
             {/* Cabeçalho do modal com botão de voltar e título */}
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => {setModalVisible(false); limparCampos()}}>
-                <Ionicons name="arrow-back" size={32} color="#f37100" />
+                <Ionicons name="arrow-back" size={32} color={theme?.primary || "#f37100"} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Criar post</Text>
+              <Text style={[styles.modalTitle, { color: theme?.primary }]}>Criar post</Text>
             </View>
 
             {/* Placeholder para imagens do destino */}
-            <View style={styles.imagePlaceholder}>
+            <View style={[styles.imagePlaceholder, { backgroundColor: theme?.backgroundDark }]}>
               
-              <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+              <TouchableOpacity style={[styles.uploadButton, { backgroundColor: theme?.backgroundDark }]} onPress={pickImage}>
                 {imageUri.length > 0 ? (
                   imageUri.map((uri, index) => (
                     <Image key={index} source={{ uri }} style={styles.profileImage} />
                   ))
                 ) : (
-                  <Ionicons name="cloud-upload-outline" size={30} color="#f37100" />
+                  <Ionicons name="cloud-upload-outline" size={30} color={theme?.primary || "#f37100"} />
                 )}
               </TouchableOpacity>
             </View>
 
             {/* Input para nome do post */}
-            <Text style={styles.label}>Nome do post</Text>
+            <Text style={[styles.label, { color: theme?.textPrimary }]}>Nome do post</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: theme?.primary,
+                color: theme?.textPrimary,
+                backgroundColor: theme?.background
+              }]}
               placeholder="Viagem para Miracatu, SP..."
-              placeholderTextColor="#a9a9a9"
+              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
               value={postName}
               onChangeText={setPostName}    // Atualiza estado postName
             />
 
       
             {/* Seleção de tipo de viagem */}
-            <Text style={styles.label}>Tipo de viagem</Text>
+            <Text style={[styles.label, { color: theme?.textPrimary }]}>Tipo de viagem</Text>
             <View style={styles.tripTypeContainer}>
               <TouchableOpacity
                 style={[
                   styles.tripTypeButton,
-                  tripType === 1 && styles.tripTypeButtonActive
+                  { borderColor: theme?.border },
+                  tripType === 1 && { backgroundColor: theme?.primary, borderColor: theme?.primary }
                 ]}
                 onPress={() => setTripType(1)}  // Marca 'Viagem'
               >
                 <Text style={[
                   styles.tripTypeText,
-                  tripType === 1 && styles.tripTypeTextActive
+                  { color: theme?.textPrimary },
+                  tripType === 1 && { color: theme?.textInverted, fontWeight: 'bold' }
                 ]}>
                   VIAGEM
                 </Text>
@@ -338,13 +343,15 @@ const reverseGeocode = async (latitude, longitude) => {
               <TouchableOpacity
                 style={[
                   styles.tripTypeButton,
-                  tripType === 3 && styles.tripTypeButtonActive
+                  { borderColor: theme?.border },
+                  tripType === 3 && { backgroundColor: theme?.primary, borderColor: theme?.primary }
                 ]}
                 onPress={() => setTripType(3)} // Marca 'Show'
               >
                 <Text style={[
                   styles.tripTypeText,
-                  tripType === 3 && styles.tripTypeTextActive
+                  { color: theme?.textPrimary },
+                  tripType === 3 && { color: theme?.textInverted, fontWeight: 'bold' }
                 ]}>
                   SHOW
                 </Text>
@@ -352,28 +359,34 @@ const reverseGeocode = async (latitude, longitude) => {
               <TouchableOpacity
                 style={[
                   styles.tripTypeButton,
-                  tripType === 2 && styles.tripTypeButtonActive
+                  { borderColor: theme?.border },
+                  tripType === 2 && { backgroundColor: theme?.primary, borderColor: theme?.primary }
                 ]}
                 onPress={() => setTripType(2)} // Marca 'Excursão'
               >
                 <Text style={[
                   styles.tripTypeText,
-                  tripType === 2 && styles.tripTypeTextActive
+                  { color: theme?.textPrimary },
+                  tripType === 2 && { color: theme?.textInverted, fontWeight: 'bold' }
                 ]}>
                   EXCURSÃO
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.label}>Data de saída</Text>
-              <View style={styles.inputWrapper}>
-                <Feather name="calendar" size={20} style={styles.icon} />
+            <Text style={[styles.label, { color: theme?.textPrimary }]}>Data de saída</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: theme?.background }]}>
+                <Feather name="calendar" size={20} style={[styles.icon, { color: theme?.primary }]} />
                 <TouchableOpacity
-                  style={styles.input}
+                  style={[styles.input, { 
+                    borderColor: theme?.primary,
+                    color: theme?.textPrimary,
+                    backgroundColor: theme?.background
+                  }]}
                   onPress={() => setShowExitDate(true)}
                   
                 >
-                  <Text style={{ color: '#a9a9a9', fontSize: 16 }}>
+                  <Text style={{ color: theme?.textTertiary || '#a9a9a9', fontSize: 16 }}>
                     {exit_date.toLocaleDateString()}
                   </Text>
                 </TouchableOpacity>
@@ -393,14 +406,18 @@ const reverseGeocode = async (latitude, longitude) => {
               )}
 
 
-            <Text style={styles.label}>Data de retorno</Text>
-            <View style={styles.inputWrapper}>
-              <Feather name="calendar" size={20} style={styles.icon} />
+            <Text style={[styles.label, { color: theme?.textPrimary }]}>Data de retorno</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.background }]}>
+              <Feather name="calendar" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TouchableOpacity
-                style={styles.input}
+                style={[styles.input, { 
+                  borderColor: theme?.primary,
+                  color: theme?.textPrimary,
+                  backgroundColor: theme?.background
+                }]}
                 onPress={() => setShowReturnDate(true)}
               >
-                <Text style={{ color: '#a9a9a9', fontSize: 16 }}>
+                <Text style={{ color: theme?.textTertiary || '#a9a9a9', fontSize: 16 }}>
                   {return_date.toLocaleDateString()}
                 </Text>
               </TouchableOpacity>
@@ -421,32 +438,44 @@ const reverseGeocode = async (latitude, longitude) => {
 
 
             {/* Input para quantidade de pessoas */}
-            <Text style={styles.label}>Quantidade de pessoas</Text>
+            <Text style={[styles.label, { color: theme?.textPrimary }]}>Quantidade de pessoas</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: theme?.primary,
+                color: theme?.textPrimary,
+                backgroundColor: theme?.background
+              }]}
               placeholder="Quantidade de pessoas"
-              placeholderTextColor="#a9a9a9"
-              value={numSlots}
-              onChangeText={setNumSlots}
+              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
+              value={String(numSlots)}
+              onChangeText={(t) => setNumSlots(Number(t) || 0)}
               keyboardType="numeric"          // Tipo numérico
             />
             {/* Input para o preço */}
-            <Text style={styles.label}>Preço R$</Text>
+            <Text style={[styles.label, { color: theme?.textPrimary }]}>Preço R$</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: theme?.primary,
+                color: theme?.textPrimary,
+                backgroundColor: theme?.background
+              }]}
               placeholder="R$00,00"
-              placeholderTextColor="#a9a9a9"
-              value={tripPrice}
-              onChangeText={setTripPrice}
+              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
+              value={String(tripPrice)}
+              onChangeText={(t) => setTripPrice(Number(t) || 0)}
               keyboardType="numeric"          // Tipo numérico
             />
 
             {/* Input de descrição da viagem */}
-            <Text style={styles.label}>Descrição da viagem</Text>
+            <Text style={[styles.label, { color: theme?.textPrimary }]}>Descrição da viagem</Text>
             <TextInput
-              style={[styles.input, styles.descriptionInput]}
+              style={[styles.input, styles.descriptionInput, { 
+                borderColor: theme?.primary,
+                color: theme?.textPrimary,
+                backgroundColor: theme?.background
+              }]}
               placeholder="Vamos nos divertir pela cidade!"
-              placeholderTextColor="#a9a9a9"
+              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
               value={description}
               onChangeText={setDescription}    // Atualiza estado description
               multiline                         // Permite múltiplas linhas
@@ -457,13 +486,19 @@ const reverseGeocode = async (latitude, longitude) => {
             <View style={{ height: 200, marginBottom: 15, borderRadius: 8, overflow: 'hidden' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
                 <TextInput
-                  style={[styles.input, { flex: 1 }]}
+                  style={[styles.input, { 
+                    flex: 1,
+                    borderColor: theme?.primary,
+                    color: theme?.textPrimary,
+                    backgroundColor: theme?.background
+                  }]}
                   placeholder="Buscar lugar..."
+                  placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
                   value={searchText}
                   onChangeText={setSearchText}
                 />
                 <TouchableOpacity onPress={handleSearch} style={{ marginLeft: 10 }}>
-                  <Feather name="search" size={24} color="#f37100" />
+                  <Feather name="search" size={24} color={theme?.primary || "#f37100"} />
                 </TouchableOpacity>
               </View>
               <MapView
@@ -482,15 +517,18 @@ const reverseGeocode = async (latitude, longitude) => {
               
             {/* SUBISTITUA ACIMA */}
             {/* Texto de termos de uso com link */}
-            <Text style={styles.termsText}>
+            <Text style={[styles.termsText, { color: theme?.textTertiary }]}>
               Ao criar uma publicação no aplicativo, você concorda com os{' '}
-              <Text style={styles.termsLink}>Termos de Uso e Política de Privacidade</Text>
+              <Text style={[styles.termsLink, { color: theme?.primary }]}>Termos de Uso e Política de Privacidade</Text>
               {' '}do JSG.
             </Text>
 
             {/* Botão para submeter/criar o post */}
-            <TouchableOpacity style={styles.submitButton} onPress={saveData}>
-              <Text style={styles.submitButtonText}>VIAJAR</Text>
+            <TouchableOpacity style={[styles.submitButton, { 
+              backgroundColor: theme?.primary,
+              borderColor: theme?.primary
+            }]} onPress={saveData}>
+              <Text style={[styles.submitButtonText, { color: theme?.textInverted }]}>VIAJAR</Text>
             </TouchableOpacity>
 
           </ScrollView>
@@ -511,11 +549,9 @@ const styles = StyleSheet.create({
   
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     justifyContent: 'center',
   },
   modalContent: {
-    backgroundColor: '#2b2c33',
     marginHorizontal: 20,
     borderRadius: 10,
     padding: 15,
@@ -531,11 +567,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
     textAlign: 'center',
-    color: "#f37100"
   },
   imagePlaceholder: {
     height: 100,
-    backgroundColor: '#363942',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -548,15 +582,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: "#e4e4e4"
   },
   input: {
     borderWidth: 1,
-    borderColor: '#f37100',
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
-    color: "#e4e4e4"
   },
   descriptionInput: {
     height: 80,
@@ -572,20 +603,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e4e4e4',
     alignItems: 'center',
-  },
-  tripTypeButtonActive: {
-    backgroundColor: '#a0a4ad',     
-    borderColor: '#f37100',         
   },
   tripTypeText: {
     fontSize: 12,
-    color: '#fff',
-  },
-  tripTypeTextActive: {
-    color: '#f37100',
-    fontWeight: 'bold',
   },
   mapPlaceholder: {
     height: 100,
@@ -597,24 +618,19 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 12,
-    color: '#b9b9b9',
     textAlign: 'center',
     marginBottom: 15,
   },
   termsLink: {
-    color: '#00bcd4',
     textDecorationLine: 'underline',
   },
   submitButton: {
-    backgroundColor: '#a4a0ad',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#f37100"
   },
   submitButtonText: {
-    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -624,9 +640,17 @@ const styles = StyleSheet.create({
   },
    uploadButton: {
     width: '100%', height: '100%', 
-    backgroundColor: '#363942', justifyContent: 'center',
+    justifyContent: 'center',
     alignItems: 'center', overflow: 'hidden',
-  }
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  icon: {
+    marginRight: 10,
+  },
 });
 
 export default CreatePost;
