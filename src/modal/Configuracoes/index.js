@@ -104,7 +104,7 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
               />
             </View>
 
-            {/* Modo Escuro/Claro */}
+            {/* Tema claro */}
             <View style={styles.item}>
               <View style={styles.left}>
                 <Icon
@@ -112,14 +112,12 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
                   size={24}
                   color={theme.primary}
                 />
-                <Text style={styles.label}>
-                  {isDarkTheme ? "Modo escuro" : "Modo claro"}
-                </Text>
+                <Text style={styles.label}>Tema claro</Text>
               </View>
               <Switch
-                value={isDarkTheme}
+                value={!isDarkTheme}
                 onValueChange={toggleTheme}
-                thumbColor={isDarkTheme ? theme.primary : "#888"}
+                thumbColor={!isDarkTheme ? theme.primary : "#888"}
                 trackColor={{
                   false: theme.backgroundDark,
                   true: theme.primaryLight,

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, ScrollView, SafeAreaView, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query } from 'firebase/firestore';
@@ -6,16 +6,21 @@ import { getAuth, signInAnonymously } from 'firebase/auth';
 
 import TelaPost from '../../modal/TelaPost';
 import { db, auth } from '../../../services/firebase';
-import { platform } from 'os';
+import { ThemeContext } from '../../context/ThemeContext';
+// import { platform } from 'os';
+// import { Platform } from 'react-native';
+
 
 export default function Home({ navigation }) {
+  const themeContext = useContext(ThemeContext);
+  const theme = themeContext?.theme;
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-250)).current;
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [posts, setPosts] = useState([]);
-  const [popularPosts, setPopularPosts] = useState([]);
+  // Populares passam a ser derivados de posts
 
   useEffect(() => {
     if (!auth.currentUser) {
@@ -50,8 +55,6 @@ export default function Home({ navigation }) {
         theme: doc.data().theme || ''
       }));
       setPosts(fetchedPosts);
-      const popular = fetchedPosts.filter(post => (post.review || 0) > 0);
-      setPopularPosts(popular);
     }, (error) => {
       console.error('Erro ao buscar eventos:', error);
     });
@@ -61,13 +64,13 @@ export default function Home({ navigation }) {
   
   // Log para verificar atualizações no estado
   useEffect(() => {
-  }, [posts, popularPosts]);
+    // Logs removidos para limpeza do código
+  }, [posts, filteredRecommended, filteredPopular]);
   
   // Alterna o estado de favorito de um post (Ajustar o id para o firebase)
   
   const toggleFav = (id) => {
     setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
-    setPopularPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
   };
   
   const toggleSidebar = () => {
@@ -84,76 +87,88 @@ export default function Home({ navigation }) {
     setModalVisible(true);
   };
   
-  const renderCard = (item) => (
-    <TouchableOpacity key={item.id} onPress={() => openModal(item)} style={styles.card}>
-      <Image
-        source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/60' }}
-        style={styles.cardImage}
-        />
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.title || 'Sem título'}</Text>
-        <Text style={styles.cardSubtitle}>
-          {typeof item.desc === 'string'
-            ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
-            : 'Sem descrição disponível'}
-        </Text>
-      </View>
-      <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-        <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color="#f37100" />
+  const renderCard = (item) => {
+    return (
+      <TouchableOpacity key={item.id} onPress={() => openModal(item)} style={[styles.card, { 
+        backgroundColor: theme?.cardBackground,
+        borderColor: theme?.primary
+      }]}>
+        <Image
+          source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/60' }}
+          style={styles.cardImage}
+          />
+        <View style={styles.cardContent}>
+          <Text style={[styles.cardTitle, { color: theme?.textPrimary }]}>{item.title || 'Sem título'}</Text>
+          <Text style={[styles.cardSubtitle, { color: theme?.textTertiary }]}>
+            {typeof item.desc === 'string'
+              ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
+              : 'Sem descrição disponível'}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
+          <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color={theme?.primary || "#f37100"} />
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
   
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme?.background }]}>
+      <View style={[styles.topBar, { borderBottomColor: theme?.primary }]}>
         <TouchableOpacity onPress={toggleSidebar}>
-          <Ionicons name="menu" size={32} color="#f37100" />
+          <Ionicons name="menu" size={32} color={theme?.primary || "#f37100"} />
         </TouchableOpacity>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { 
+            backgroundColor: theme?.backgroundSecondary,
+            color: theme?.textPrimary,
+            borderColor: theme?.primary
+          }]}
           placeholder="Quero ir para...."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#a9a9a9"
+          placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
           />
         <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
-          <Ionicons name="person-circle-outline" size={32} color="#f37100" />
+          <Ionicons name="person-circle-outline" size={32} color={theme?.primary || "#f37100"} />
         </TouchableOpacity>
       </View>
 
-      {sidebarVisible && <TouchableOpacity style={styles.overlay} onPress={toggleSidebar} activeOpacity={1} />}
+      {sidebarVisible && <TouchableOpacity style={[styles.overlay, { backgroundColor: theme?.overlay }]} onPress={toggleSidebar} activeOpacity={1} />}
 
-      <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarAnimation }] }]}>
-        <Text style={styles.sidebarTitle}>Menu</Text>
+      <Animated.View style={[styles.sidebar, { 
+        backgroundColor: theme?.backgroundDark,
+        transform: [{ translateX: sidebarAnimation }] 
+      }]}>
+        <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>Menu</Text>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text style={styles.sidebarText}>Agenda</Text>
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Agenda</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
-          const favoritos = [...posts, ...popularPosts].filter(p => p.fav);
+          const favoritos = posts.filter(p => p.fav);
           navigation.navigate('Favoritos', { favoritos });
           toggleSidebar();
         }}>
-          <Text style={styles.sidebarText}>Favoritos</Text>
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: '#f37100' }]} onPress={toggleSidebar}>
-          <Text style={{ color: 'black', textAlign: 'center' }}>Fechar</Text>
+        <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: theme?.primary }]} onPress={toggleSidebar}>
+          <Text style={{ color: theme?.textInverted, textAlign: 'center' }}>Fechar</Text>
         </TouchableOpacity>
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.sectionTitle}>Recomendados</Text>
-        {filteredRecommended.length > 0 ? (
+        <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Recomendados</Text>
+        {posts.length > 0 ? (
           filteredRecommended.map(item => renderCard(item))
         ) : (
-          <Text style={styles.emptyText}>Nenhum evento recomendado encontrado</Text>
+          <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>Carregando eventos...</Text>
         )}
 
-        <Text style={styles.popularesTxt}>Populares recentemente</Text>
-        {filteredPopular.length > 0 ? (
+        <Text style={[styles.popularesTxt, { color: theme?.textPrimary }]}>Populares recentemente</Text>
+        {posts.length > 0 ? (
           filteredPopular.map(item => renderCard(item))
         ) : (
-          <Text style={styles.emptyText}>Nenhum evento popular encontrado</Text>
+          <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>Carregando eventos...</Text>
         )}
       </ScrollView>
 
@@ -170,33 +185,28 @@ export default function Home({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1b21',
   },
   topBar: {
     paddingTop: 40,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#363942',
+    backgroundColor: 'transparent',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#f37100',
   },
   searchInput: {
     flex: 1,
     height: 40,
-    backgroundColor: '#2b2c33',
     borderRadius: 20,
     paddingHorizontal: 15,
     marginHorizontal: 12,
     fontSize: 16,
-    color: '#e4e4e4',
     borderWidth: 1,
-    borderColor: '#f37100',
   },
   scrollContent: {
     padding: 16,
@@ -205,14 +215,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
     marginVertical: 12,
     marginLeft: 4,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#363942',
     borderRadius: 12,
     elevation: 3,
     shadowColor: '#000',
@@ -222,13 +230,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#f37100',
   },
   cardImage: {
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: '#f0f2f5',
+    backgroundColor: 'transparent',
   },
   cardContent: {
     flex: 1,
@@ -238,23 +245,20 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#fff',
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#a0a4ad',
     lineHeight: 20,
   },
   cardIcon: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: '#f9fafb',
+    backgroundColor: 'transparent',
   },
   popularesTxt: {
     fontWeight: '600',
     fontSize: 16,
-    color: '#fff',
     marginVertical: 12,
     marginLeft: 16,
   },
@@ -264,7 +268,6 @@ const styles = StyleSheet.create({
     left: -30,
     width: 280,
     height: '100%',
-    backgroundColor: '#363942',
     padding: 24,
     zIndex: 100,
     elevation: 5,
@@ -274,13 +277,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   sidebarText: {
-    color: "#e4e4e4",
     marginHorizontal: 'auto'
   },
   sidebarTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#fff',
     marginBottom: 24,
     marginTop: 16,
   },
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#2b2c33',
+    backgroundColor: 'transparent',
   },
   overlay: {
     position: 'absolute',
@@ -296,12 +297,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
     zIndex: 99,
   },
   emptyText: {
     fontSize: 16,
-    color: '#a0a4ad',
     textAlign: 'center',
     marginVertical: 20,
   },

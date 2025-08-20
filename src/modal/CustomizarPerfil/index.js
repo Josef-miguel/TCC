@@ -9,6 +9,7 @@ import { useAuth } from '../../../services/AuthContext';
 import { db } from '../../../services/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { appContext } from '../../../App';
+import { ThemeContext } from '../../context/ThemeContext';
 
 
 const CustomizeProfile = ({
@@ -19,6 +20,8 @@ const CustomizeProfile = ({
 }) => {
   const { organizerMode, toggleOrganizer } = useContext(appContext);
   const {userData} = useAuth();
+  const themeContext = useContext(ThemeContext);
+  const theme = themeContext?.theme;
   const [name, setName] = useState(userData?.userInfo?.nome || "");
   const [surname, setSurname] = useState(userData?.userInfo?.surname || "");
   const [description, setDescription] = useState(userData?.userInfo?.desc || "");
@@ -105,54 +108,54 @@ const pickImage = async () => {
 
   return (
     <Modal visible={modalVisible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.background}>
+      <View style={[styles.modalOverlay, { backgroundColor: theme?.overlay }]}>
+        <View style={[styles.background, { backgroundColor: theme?.backgroundSecondary }]}>
           {/* --- Header --- */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Ionicons name="arrow-back" size={32} color="#f37100" />
+              <Ionicons name="arrow-back" size={32} color={theme?.primary || "#f37100"} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Customizar perfil</Text>
+            <Text style={[styles.headerTitle, { color: theme?.primary }]}>Customizar perfil</Text>
           </View>
 
           {/* --- Upload de Foto --- */}
           <View style={styles.profilePicContainer}>
-            <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+            <TouchableOpacity style={[styles.uploadButton, { backgroundColor: theme?.backgroundDark }]} onPress={pickImage}>
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.profileImage} />
               ) : (
-                <Ionicons name="cloud-upload-outline" size={30} color="#f37100" />
+                <Ionicons name="cloud-upload-outline" size={30} color={theme?.primary || "#f37100"} />
               )}
             </TouchableOpacity>
           </View>
 
           {/* --- Campos de Texto --- */}
-          <Text style={styles.label}>Nome</Text>
+          <Text style={[styles.label, { color: theme?.textPrimary }]}>Nome</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme?.background, borderColor: theme?.primary, color: theme?.textPrimary }]}
             value={name}
             onChangeText={setName}
             placeholder="Digite seu nome"
-            placeholderTextColor="#a4a4a4"
+            placeholderTextColor={theme?.textTertiary || "#a4a4a4"}
           />
 
-          <Text style={styles.label}>Sobrenome</Text>
+          <Text style={[styles.label, { color: theme?.textPrimary }]}>Sobrenome</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme?.background, borderColor: theme?.primary, color: theme?.textPrimary }]}
             value={surname}
             onChangeText={setSurname}
             placeholder="Digite seu sobrenome"
-            placeholderTextColor="#a4a4a4"
+            placeholderTextColor={theme?.textTertiary || "#a4a4a4"}
           />
 
-          <Text style={styles.label}>Descrição</Text>
+          <Text style={[styles.label, { color: theme?.textPrimary }]}>Descrição</Text>
           <TextInput
-            style={[styles.input, styles.descriptionInput]}
+            style={[styles.input, styles.descriptionInput, { backgroundColor: theme?.background, borderColor: theme?.primary, color: theme?.textPrimary }]}
             value={description}
             onChangeText={setDescription}
             placeholder="Fale um pouco sobre você..."
             multiline
-            placeholderTextColor="#a4a4a4"
+            placeholderTextColor={theme?.textTertiary || "#a4a4a4"}
           />
 
           {/* --- Switch --- */}
@@ -160,33 +163,33 @@ const pickImage = async () => {
             <Switch
               value={isOrganizerMode}
               onValueChange={(value) => setIsOrganizerMode(value)}
-              thumbColor={isOrganizerMode ? '#f37100' : '#000'}
+              thumbColor={isOrganizerMode ? (theme?.primary || '#f37100') : '#000'}
               trackColor={{ false: '#767577', true: '#494949' }}
             />
-            <Text style={styles.switchLabel}>Modo organizador</Text>
+            <Text style={[styles.switchLabel, { color: theme?.textSecondary }]}>Modo organizador</Text>
           </View>
 
           {/* --- Botões Extras --- */}
           <TouchableOpacity
-            style={[styles.button, styles.paymentButton]}
+            style={[styles.button, styles.paymentButton, { backgroundColor: theme?.backgroundDark, borderColor: theme?.primary }]}
             onPress={() => navigation.navigate('Formapagamento')}
           >
-            <Text style={styles.buttonText}>Formas de pagamento</Text>
+            <Text style={[styles.buttonText, { color: theme?.textPrimary }]}>Formas de pagamento</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, styles.verificationButton]}
+            style={[styles.button, styles.verificationButton, { backgroundColor: theme?.backgroundDark, borderColor: theme?.primary }]}
             onPress={() => navigation.navigate('VerificacaoIdentidade')}
           >
-            <Text style={styles.buttonText}>Verificação de identidade</Text>
+            <Text style={[styles.buttonText, { color: theme?.textPrimary }]}>Verificação de identidade</Text>
           </TouchableOpacity>
 
           {/* --- Botão Salvar --- */}
           <TouchableOpacity
-            style={[styles.button, styles.saveButton]}
+            style={[styles.button, styles.saveButton, { backgroundColor: theme?.primary, borderColor: theme?.primary }]}
             onPress={handleSave}
           >
-            <Text style={styles.buttonText}>Salvar</Text>
+            <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Salvar</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -197,38 +200,36 @@ const pickImage = async () => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   background: {
     width: '90%',
-    backgroundColor: '#1a1b21',
     borderRadius: 8,
     padding: 20,
   },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center', color: "#f37100" },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center' },
   profilePicContainer: { alignItems: 'center', marginBottom: 20 },
   uploadButton: {
     width: 100, height: 100, borderRadius: 50,
-    backgroundColor: '#363942', justifyContent: 'center',
+    justifyContent: 'center',
     alignItems: 'center', overflow: 'hidden',
   },
   profileImage: { width: '100%', height: '100%' },
-  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5, color: "#e4e4e4" },
+  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5 },
   input: {
-    borderWidth: 1, borderColor: '#f37100', borderRadius: 8,
-    padding: 10, marginBottom: 15, backgroundColor: '#2b2c33', color: "#fff" 
+    borderWidth: 1, borderRadius: 8,
+    padding: 10, marginBottom: 15
   },
   descriptionInput: { height: 80, textAlignVertical: 'top' },
   switchContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  switchLabel: { marginLeft: 10, fontSize: 14, color: '#e4e4e4' },
+  switchLabel: { marginLeft: 10, fontSize: 14 },
   button: { padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 10 },
-  paymentButton: { backgroundColor: '#363942', borderWidth: 1, borderColor: "#f37100" },
-  verificationButton: { backgroundColor: '#363942', borderWidth: 1, borderColor: "#f37100" },
-  saveButton: { backgroundColor: '#363942', borderWidth: 1, borderColor: '#f37100'}, // verde para Salvar
-  buttonText: { color: '#ffff', fontWeight: 'bold', fontSize: 16 },
+  paymentButton: { borderWidth: 1 },
+  verificationButton: { borderWidth: 1 },
+  saveButton: { borderWidth: 1 },
+  buttonText: { fontWeight: 'bold', fontSize: 16 },
 });
 
 export default CustomizeProfile;

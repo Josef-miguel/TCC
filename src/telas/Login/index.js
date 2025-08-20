@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,13 +16,16 @@ import { Feather } from '@expo/vector-icons';
 import { showMessage } from 'react-native-flash-message';
 import {auth, db} from '../../../services/firebase';
 import {signInWithEmailAndPassword} from 'firebase/auth';
-import { useAuth } from '../../../services/AuthContext';
+// import { useAuth } from '../../../services/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
+import { ThemeContext } from '../../context/ThemeContext';
 
 
 // Tela de Login principal
 export default function Login({ navigation }) {
-  const {setUserData} = useAuth()
+  // Contexto agora atualiza sozinho após login; não é necessário setUserData aqui
+  const themeContext = useContext(ThemeContext);
+  const theme = themeContext?.theme;
 
   // Valores animados para deslocamento (offset) e opacidade
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
@@ -55,6 +58,7 @@ export default function Login({ navigation }) {
   // Limpa os campos de usuário e senha
   const limparCampos = () => {
     setUser('');
+    setEmail('');
     setPassword('');
   };
 
@@ -69,16 +73,13 @@ async function handleLogin(obj) {
 
     if (docSnap.exists()) {
       const userDataFromFirestore = docSnap.data();
-
-      // Atualiza o contexto com os dados do Firestore
-      setUserData({userInfo: userDataFromFirestore});
-
       console.log('Usuário logado com dados:', userDataFromFirestore);
       showMessage({
         message: 'Login Bem-Sucedido',
         description: 'Bem-vindo!',
         type: 'success',
       });
+      limparCampos();
       navigation.navigate('Home');
     } else {
       console.warn('Usuário logado, mas documento não encontrado no Firestore.');
@@ -96,25 +97,25 @@ async function handleLogin(obj) {
       description: error.message,
       type: 'danger',
     });
+    setPassword('');
   }
 }
 
 
   async function saveData() {
     // Validação básica de preenchimento
-    if (!user || !password) {
+    if (!email || !password) {
       showMessage({
         message: 'Erro ao Salvar',
-        description: 'Preencha os Campos Obrigatórios!',
+        description: 'Informe e-mail e senha.',
         type: 'warning',
       });
       return;
     }
 
     const obj = {
-      user : user,
-      email : email, 
-      password : password
+      email: email.trim(),
+      password: password,
     }
 
     handleLogin(obj);
@@ -124,7 +125,7 @@ async function handleLogin(obj) {
   return (
     // Fundo gradiente de cores
     <View
-      style={styles.background}
+      style={[styles.background, { backgroundColor: theme?.background }]}
     >
       {/* ScrollView + KeyboardAvoiding para evitar sobreposição do teclado */}
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -146,23 +147,23 @@ async function handleLogin(obj) {
           {/* Formulário animado */}
           <Animated.View style={[styles.form, { opacity: opac, transform: [{ translateY: offset.y }] }]}>            
             {/* Campo de Usuário com ícone */}
-            <View style={styles.inputWrapper}>
-              <Feather name="user" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="user" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme?.textPrimary }]}
                 placeholder="Usuário"
-                placeholderTextColor="#666"
+                placeholderTextColor={theme?.textTertiary || "#666"}
                 autoCapitalize="none"
                 value={user}
                 onChangeText={setUser}
               />
             </View>
-            <View style={styles.inputWrapper}>
-              <Feather name="mail" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="mail" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme?.textPrimary }]}
                 placeholder="Email"
-                placeholderTextColor="#666"
+                placeholderTextColor={theme?.textTertiary || "#666"}
                 autoCapitalize="none"
                 value={email}
                 onChangeText={setEmail}
@@ -170,12 +171,12 @@ async function handleLogin(obj) {
             </View>
 
             {/* Campo de Senha com ícone */}
-            <View style={styles.inputWrapper}>
-              <Feather name="lock" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="lock" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme?.textPrimary }]}
                 placeholder="Senha"
-                placeholderTextColor="#666"
+                placeholderTextColor={theme?.textTertiary || "#666"}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
@@ -183,13 +184,13 @@ async function handleLogin(obj) {
             </View>
 
             {/* Botão Entrar */}
-            <TouchableOpacity style={styles.button} onPress={saveData}>
-              <Text style={styles.buttonText}>Entrar</Text>
+            <TouchableOpacity style={[styles.button, { backgroundColor: theme?.primary }]} onPress={saveData}>
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Entrar</Text>
             </TouchableOpacity>
 
             {/* Link para tela de cadastro */}
             <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
-              <Text style={styles.linkText}>Ainda não possui conta? Registre-se</Text>
+              <Text style={[styles.linkText, { color: theme?.textPrimary }]}>Ainda não possui conta? Registre-se</Text>
             </TouchableOpacity>
 
           </Animated.View>
@@ -201,7 +202,7 @@ async function handleLogin(obj) {
 
 // Estilos da tela
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: '#1a1b21'}, 
+  background: { flex: 1}, 
   scroll: { flexGrow: 1 },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   logoContainer: { marginBottom: 30, alignItems: 'center' },
@@ -210,7 +211,6 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row', 
     alignItems: 'center',
-    backgroundColor: '#2b2c33',
     borderRadius: 25,
     paddingHorizontal: 15,
     marginBottom: 15,
@@ -222,10 +222,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  icon: { color: '#f37100', marginRight: 10 },
-  input: { flex: 1, fontSize: 16, color: '#fff' },
+  icon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 16 },
   button: {
-    backgroundColor: '#f37100',
     borderRadius: 25,
     height: 50,
     alignItems: 'center',
@@ -237,6 +236,6 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 4,
   },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  linkText: { color: '#fff', textAlign: 'center', marginTop: 10, textDecorationLine: 'underline' },
+  buttonText: { fontSize: 18, fontWeight: 'bold' },
+  linkText: { textAlign: 'center', marginTop: 10, textDecorationLine: 'underline' },
 });

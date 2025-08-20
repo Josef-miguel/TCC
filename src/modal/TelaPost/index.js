@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import ParticiparPost from "../ParticiparPost";
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import { ThemeContext } from "../../context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,6 +26,8 @@ const PostScreen = ({
   setSelectedPost,
 }) => {
   const navigation = useNavigation();
+  const themeContext = useContext(ThemeContext);
+  const theme = themeContext?.theme;
 
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
@@ -62,7 +65,7 @@ const PostScreen = ({
   return (
     <View style={{ flex: 1 }}>
       <Modal visible={modalVisible} animationType="slide" transparent={false}>
-        <View style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { backgroundColor: theme?.background }] }>
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
 
             {/* Carrossel fullscreen */}
@@ -90,18 +93,18 @@ const PostScreen = ({
             </View>
 
             {/* Rota */}
-            <Text style={styles.sectionTitle}>Trajeto da viagem</Text>
-            <View style={styles.routeBox}>
-              <Ionicons name="location-sharp" size={24} color="#fff" />
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Trajeto da viagem</Text>
+            <View style={[styles.routeBox, { borderColor: theme?.border, backgroundColor: theme?.backgroundSecondary }]}>
+              <Ionicons name="location-sharp" size={24} color={theme?.textPrimary} />
               <View style={{ marginLeft: 10 }}>
-                <Text style={styles.routeText}>Início: {selectedPost.route?.display_start}</Text>
-                <Text style={styles.routeText}>Destino: {selectedPost.route?.display_end}</Text>
+                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>Início: {selectedPost.route?.display_start}</Text>
+                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>Destino: {selectedPost.route?.display_end}</Text>
               </View>
             </View>
 
-            <View style={styles.routeBox}>
+            <View style={[styles.routeBox, { borderColor: theme?.border, backgroundColor: theme?.backgroundSecondary }]}>
               {selectedPost.route?.start && selectedPost.route?.end && (
-                <View style={styles.mapContainer}>
+                <View style={[styles.mapContainer, { borderColor: theme?.border }]}>
                   <MapView
                     style={styles.map}
                     initialRegion={{
@@ -123,7 +126,7 @@ const PostScreen = ({
                     />
                     <Polyline
                       coordinates={selectedPost.route.coordinates}
-                      strokeColor="#f37100"
+                      strokeColor={theme?.primary || "#f37100"}
                       strokeWidth={4}
                     />
                   </MapView>
@@ -132,53 +135,53 @@ const PostScreen = ({
             </View>
 
             {/* Informações */}
-            <Text style={styles.sectionTitle}>Informações da excursão</Text>
-            <View style={styles.infoBox}>
-              <Text style={styles.commentTitle}>Descrição: </Text>
-              <Text style={styles.commentText}>{selectedPost?.desc}</Text>
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Informações da excursão</Text>
+            <View style={[styles.infoBox, { borderColor: theme?.border }]}>
+              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Descrição: </Text>
+              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.desc}</Text>
               {/* <Text style={styles.commentText}>Vamos sair em: {selectedPost?.exit_date}</Text>
               <Text style={styles.commentText}>Vamos voltar em: {selectedPost?.return_date}</Text> */}
-              <Text style={styles.commentTitle}>Quantas vagas estão disponíveis: </Text>
-              <Text style={styles.commentText}>{selectedPost?.numSlots}</Text>
-              <Text style={styles.commentTitle}>Essa viagem é uma: </Text>
-              <Text style={styles.commentText}>{(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}</Text>
+              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Quantas vagas estão disponíveis: </Text>
+              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.numSlots}</Text>
+              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Essa viagem é uma: </Text>
+              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}</Text>
             </View>
 
             {/* Avaliação */}
-            <Text style={styles.sectionTitle}>Avaliação</Text>
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Avaliação</Text>
             <View style={styles.starContainer}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <TouchableOpacity key={i} onPress={() => handleStarPress(i)} style={styles.starButton}>
                   <Ionicons
                     name={i <= starRating ? "star" : "star-outline"}
                     size={30}
-                    color="#f37100"
+                    color={theme?.primary || "#f37100"}
                   />
                 </TouchableOpacity>
               ))}
-              <Text style={styles.starText}>{starRating} de 5</Text>
+              <Text style={[styles.starText, { color: theme?.textPrimary }]}>{starRating} de 5</Text>
             </View>
 
             {/* Comentários */}
-            <Text style={styles.sectionTitle}>Comentários</Text>
-            <View style={styles.commentsBox}>
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Comentários</Text>
+            <View style={[styles.commentsBox, { borderColor: theme?.border }]}>
               {comments.map((c, idx) => (
                 <View key={idx} style={{ marginBottom: 8 }}>
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>{c.username}</Text>
-                  <Text style={styles.commentText}>"{c.comment_text}"</Text>
+                  <Text style={{ color: theme?.textPrimary, fontWeight: "bold" }}>{c.username}</Text>
+                  <Text style={[styles.commentText, { color: theme?.textSecondary }]}>"{c.comment_text}"</Text>
                 </View>
               ))}
             
               <View style={styles.commentInputContainer}>
                 <TextInput
-                  style={styles.commentInput}
+                  style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
                   placeholder="Digite um comentário..."
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor={theme?.textTertiary || "#aaa"}
                   value={newText}
                   onChangeText={setNewText}
                 />
                 <TouchableOpacity onPress={handleSendComment}>
-                  <Ionicons name="send" size={24} color="#f37100" />
+                  <Ionicons name="send" size={24} color={theme?.primary || "#f37100"} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -186,16 +189,16 @@ const PostScreen = ({
 
             {/* Botões de ação */}
             <TouchableOpacity
-              style={[styles.modalButton, styles.joinButton]}
+              style={[styles.modalButton, styles.joinButton, { backgroundColor: theme?.primary }]}
               onPress={() => setParticipationModalVisible(true)}
             >
-              <Text style={styles.buttonText}>Participar da viagem</Text>
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Participar da viagem</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.chatButton, styles.modalButton]}
               onPress={() => navigation.navigate("Chat")}
             >
-              <Text style={styles.buttonText}>Conversar com o organizador</Text>
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Conversar com o organizador</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -218,7 +221,6 @@ const PostScreen = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: "#1a1b21",
   },
   modalScroll: {
     flex: 1,
@@ -243,12 +245,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 6,
     fontSize: 16,
-    color: "#fff",
   },
   commentTitle: {
     fontWeight: "bold",
     fontSize: 16,
-    color: "#fff",
     paddingBottom: 4,
   },
   routeBox: {
@@ -258,13 +258,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
-    borderColor: "#fff",
-    backgroundColor: "#2a2a2a",
     flexWrap: 'wrap',
     width: '100%',
   },
   routeText: {
-    color: "#fff",
     fontSize: 14,
     marginBottom: 4,
     flexShrink: 1,
@@ -275,7 +272,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
-    borderColor: "#fff",
   },
   starContainer: {
     flexDirection: "row",
@@ -288,19 +284,16 @@ const styles = StyleSheet.create({
   starText: {
     marginLeft: 8,
     fontSize: 16,
-    color: '#fff'
   },
   commentsBox: {
     padding: 10,
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 12,
-    borderColor: "#fff",
   },
   commentText: {
     marginBottom: 4,
     fontStyle: "italic",
-    color: "#fff",
   },
   commentInputContainer: {
     flexDirection: 'row',
@@ -313,27 +306,22 @@ const styles = StyleSheet.create({
   commentInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#f37100',
     borderRadius: 6,
     padding: 8,
     marginRight: 8,
-    color: '#fff',
   },
   modalButton: {
     padding: 12,
-    backgroundColor: "#f37100",
     borderRadius: 6,
     marginBottom: 8,
     alignItems: "center",
   },
   joinButton: {
-    backgroundColor: "#f37100",
   },
   chatButton: {
     backgroundColor: "#f65a65",
   },
   buttonText: {
-    color: "#fff",
     fontWeight: "bold",
   },
   mapContainer: {
@@ -342,7 +330,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
     marginBottom: 12,
-    borderColor: "#fff",
     borderWidth: 1,
   },
   map: {
