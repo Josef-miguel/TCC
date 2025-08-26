@@ -199,6 +199,69 @@
             align-items: flex-start;
         }
     }
+
+    /* Estilos específicos para login social */
+    .social-login {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+
+    .social-login p {
+        color: var(--text-color);
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .social-login p::before,
+    .social-login p::after {
+        content: "";
+        display: inline-block;
+        width: 30%;
+        height: 1px;
+        background: var(--dark-color);
+        position: absolute;
+        top: 50%;
+    }
+
+    .social-login p::before {
+        left: 0;
+    }
+
+    .social-login p::after {
+        right: 0;
+    }
+
+    .social-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .social-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .social-btn:hover {
+        transform: translateY(-3px);
+    }
+
+    .google-btn {
+        background: #DB4437;
+        color: white;
+    }
+
+    .facebook-btn {
+        background: #4267B2;
+        color: white;
+    }
 </style>
 
 <div class="login-container">
@@ -207,7 +270,8 @@
             <h2 class="login-title">Acesse sua conta</h2>
         </div>
         <div class="login-body">
-            <form method="POST" action="{{ url_for('routes.login') }}" novalidate>
+            <!-- Formulário tradicional (opcional) -->
+            <form id="loginForm" method="POST" novalidate>
                 {{ form.hidden_tag() }}
                 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -233,11 +297,11 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="senha" class="form-label">Senha</label>
-                    <input type="password" class="form-control" id="senha" name="senha" placeholder="Digite sua senha" required>
-                    {% if form.senha.errors %}
+                    <label for="password" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Digite sua senha" required>
+                    {% if form.password.errors %}
                         <div class="invalid-feedback">
-                            {% for error in form.senha.errors %}
+                            {% for error in form.password.errors %}
                                 {{ error }}
                             {% endfor %}
                         </div>
@@ -246,27 +310,196 @@
                 
                 <div class="login-options">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="lembrar" name="lembrar">
-                        <label class="form-check-label" for="lembrar">Lembrar-me</label>
+                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">Lembrar-me</label>
                     </div>
-                    <a href="#" class="login-link">Esqueci minha senha</a>
+                    <a href="{{ url_for('routes.reset_password_request') }}" class="login-link">Esqueci minha senha</a>
                 </div>
                 
-                <button type="submit" class="btn-login">
+                <button type="submit" class="btn-login" id="loginButton">
                     Entrar
                 </button>
-                
-                <div class="register-text">
-                    <p class="mb-0">Não tem uma conta? <a href="{{ url_for('routes.register') }}" class="login-link">Cadastre-se</a></p>
-                </div>
             </form>
+
+            <!-- Divisor para login social -->
+            <div class="social-login">
+                <p>Ou entre com</p>
+                <div class="social-buttons">
+                    <button class="social-btn google-btn" id="googleLogin">
+                        <i class="fab fa-google"></i>
+                    </button>
+                    <button class="social-btn facebook-btn" id="facebookLogin">
+                        <i class="fab fa-facebook-f"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="register-text">
+                <p class="mb-0">Não tem uma conta? <a href="{{ url_for('routes.register') }}" class="login-link">Cadastre-se</a></p>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<!-- Adicione o SDK do Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
 <script>
+    // Configuração do Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbVaxU__hw2JArtq9BTaPqyjskP_ybPnY",
+        authDomain: "jsg-tcc.firebaseapp.com",
+        projectId: "jsg-tcc",
+        storageBucket: "jsg-tcc.appspot.com",
+        messagingSenderId: "658782512097",
+        appId: "1:658782512097:web:55b0728c26a4fa9e16a8a0",
+        measurementId: "G-W9QE4LFFN3"
+    };
+
+    // Inicialize o Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Login com email/senha
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const remember = document.getElementById('remember').checked;
+        const loginButton = document.getElementById('loginButton');
+        
+        loginButton.disabled = true;
+        loginButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Entrando...';
+        
+        auth.setPersistence(remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION)
+            .then(() => {
+                return auth.signInWithEmailAndPassword(email, password);
+            })
+            .then((userCredential) => {
+                // Usuário logado no Firebase, agora obter token e enviar para o backend
+                return userCredential.user.getIdToken();
+            })
+            .then((idToken) => {
+                // Enviar token para o backend para verificação
+                return fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: idToken }),
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    showError(data.message || 'Erro ao fazer login');
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = 'Entrar';
+                }
+            })
+            .catch((error) => {
+                handleFirebaseError(error);
+                loginButton.disabled = false;
+                loginButton.innerHTML = 'Entrar';
+            });
+    });
+
+    // Login com Google
+    document.getElementById('googleLogin').addEventListener('click', function() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        socialLogin(provider);
+    });
+
+    // Login com Facebook
+    document.getElementById('facebookLogin').addEventListener('click', function() {
+        const provider = new firebase.auth.FacebookAuthProvider();
+        socialLogin(provider);
+    });
+
+    // Função genérica para login social
+    function socialLogin(provider) {
+        auth.signInWithPopup(provider)
+            .then((result) => {
+                return result.user.getIdToken();
+            })
+            .then((idToken) => {
+                return fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: idToken }),
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    showError(data.message || 'Erro ao fazer login com rede social');
+                }
+            })
+            .catch((error) => {
+                handleFirebaseError(error);
+            });
+    }
+
+    // Tratamento de erros do Firebase
+    function handleFirebaseError(error) {
+        let errorMessage = 'Erro ao fazer login';
+        
+        switch (error.code) {
+            case 'auth/invalid-email':
+                errorMessage = 'E-mail inválido';
+                break;
+            case 'auth/user-disabled':
+                errorMessage = 'Esta conta foi desativada';
+                break;
+            case 'auth/user-not-found':
+                errorMessage = 'Usuário não encontrado';
+                break;
+            case 'auth/wrong-password':
+                errorMessage = 'Senha incorreta';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage = 'Muitas tentativas. Tente novamente mais tarde';
+                break;
+            case 'auth/popup-closed-by-user':
+                // Usuário fechou a janela de login, não mostrar erro
+                return;
+            default:
+                console.error('Erro no login:', error);
+                errorMessage = error.message || 'Erro desconhecido';
+        }
+        
+        showError(errorMessage);
+    }
+
+    // Mostrar mensagem de erro
+    function showError(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.textContent = message;
+        
+        const form = document.getElementById('loginForm');
+        if (form.querySelector('.alert')) {
+            form.querySelector('.alert').remove();
+        }
+        form.insertBefore(alertDiv, form.firstChild);
+        
+        // Rolagem suave para o topo para mostrar o erro
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
     // Adiciona classe de erro aos campos inválidos
     document.querySelectorAll('.is-invalid').forEach(element => {
         element.classList.add('is-invalid');
@@ -279,15 +512,6 @@
                 }
             }
         });
-    });
-
-    // Efeito de loading no botão de login
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const btn = this.querySelector('.btn-login');
-        if (btn) {
-            btn.innerHTML = 'Entrando...';
-            btn.disabled = true;
-        }
     });
 </script>
 {% endblock %}

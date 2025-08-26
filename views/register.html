@@ -158,6 +158,25 @@
         display: block;
     }
 
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    .alert-danger {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+
+    .alert-success {
+        background-color: rgba(25, 135, 84, 0.2);
+        color: #6bffa0;
+        border: 1px solid rgba(25, 135, 84, 0.3);
+    }
+
     .text-center {
         text-align: center;
     }
@@ -194,6 +213,70 @@
             min-width: 100%;
         }
     }
+
+    /* Estilos para login social */
+    .social-register {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+
+    .social-register p {
+        color: var(--text-color);
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .social-register p::before,
+    .social-register p::after {
+        content: "";
+        display: inline-block;
+        width: 30%;
+        height: 1px;
+        background: var(--dark-color);
+        position: absolute;
+        top: 50%;
+    }
+
+    .social-register p::before {
+        left: 0;
+    }
+
+    .social-register p::after {
+        right: 0;
+    }
+
+    .social-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .social-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .social-btn:hover {
+        transform: translateY(-3px);
+    }
+
+    .google-btn {
+        background: #DB4437;
+        color: white;
+    }
+
+    .facebook-btn {
+        background: #4267B2;
+        color: white;
+    }
 </style>
 
 <div class="register-container">
@@ -202,27 +285,34 @@
             <h2 class="register-title">Crie sua conta</h2>
         </div>
         <div class="register-body">
-            <form action="{{ url_for('routes.register') }}" method="POST" novalidate>
+            <!-- Formulário de registro tradicional -->
+            <form id="registerForm" novalidate>
                 {{ form.hidden_tag() }}
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="nome" class="form-label">Nome Completo</label>
-                            {{ form.nome(class="form-control", id="nome", placeholder="Digite seu nome completo") }}
-                            {% for error in form.nome.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                            <label for="name" class="form-label">Nome Completo</label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Digite seu nome completo" required>
+                            <div class="invalid-feedback" id="name-error"></div>
                         </div>
                     </div>
 
                     <div class="form-col">
                         <div class="form-group">
                             <label for="email" class="form-label">E-mail</label>
-                            {{ form.email(class="form-control", id="email", placeholder="seu@email.com") }}
-                            {% for error in form.email.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                            <input type="email" class="form-control" id="email" name="email" placeholder="seu@email.com" required>
+                            <div class="invalid-feedback" id="email-error"></div>
                         </div>
                     </div>
                 </div>
@@ -230,18 +320,16 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="telefone" class="form-label">Telefone</label>
-                            {{ form.telefone(class="form-control", id="telefone", placeholder="(00) 00000-0000") }}
+                            <label for="phone" class="form-label">Telefone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="(00) 00000-0000">
                         </div>
                     </div>
 
                     <div class="form-col">
                         <div class="form-group">
                             <label for="cpf" class="form-label">CPF</label>
-                            {{ form.cpf(class="form-control", id="cpf", placeholder="000.000.000-00") }}
-                            {% for error in form.cpf.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00" required>
+                            <div class="invalid-feedback" id="cpf-error"></div>
                         </div>
                     </div>
                 </div>
@@ -249,29 +337,25 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="senha" class="form-label">Senha</label>
-                            {{ form.senha(class="form-control", id="senha", placeholder="Mínimo 6 caracteres") }}
-                            {% for error in form.senha.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                            <label for="password" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Mínimo 6 caracteres" required>
+                            <div class="invalid-feedback" id="password-error"></div>
                         </div>
                     </div>
 
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="confirmar_senha" class="form-label">Confirmar Senha</label>
-                            {{ form.confirmar_senha(class="form-control", id="confirmar_senha", placeholder="Confirme sua senha") }}
-                            {% for error in form.confirmar_senha.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                            <label for="confirm_password" class="form-label">Confirmar Senha</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirme sua senha" required>
+                            <div class="invalid-feedback" id="confirm_password-error"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="form-check">
-                        {{ form.tipo_organizador(class="form-check-input", id="tipo_organizador") }}
-                        <label class="form-check-label" for="tipo_organizador">
+                        <input class="form-check-input" type="checkbox" id="is_organizer" name="is_organizer">
+                        <label class="form-check-label" for="is_organizer">
                             Sou organizador de eventos
                         </label>
                     </div>
@@ -285,40 +369,56 @@
                     <div class="form-row">
                         <div class="form-col">
                             <div class="form-group">
-                                <label for="nome_empresa" class="form-label">Nome da Empresa</label>
-                                {{ form.nome_empresa(class="form-control", id="nome_empresa") }}
+                                <label for="company_name" class="form-label">Nome da Empresa</label>
+                                <input type="text" class="form-control" id="company_name" name="company_name">
+                                <div class="invalid-feedback" id="company_name-error"></div>
                             </div>
                         </div>
 
                         <div class="form-col">
                             <div class="form-group">
                                 <label for="cnpj" class="form-label">CNPJ</label>
-                                {{ form.cnpj(class="form-control", id="cnpj", placeholder="00.000.000/0000-00") }}
+                                <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00">
+                                <div class="invalid-feedback" id="cnpj-error"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="endereco" class="form-label">Endereço</label>
-                        {{ form.endereco(class="form-control", id="endereco") }}
+                        <label for="address" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="address" name="address">
+                        <div class="invalid-feedback" id="address-error"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="descricao" class="form-label">Descrição da Empresa</label>
-                        {{ form.descricao(class="form-control", id="descricao", rows="3") }}
+                        <label for="company_description" class="form-label">Descrição da Empresa</label>
+                        <textarea class="form-control" id="company_description" name="company_description" rows="3"></textarea>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-register">
+                <button type="submit" class="btn-register" id="registerButton">
                     Cadastrar
                 </button>
-
-                <div class="text-center mt-4">
-                    <p class="mb-0">Já tem uma conta?
-                        <a href="{{ url_for('routes.login') }}" class="login-link">Faça login</a>
-                    </p>
-                </div>
             </form>
+
+            <!-- Opção de registro com redes sociais -->
+            <div class="social-register">
+                <p>Ou cadastre-se com</p>
+                <div class="social-buttons">
+                    <button class="social-btn google-btn" id="googleRegister">
+                        <i class="fab fa-google"></i>
+                    </button>
+                    <button class="social-btn facebook-btn" id="facebookRegister">
+                        <i class="fab fa-facebook-f"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="mb-0">Já tem uma conta?
+                    <a href="{{ url_for('routes.login') }}" class="login-link">Faça login</a>
+                </p>
+            </div>
         </div>
     </div>
 </div>
@@ -326,11 +426,31 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Adicione o SDK do Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
 <script>
+    // Configuração do Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbVaxU__hw2JArtq9BTaPqyjskP_ybPnY",
+        authDomain: "jsg-tcc.firebaseapp.com",
+        projectId: "jsg-tcc",
+        storageBucket: "jsg-tcc.appspot.com",
+        messagingSenderId: "658782512097",
+        appId: "1:658782512097:web:55b0728c26a4fa9e16a8a0",
+        measurementId: "G-W9QE4LFFN3"
+    };
+
+    // Inicialize o Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Mostrar/ocultar campos de organizador
     document.addEventListener('DOMContentLoaded', function () {
-        const checkbox = document.getElementById('tipo_organizador');
+        const checkbox = document.getElementById('is_organizer');
         const fields = document.getElementById('organizadorFields');
-        const requiredFields = ['nome_empresa', 'cnpj', 'endereco'];
+        const requiredFields = ['company_name', 'cnpj', 'address'];
 
         function toggleOrganizadorFields() {
             const show = checkbox.checked;
@@ -344,10 +464,235 @@
         toggleOrganizadorFields(); // Inicializar com base no estado do checkbox
     });
 
+    // Registrar com email/senha
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const cpf = document.getElementById('cpf').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        const isOrganizer = document.getElementById('is_organizer').checked;
+        const companyName = document.getElementById('company_name').value;
+        const cnpj = document.getElementById('cnpj').value;
+        const address = document.getElementById('address').value;
+        const companyDescription = document.getElementById('company_description').value;
+        
+        const registerButton = document.getElementById('registerButton');
+        registerButton.disabled = true;
+        registerButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cadastrando...';
+        
+        // Validação básica no cliente
+        if (password !== confirmPassword) {
+            showError('As senhas não coincidem', 'confirm_password');
+            registerButton.disabled = false;
+            registerButton.innerHTML = 'Cadastrar';
+            return;
+        }
+        
+        if (password.length < 6) {
+            showError('A senha deve ter pelo menos 6 caracteres', 'password');
+            registerButton.disabled = false;
+            registerButton.innerHTML = 'Cadastrar';
+            return;
+        }
+        
+        if (isOrganizer && (!companyName || !cnpj || !address)) {
+            showError('Preencha todos os campos obrigatórios para organizador');
+            registerButton.disabled = false;
+            registerButton.innerHTML = 'Cadastrar';
+            return;
+        }
+
+        // Criar usuário no Firebase
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Usuário criado no Firebase, agora enviar dados para o backend
+                const userData = {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    cpf: cpf,
+                    is_organizer: isOrganizer,
+                    firebase_uid: userCredential.user.uid
+                };
+                
+                if (isOrganizer) {
+                    userData.company_name = companyName;
+                    userData.cnpj = cnpj;
+                    userData.address = address;
+                    userData.company_description = companyDescription;
+                }
+                
+                return fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Login automático após cadastro
+                    return auth.signInWithEmailAndPassword(email, password);
+                } else {
+                    throw new Error(data.message || 'Erro ao cadastrar no sistema');
+                }
+            })
+            .then((userCredential) => {
+                // Obter token JWT e fazer login no backend
+                return userCredential.user.getIdToken();
+            })
+            .then((idToken) => {
+                return fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: idToken }),
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    throw new Error(data.message || 'Erro ao fazer login após cadastro');
+                }
+            })
+            .catch((error) => {
+                handleFirebaseError(error);
+                registerButton.disabled = false;
+                registerButton.innerHTML = 'Cadastrar';
+            });
+    });
+
+    // Registrar com Google
+    document.getElementById('googleRegister').addEventListener('click', function() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        socialRegister(provider);
+    });
+
+    // Registrar com Facebook
+    document.getElementById('facebookRegister').addEventListener('click', function() {
+        const provider = new firebase.auth.FacebookAuthProvider();
+        socialRegister(provider);
+    });
+
+    // Função genérica para registro social
+    function socialRegister(provider) {
+        auth.signInWithPopup(provider)
+            .then((result) => {
+                // Usuário autenticado, enviar dados para o backend
+                const user = result.user;
+                const userData = {
+                    name: user.displayName || 'Usuário',
+                    email: user.email,
+                    firebase_uid: user.uid,
+                    is_organizer: false // Por padrão, não é organizador
+                };
+                
+                return fetch('/api/register/social', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    throw new Error(data.message || 'Erro ao cadastrar com rede social');
+                }
+            })
+            .catch((error) => {
+                handleFirebaseError(error);
+            });
+    }
+
+    // Tratamento de erros do Firebase
+    function handleFirebaseError(error) {
+        let errorMessage = 'Erro ao cadastrar';
+        let field = null;
+        
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                errorMessage = 'Este e-mail já está em uso';
+                field = 'email';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'E-mail inválido';
+                field = 'email';
+                break;
+            case 'auth/weak-password':
+                errorMessage = 'A senha deve ter pelo menos 6 caracteres';
+                field = 'password';
+                break;
+            case 'auth/operation-not-allowed':
+                errorMessage = 'Operação não permitida';
+                break;
+            case 'auth/popup-closed-by-user':
+                // Usuário fechou a janela de login, não mostrar erro
+                return;
+            default:
+                console.error('Erro no cadastro:', error);
+                errorMessage = error.message || 'Erro desconhecido';
+        }
+        
+        showError(errorMessage, field);
+    }
+
+    // Mostrar mensagem de erro
+    function showError(message, fieldId = null) {
+        // Limpar erros anteriores
+        document.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.textContent = '';
+        });
+        
+        // Mostrar alerta geral
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.textContent = message;
+        
+        const form = document.getElementById('registerForm');
+        if (form.querySelector('.alert')) {
+            form.querySelector('.alert').remove();
+        }
+        form.insertBefore(alertDiv, form.firstChild);
+        
+        // Mostrar erro em campo específico
+        if (fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.classList.add('is-invalid');
+                const errorElement = document.getElementById(`${fieldId}-error`);
+                if (errorElement) {
+                    errorElement.textContent = message;
+                }
+            }
+        }
+        
+        // Rolagem suave para o topo para mostrar o erro
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
     // Aplicar máscaras se jQuery estiver disponível
     if (typeof $ !== 'undefined' && typeof $.fn.mask !== 'undefined') {
         $(function () {
-            $('#telefone').mask('(00) 00000-0000');
+            $('#phone').mask('(00) 00000-0000');
             $('#cpf').mask('000.000.000-00');
             $('#cnpj').mask('00.000.000/0000-00');
         });

@@ -1,19 +1,126 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Lista de Eventos</h1>
+<style>
+    /* Estilos base */
+    .eventos-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 2rem;
+        position: relative;
+        padding-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    .page-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: #c35a00;
+        border-radius: 2px;
+    }
+    
+    /* Lista de eventos */
+    .eventos-lista {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .evento-item {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .evento-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .evento-link {
+        display: block;
+        padding: 1.5rem;
+        text-decoration: none;
+        color: #333;
+    }
+    
+    .evento-destino {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #c35a00;
+    }
+    
+    .evento-data {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .evento-data i {
+        color: #c35a00;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        color: #666;
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .eventos-lista {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+    }
+</style>
 
-{% if eventos %}
-<ul>
-    {% for evento in eventos %}
-    <li>
-        <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}">
-            {{ evento.destino }} - {{ evento.data_de_saida }}
-        </a>
-    </li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>Nenhum evento encontrado.</p>
-{% endif %}
+<div class="eventos-container">
+    <h1 class="page-title">Pacotes de Viagem</h1>
+    
+    {% if eventos %}
+    <ul class="eventos-lista">
+        {% for evento in eventos %}
+        <li class="evento-item">
+            <a href="{{ url_for('routes.detalhes_evento', id=evento.id_evento) }}" class="evento-link">
+                <h3 class="evento-destino">{{ evento.destino }}</h3>
+                <div class="evento-data">
+                    <i class="fas fa-calendar-alt"></i>
+                    {{ evento.data_de_saida.strftime('%d/%m/%Y') if evento.data_de_saida else 'Data flexível' }}
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-suitcase-rolling fa-3x" style="color: #c35a00; margin-bottom: 1rem;"></i>
+        <h3>Nenhum pacote encontrado</h3>
+        <p>No momento não temos pacotes disponíveis. Volte em breve para novas ofertas!</p>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
