@@ -75,6 +75,7 @@ export default function Cadastro({ navigation }) {
           favoriteTags : [],
         },
         isOrganizer: false,
+        currentJoinedEvents: [],
         uid: uid, // salva o UID do Auth também, boa prática!
       });
 
