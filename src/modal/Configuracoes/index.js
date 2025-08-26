@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { ThemeContext } from "../../context/ThemeContext";
+import { Picker } from "@react-native-picker/picker";
 
 // Fallback theme para quando o contexto não estiver disponível
 const defaultTheme = {
@@ -31,6 +32,8 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
   const theme = themeContext?.theme || defaultTheme;
   const isDarkTheme = themeContext?.isDarkTheme ?? true;
   const toggleTheme = themeContext?.toggleTheme ?? (() => console.warn('ThemeContext não disponível'));
+  const [selectedValue, setSelectedValue] = useState("java");
+  const [visible, setVisible] = useState(false);
 
   const styles = StyleSheet.create({
     overlay: {
@@ -126,13 +129,32 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
             </View>
 
             {/* Idioma */}
-            <TouchableOpacity style={styles.item}>
+            <TouchableOpacity
+            onPress={() => setVisible(true)}
+            style={styles.item}
+            >
               <View style={styles.left}>
                 <Icon name="translate" size={24} color={theme.primary} />
                 <Text style={styles.label}>Idioma</Text>
               </View>
               <Icon name="chevron-right" size={24} color={theme.textTertiary} />
             </TouchableOpacity>
+            <Modal visible={visible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedValue}
+              onValueChange={(itemValue) => setSelectedValue(itemValue)}
+            >
+              <Picker.Item label="Português (Brasileiro)" value="PT-BR" />
+              <Picker.Item label="English" value="ENG" />
+              <Picker.Item label="官话" value="CMN" />
+              <Picker.Item label="C#" value="csharp" />
+            </Picker>
+            <Button title="Fechar" onPress={() => setVisible(false)} />
+          </View>
+        </View>
+      </Modal>
 
             {/* Alterar Senha */}
             <TouchableOpacity style={styles.item}>
