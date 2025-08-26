@@ -14,8 +14,6 @@ from flask import current_app
 routes = Blueprint('routes', __name__)
 
 # Home - Lista de Eventos
-
-# Defindo a rota inicial
 @routes.route('/')
 def home():
     try:
@@ -26,9 +24,9 @@ def home():
         flash('Erro ao carregar eventos. Tente novamente.', 'error')
         return render_template('home.html', eventos=[])
 
-# Login
 
-# Rota de login do usuario
+
+# Login
 @routes.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
