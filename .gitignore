@@ -34,3 +34,8 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Adicione o arquivo ao .gitignore para evitar commits futuros
+echo "serviceAccountKey.json" >> .gitignore
+echo "*.json" >> .gitignore  # Para maior segurança
+echo "firebase-admin-sdk*.json" >> .gitignore
