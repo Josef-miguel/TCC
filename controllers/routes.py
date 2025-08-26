@@ -1,15 +1,28 @@
-
-# Importação de todas as bibliotecas que serão usadas 
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_user, login_required, logout_user, current_user
-from models.database import db, Usuario, Evento, Organizador, Reserva, Favorito
+from models.database import db, Usuario, Evento, Organizador, Reserva, Favorito, ComentarioEvento, Mensagem
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError
-from forms import RegistrationForm
-from forms import LoginForm  # Ou o caminho correto para seu arquivo forms.py
+from sqlalchemy import or_
+from forms import (FirebaseRegistrationForm, FirebaseLoginForm, PerfilForm, 
+                  SenhaForm, OrganizadorForm, EventoForm, ComentarioForm, MensagemForm)
 from flask_login import UserMixin
 from flask import current_app
+import firebase_admin
+from firebase_admin import auth
+from firebase_admin.exceptions import FirebaseError
+import logging
+from app import db, login_manager
+
+from flask_login import LoginManager
+
+
+# Configura o user_loader
+@login_manager.user_loader
+def load_user(user_id):
+    from models.database import Usuario  # Importação local para evitar circular
+    return Usuario.query.get(int(user_id))
 
 routes = Blueprint('routes', __name__)
 
@@ -21,6 +34,7 @@ def home():
             .order_by(Evento.data_de_saida.asc()).all()
         return render_template('home.html', eventos=eventos)
     except Exception as e:
+        logger.error(f"Home error: {str(e)}")
         flash('Erro ao carregar eventos. Tente novamente.', 'error')
         return render_template('home.html', eventos=[])
 
@@ -32,110 +46,266 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('routes.dashboard'))
 
-    form = LoginForm()
+    form = FirebaseLoginForm()
 
     if form.validate_on_submit():
-        user = Usuario.query.filter_by(email=form.email.data).first()
-        
-        if user and check_password_hash(user.senha, form.senha.data):
-            login_user(user, remember=form.lembrar.data)
-            flash('Login realizado com sucesso!', 'success')
+        try:
+            # Autenticar com Firebase
+            firebase_user = auth.get_user_by_email(form.email.data)
+            db = get_db()
             
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('routes.dashboard'))
-        
-        flash('E-mail ou senha incorretos', 'error')
-    
+            # Buscar dados do usuário no Firestore
+            user_ref = db.collection('usuarios').document(firebase_user.uid)
+            user_doc = user_ref.get()
+            
+            if user_doc.exists:
+                user = FirebaseUser(firebase_user.uid, user_doc.to_dict())
+                login_user(user, remember=form.remember.data)
+                flash('Login realizado com sucesso!', 'success')
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('routes.dashboard'))
+            else:
+                flash('Usuário não cadastrado no sistema', 'error')
+                
+        except auth.UserNotFoundError:
+            flash('E-mail não cadastrado', 'error')
+        except FirebaseError as e:
+            logger.error(f"Firebase error: {str(e)}")
+            flash('Erro ao autenticar. Tente novamente.', 'error')
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            flash('Erro interno no servidor', 'error')
+
     return render_template('login.html', form=form)
 
-
-
-@routes.route('/reset-password', methods=['GET', 'POST'])
-def reset_password_request():
+@routes.route('/register', methods=['GET', 'POST'])
+def register():
     if current_user.is_authenticated:
         return redirect(url_for('routes.dashboard'))
-    
-    form = ResetPasswordRequestForm()  # Você precisará criar este formulário
-    
-    if form.validate_on_submit():
-        user = Usuario.query.filter_by(email=form.email.data).first()
-        if user:
-            # Aqui você implementaria o envio do e-mail de recuperação
-            send_password_reset_email(user)  # Função que você precisa implementar
-            
-        flash('Se o e-mail existir em nosso sistema, enviaremos instruções para redefinir sua senha', 'info')
-        return redirect(url_for('routes.login'))
-    
-    return render_template('reset_password_request.html', form=form)
 
-# Logout
+    form = FirebaseRegistrationForm()
+
+    if form.validate_on_submit():
+        try:
+            db = get_db()
+            
+            # 1. Criar usuário no Firebase Auth
+            firebase_user = auth.create_user(
+                email=form.email.data,
+                password=form.password.data,
+                display_name=form.name.data
+            )
+            
+            # 2. Criar documento do usuário no Firestore
+            user_data = {
+                'nome': form.name.data,
+                'email': form.email.data,
+                'telefone': form.phone.data,
+                'cpf': form.cpf.data,
+                'tipo': 'organizador' if form.is_organizer.data else 'comum',
+                'data_criacao': datetime.utcnow()
+            }
+            
+            db.collection('usuarios').document(firebase_user.uid).set(user_data)
+            
+            # 3. Se for organizador, criar dados adicionais
+            if form.is_organizer.data:
+                organizador_data = {
+                    'nome_empresa': form.company_name.data,
+                    'cnpj': form.cnpj.data,
+                    'endereco': form.address.data,
+                    'descricao': form.company_description.data,
+                    'id_usuario': firebase_user.uid
+                }
+                db.collection('organizadores').document(firebase_user.uid).set(organizador_data)
+            
+            flash('Cadastro realizado com sucesso!', 'success')
+            return redirect(url_for('routes.login'))
+            
+        except auth.EmailAlreadyExistsError:
+            flash('E-mail já cadastrado', 'error')
+        except FirebaseError as e:
+            logger.error(f"Firebase error: {str(e)}")
+            flash(f'Erro ao cadastrar: {str(e)}', 'error')
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            flash('Erro interno no servidor', 'error')
+
+    return render_template('register.html', form=form)
+
 @routes.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('routes.home'))
 
-# Rota que envia os dados de login
-@routes.route('/login/ajax', methods=['POST'])
-def login_ajax():
-    if current_user.is_authenticated:
-        return jsonify({'success': True, 'redirect': url_for('routes.dashboard')})
+# =============================================
+# Rotas Principais
+# =============================================
 
-    data = request.get_json()
-    email = data.get('email', '').strip()
-    senha = data.get('senha', '')
+@routes.route('/')
+def home():
+    try:
+        db = get_db()
+        eventos_ref = db.collection('eventos').order_by('data_de_saida').stream()
+        
+        eventos = []
+        for evento in eventos_ref:
+            event_data = evento.to_dict()
+            event_data['id'] = evento.id
+            # Busca informações do organizador
+            if 'id_organizador' in event_data:
+                org_ref = db.collection('organizadores').document(event_data['id_organizador'])
+                org_data = org_ref.get().to_dict()
+                event_data['organizador'] = org_data
+            
+            eventos.append(event_data)
+            
+        return render_template('home.html', eventos=eventos)
+    except Exception as e:
+        logger.error(f"Home error: {str(e)}")
+        flash('Erro ao carregar eventos. Tente novamente.', 'error')
+        return render_template('home.html', eventos=[])
 
-    if not email or not senha:
-        return jsonify({'success': False, 'message': 'Preencha todos os campos'})
+@routes.route('/dashboard')
+@login_required
+def dashboard():
+    db = get_db()
+    
+    if current_user.tipo == 'organizador':
+        # Dashboard para organizador
+        eventos_ref = db.collection('eventos').where('id_organizador', '==', current_user.uid).stream()
+        
+        eventos = []
+        for evento in eventos_ref:
+            event_data = evento.to_dict()
+            event_data['id'] = evento.id
+            eventos.append(event_data)
+            
+        return render_template('dashboard_organizador.html', eventos=eventos)
+    else:
+        # Dashboard para usuário comum
+        reservas_ref = db.collection('reservas').where('id_usuario', '==', current_user.uid).stream()
+        
+        reservas = []
+        for reserva in reservas_ref:
+            reserva_data = reserva.to_dict()
+            reserva_data['id'] = reserva.id
+            # Busca dados do evento
+            event_ref = db.collection('eventos').document(reserva_data['id_evento'])
+            event_data = event_ref.get().to_dict()
+            reserva_data['evento'] = event_data
+            reservas.append(reserva_data)
+            
+        return render_template('dashboard_usuario.html', reservas=reservas)
 
-    user = Usuario.query.filter_by(email=email).first()
+# ... (continuar com as outras rotas adaptadas para Firestore)
+@routes.route('/evento/<int:id_evento>/comentar', methods=['POST'])
+@login_required
+def comentar_evento(id_evento):
+    form = ComentarioForm()
+    
+    if form.validate_on_submit():
+        try:
+            comentario = ComentarioEvento(
+                id_evento=id_evento,
+                id_usuario=current_user.id_usuario,
+                texto=form.texto.data
+            )
+            db.session.add(comentario)
+            db.session.commit()
+            flash('Comentário adicionado com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erro ao adicionar comentário: {str(e)}")
+            flash('Erro ao adicionar comentário', 'error')
+    
+    return redirect(url_for('routes.detalhes_evento', id_evento=id_evento))
 
-    if user and check_password_hash(user.senha, senha):
-        login_user(user)
-        return jsonify({
-            'success': True,
-            'redirect': url_for('routes.dashboard')
-        })
+# =============================================
+# Rotas de Mensagens
+# =============================================
 
-    return jsonify({'success': False, 'message': 'Credenciais inválidas'})
+@routes.route('/mensagens')
+@login_required
+def mensagens():
+    # Obter todas as conversas do usuário
+    conversas = db.session.query(
+        Mensagem,
+        Usuario
+    ).join(
+        Usuario,
+        or_(
+            Mensagem.id_remetente == Usuario.id_usuario,
+            Mensagem.id_destinatario == Usuario.id_usuario
+        )
+    ).filter(
+        or_(
+            Mensagem.id_remetente == current_user.id_usuario,
+            Mensagem.id_destinatario == current_user.id_usuario
+        ),
+        Usuario.id_usuario != current_user.id_usuario
+    ).group_by(Usuario.id_usuario).all()
+    
+    return render_template('mensagens.html', conversas=conversas)
 
-# Rota de perfil do usuario
+@routes.route('/mensagens/<int:id_usuario>', methods=['GET', 'POST'])
+@login_required
+def conversa(id_usuario):
+    outro_usuario = Usuario.query.get_or_404(id_usuario)
+    form = MensagemForm()
+    
+    if form.validate_on_submit():
+        try:
+            mensagem = Mensagem(
+                id_remetente=current_user.id_usuario,
+                id_destinatario=id_usuario,
+                texto=form.texto.data
+            )
+            db.session.add(mensagem)
+            db.session.commit()
+            return redirect(url_for('routes.conversa', id_usuario=id_usuario))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erro ao enviar mensagem: {str(e)}")
+            flash('Erro ao enviar mensagem', 'error')
+    
+    # Obter histórico de mensagens
+    mensagens = Mensagem.query.filter(
+        or_(
+            (Mensagem.id_remetente == current_user.id_usuario) & (Mensagem.id_destinatario == id_usuario),
+            (Mensagem.id_remetente == id_usuario) & (Mensagem.id_destinatario == current_user.id_usuario)
+        )
+    ).order_by(Mensagem.data_envio.asc()).all()
+    
+    return render_template('conversa.html', 
+                         outro_usuario=outro_usuario, 
+                         mensagens=mensagens, 
+                         form=form)
+
+# =============================================
+# Rotas de Perfil
+# =============================================
+
 @routes.route('/perfil', methods=['GET', 'POST'])
 @login_required
 def perfil():
-    # Importações (se não estiverem no topo do arquivo)
-    from forms import PerfilForm, SenhaForm, OrganizadorForm
-
-    # Inicialização de formulários
     form = PerfilForm(obj=current_user)
     senha_form = SenhaForm()
     org_form = OrganizadorForm()
 
-    # Verificar se é organizador
-    organizador = None
     if current_user.tipo == 'organizador':
         organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
         if organizador and request.method == 'GET':
             org_form = OrganizadorForm(obj=organizador)
+    else:
+        organizador = None
 
-    # Carregar reservas do usuário
     reservas = Reserva.query.filter_by(id_usuario=current_user.id_usuario)\
         .options(db.joinedload(Reserva.evento))\
         .order_by(Reserva.data_de_reserva.desc())\
         .all()
 
-    # Processar POST do formulário principal
-    if form.validate_on_submit():
-        try:
-            form.populate_obj(current_user)
-            db.session.commit()
-            flash('Perfil atualizado com sucesso!', 'success')
-            return redirect(url_for('routes.perfil'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao atualizar perfil: {str(e)}', 'error')
-
-    # Estatísticas para organizador
     stats = {
         'total_eventos': 0,
         'total_reservas': 0,
@@ -157,6 +327,17 @@ def perfil():
         
         stats['faturamento_total'] = faturamento if faturamento else 0
 
+    if form.validate_on_submit():
+        try:
+            form.populate_obj(current_user)
+            db.session.commit()
+            flash('Perfil atualizado com sucesso!', 'success')
+            return redirect(url_for('routes.perfil'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Perfil update error: {str(e)}")
+            flash(f'Erro ao atualizar perfil: {str(e)}', 'error')
+
     return render_template(
         'perfil.html',
         form=form,
@@ -165,165 +346,17 @@ def perfil():
         reservas=reservas,
         organizador=organizador,
         **stats
-    ) 
+    )
 
+# =============================================
+# Rotas de Eventos (Organizador)
+# =============================================
 
-@routes.route('/alterar-senha', methods=['POST'])
+@routes.route('/evento/novo', methods=['GET', 'POST'])
 @login_required
-def alterar_senha():
-    from forms import SenhaForm
-    form = SenhaForm()
-    
-    if form.validate_on_submit():
-        try:
-            if not check_password_hash(current_user.senha, form.senha_atual.data):
-                flash('Senha atual incorreta', 'error')
-            else:
-                current_user.senha = generate_password_hash(form.nova_senha.data)
-                db.session.commit()
-                flash('Senha alterada com sucesso!', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao alterar senha: {str(e)}', 'error')
-    
-    return redirect(url_for('routes.perfil'))
-
-
-@routes.route('/atualizar-organizador', methods=['POST'])
-@login_required
-def atualizar_organizador():
+def novo_evento():
     if current_user.tipo != 'organizador':
-        abort(403)
-    
-    from forms import OrganizadorForm
-    form = OrganizadorForm()
-    
-    if form.validate_on_submit():
-        organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first_or_404()
-        
-        try:
-            form.populate_obj(organizador)
-            db.session.commit()
-            flash('Informações atualizadas com sucesso!', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao atualizar informações: {str(e)}', 'error')
-    
-    return redirect(url_for('routes.perfil'))
-
-# Rota que cadastra o usuario
-@routes.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegistrationForm()
-    
-    if form.validate_on_submit():
-        try:
-            # Criar hash da senha
-            hashed_password = generate_password_hash(form.senha.data)
-            
-            # Criar novo usuário
-            new_user = Usuario(
-                nome=form.nome.data,
-                email=form.email.data,
-                senha=hashed_password,
-                telefone=form.telefone.data,
-                cpf=form.cpf.data,
-                tipo='organizador' if form.tipo_organizador.data else 'usuario'
-            )
-            
-            db.session.add(new_user)
-            db.session.commit()  # Commit para gerar o id_usuario
-            
-            # Se for organizador, criar perfil
-            if form.tipo_organizador.data:
-                organizador = Organizador(
-                    id_usuario=new_user.id_usuario,
-                    nome_empresa=form.nome_empresa.data,
-                    cnpj=form.cnpj.data,
-                    endereco=form.endereco.data,
-                    descricao=form.descricao.data
-                )
-                db.session.add(organizador)
-                db.session.commit()
-            
-            flash('Cadastro realizado com sucesso!', 'success')
-            return redirect(url_for('routes.login'))
-            
-        except IntegrityError:
-            db.session.rollback()
-            flash('E-mail ou CPF já cadastrado', 'error')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao cadastrar: {str(e)}', 'error')
-            print(f"Erro detalhado: {str(e)}")  # Log para debug
-    
-    return render_template('register.html', form=form)
-
-# Rota que envia os dados de registro do usuario
-@routes.route('/register/ajax', methods=['POST'])
-def register_ajax():
-    form = RegistrationForm()
-
-    if form.validate_on_submit():
-        # Sua lógica de registro aqui (igual à rota normal)
-        # ...
-
-        return jsonify({
-            'success': True,
-            'message': 'Cadastro realizado com sucesso!',
-            'redirect': url_for('routes.login')
-        })
-
-    # Se houver erros de validação
-    errors = {field.name: field.errors for field in form if field.errors}
-    return jsonify({
-        'success': False,
-        'message': 'Por favor, corrija os erros no formulário',
-        'errors': errors
-    }), 400
-
-# Dashboard
-
-
-@routes.route('/dashboard')
-@login_required
-def dashboard():
-    if current_user.tipo == 'organizador':
-        organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
-        if not organizador:
-            flash('Complete seu perfil de organizador primeiro', 'error')
-            return redirect(url_for('routes.perfil'))
-            
-        eventos = Evento.query.filter_by(id_organizador=organizador.id_organizador)\
-            .order_by(Evento.data_de_saida.desc()).all()
-        return render_template('dashboard_organizador.html', eventos=eventos)
-    
-    # Usuário comum
-    reservas = Reserva.query.filter_by(id_usuario=current_user.id_usuario)\
-        .options(db.joinedload(Reserva.evento)).all()
-    return render_template('dashboard_usuario.html', reservas=reservas)
-
-# Lista de Eventos
-
-# Rota que mostra os eventos do site
-@routes.route('/eventos')
-def eventos():
-    print("Tentando buscar eventos...")
-    eventos = Evento.query.all()
-    print(f"Eventos encontrados: {len(eventos)}")
-    for evento in eventos:
-        print(f"Evento ID: {evento.id_evento}, Destino: {evento.destino}")
-    return render_template('lista_eventos.html', eventos=eventos)
-
-# Criar Novo Evento
-
-
-
-@routes.route('/eventos/novo', methods=['GET', 'POST'])
-@login_required
-def nova_excursao():
-    if current_user.tipo != 'organizador':
-        flash('Acesso restrito a organizadores', 'error')
+        flash('Apenas organizadores podem criar eventos', 'error')
         return redirect(url_for('routes.dashboard'))
 
     organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
@@ -331,148 +364,204 @@ def nova_excursao():
         flash('Complete seu perfil de organizador primeiro', 'error')
         return redirect(url_for('routes.perfil'))
 
-    # Crie uma classe de formulário para eventos (adicione isso no seu forms.py)
-    form = EventoForm()  # Você precisará criar esta classe
+    form = EventoForm()
 
     if form.validate_on_submit():
         try:
             evento = Evento(
-                destino=form.destino.data,
+                nome=form.nome.data,
                 descricao=form.descricao.data,
-                local_saida=form.local_saida.data,
+                local=form.local.data,
                 data_de_saida=form.data_de_saida.data,
                 data_de_retorno=form.data_de_retorno.data,
                 preco=form.preco.data,
-                n_vagas=form.n_vagas.data,
+                vagas=form.vagas.data,
                 id_organizador=organizador.id_organizador
             )
-
             db.session.add(evento)
             db.session.commit()
             flash('Evento criado com sucesso!', 'success')
             return redirect(url_for('routes.dashboard'))
-
         except Exception as e:
             db.session.rollback()
-            flash(f'Erro ao criar evento: {str(e)}', 'error')
+            logger.error(f"Erro ao criar evento: {str(e)}")
+            flash('Erro ao criar evento', 'error')
 
-    # Passe o form para o template
     return render_template('novo_evento.html', form=form)
 
-# Detalhes do Evento
+# =============================================
+# Rotas de Reservas
+# =============================================
 
-
-@routes.route('/evento/<int:id>')
-def detalhes_evento(id):
-    try:
-        evento = Evento.query.options(
-            db.joinedload(Evento.organizador)
-        ).get_or_404(id)
-        
-        evento.n_acessos = evento.n_acessos + 1 if evento.n_acessos else 1
-        db.session.commit()
-        
-        return render_template('detalhes_evento.html', evento=evento)
-    except Exception as e:
-        current_app.logger.error(f"Erro ao carregar evento {id}: {str(e)}")
-        flash('Erro ao carregar detalhes do evento', 'error')
-        return redirect(url_for('routes.eventos'))  # Mude para o nome correto da sua rota de listagem
-
-
-@routes.route('/eventos/<int:id>/editar', methods=['GET', 'POST'])
+@routes.route('/evento/<int:id_evento>/reservar', methods=['POST'])
 @login_required
-def editar_evento(id):
-    evento = Evento.query.get_or_404(id)
-    organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
-
-    # Verificar permissão
-    if not organizador or evento.id_organizador != organizador.id_organizador:
-        flash('Você não tem permissão para editar este evento', 'error')
-        return redirect(url_for('routes.dashboard'))
-
-    if request.method == 'POST':
-        try:
-            # Validações
-            required_fields = ['destino', 'local_saida', 'data_de_saida',
-                             'data_de_retorno', 'preco', 'n_vagas']
-            if any(not request.form.get(field) for field in required_fields):
-                flash('Preencha todos os campos obrigatórios', 'error')
-                return redirect(url_for('routes.editar_evento', id=id))
-
-            data_saida = datetime.strptime(request.form['data_de_saida'], '%Y-%m-%d')
-            data_retorno = datetime.strptime(request.form['data_de_retorno'], '%Y-%m-%d')
-            
-            if data_retorno <= data_saida:
-                flash('Data de retorno deve ser após a data de saída', 'error')
-                return redirect(url_for('routes.editar_evento', id=id))
-
-            # Atualizar evento
-            evento.destino = request.form['destino']
-            evento.descricao = request.form.get('descricao', '')
-            evento.local_saida = request.form['local_saida']
-            evento.data_de_saida = data_saida
-            evento.data_de_retorno = data_retorno
-            evento.preco = float(request.form['preco'])
-            
-            # Não permitir reduzir vagas abaixo do número de reservas confirmadas
-            novas_vagas = int(request.form['n_vagas'])
-            reservas_confirmadas = sum(1 for r in evento.reservas if r.status == 'confirmado')
-            
-            if novas_vagas < reservas_confirmadas:
-                flash(f'Não é possível ter menos vagas ({novas_vagas}) que reservas confirmadas ({reservas_confirmadas})', 'error')
-                return redirect(url_for('routes.editar_evento', id=id))
-                
-            evento.n_vagas = novas_vagas
-
-            db.session.commit()
-            flash('Evento atualizado com sucesso!', 'success')
-            return redirect(url_for('routes.detalhes_evento', id=evento.id_evento))
-
-        except ValueError:
-            db.session.rollback()
-            flash('Valores inválidos nos campos numéricos ou datas', 'error')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao atualizar evento: {str(e)}', 'error')
-
-    # Formatar datas para o input type="date"
-    evento.data_de_saida_str = evento.data_de_saida.strftime('%Y-%m-%d')
-    evento.data_de_retorno_str = evento.data_de_retorno.strftime('%Y-%m-%d')
+def reservar_evento(id_evento):
+    evento = Evento.query.get_or_404(id_evento)
     
-    return render_template('editar_evento.html', evento=evento)
-# Excluir Evento
-
-
-@routes.route('/eventos/<int:id>/excluir', methods=['POST'])
-@login_required
-def excluir_evento(id):
-    evento = Evento.query.get_or_404(id)
-    organizador = Organizador.query.filter_by(id_usuario=current_user.id_usuario).first()
-
-    # Verificar permissão
-    if not organizador or evento.id_organizador != organizador.id_organizador:
-        flash('Você não tem permissão para excluir este evento', 'error')
-        return redirect(url_for('routes.dashboard'))
-
     try:
-        db.session.delete(evento)
+        # Verificar se já existe reserva
+        reserva_existente = Reserva.query.filter_by(
+            id_evento=id_evento,
+            id_usuario=current_user.id_usuario
+        ).first()
+        
+        if reserva_existente:
+            flash('Você já possui uma reserva para este evento', 'warning')
+            return redirect(url_for('routes.detalhes_evento', id_evento=id_evento))
+        
+        # Criar nova reserva
+        reserva = Reserva(
+            id_evento=id_evento,
+            id_usuario=current_user.id_usuario,
+            data_de_reserva=datetime.utcnow(),
+            status='pendente'
+        )
+        
+        db.session.add(reserva)
         db.session.commit()
-        flash('Evento excluído com sucesso!', 'success')
+        flash('Reserva realizada com sucesso!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Erro ao excluir evento: {str(e)}', 'error')
+        logger.error(f"Erro ao reservar evento: {str(e)}")
+        flash('Erro ao realizar reserva', 'error')
+    
+    return redirect(url_for('routes.detalhes_evento', id_evento=id_evento))
 
-    return redirect(url_for('routes.dashboard'))
+# =============================================
+# Rotas de Favoritos
+# =============================================
 
-
-# Favoritos
-@routes.route('/favoritos')
+@routes.route('/evento/<int:id_evento>/favoritar', methods=['POST'])
 @login_required
-def favoritos():
+def favoritar_evento(id_evento):
+    evento = Evento.query.get_or_404(id_evento)
+    
     try:
-        # Usando o relacionamento many-to-many
-        eventos_favoritos = current_user.eventos_favoritos
-        return render_template('favoritos.html', eventos_favoritos=eventos_favoritos)
+        # Verificar se já é favorito
+        favorito_existente = Favorito.query.filter_by(
+            id_evento=id_evento,
+            id_usuario=current_user.id_usuario
+        ).first()
+        
+        if favorito_existente:
+            db.session.delete(favorito_existente)
+            db.session.commit()
+            flash('Evento removido dos favoritos', 'success')
+        else:
+            # Adicionar aos favoritos
+            favorito = Favorito(
+                id_evento=id_evento,
+                id_usuario=current_user.id_usuario
+            )
+            db.session.add(favorito)
+            db.session.commit()
+            flash('Evento adicionado aos favoritos!', 'success')
     except Exception as e:
-        flash('Erro ao carregar favoritos', 'error')
-        return redirect(url_for('routes.dashboard'))
+        db.session.rollback()
+        logger.error(f"Erro ao favoritar evento: {str(e)}")
+        flash('Erro ao favoritar evento', 'error')
+    
+    return redirect(url_for('routes.detalhes_evento', id_evento=id_evento))
+
+
+# =============================================
+# Rotas de Eventos
+# =============================================
+
+@routes.route('/evento/<evento_id>')
+def detalhes_evento(evento_id):
+    try:
+        db = get_db()
+        evento_ref = db.collection('eventos').document(evento_id)
+        evento = evento_ref.get().to_dict()
+        
+        if not evento:
+            flash('Evento não encontrado', 'error')
+            return redirect(url_for('routes.home'))
+        
+        evento['id'] = evento_id
+        
+        # Busca organizador
+        org_ref = db.collection('organizadores').document(evento['id_organizador'])
+        evento['organizador'] = org_ref.get().to_dict()
+        
+        # Busca comentários
+        comentarios_ref = db.collection('comentarios').where('id_evento', '==', evento_id).stream()
+        comentarios = []
+        for comentario in comentarios_ref:
+            comentario_data = comentario.to_dict()
+            comentario_data['id'] = comentario.id
+            # Busca usuário que fez o comentário
+            user_ref = db.collection('usuarios').document(comentario_data['id_usuario'])
+            comentario_data['usuario'] = user_ref.get().to_dict()
+            comentarios.append(comentario_data)
+        
+        form = ComentarioForm()
+        return render_template('detalhes_evento.html', evento=evento, comentarios=comentarios, form=form)
+    
+    except Exception as e:
+        logger.error(f"Detalhes evento error: {str(e)}")
+        flash('Erro ao carregar evento', 'error')
+        return redirect(url_for('routes.home'))
+
+# =============================================
+# API Routes
+# =============================================
+
+@routes.route('/api/eventos')
+def api_eventos():
+    eventos = Evento.query.all()
+    return jsonify([{
+        'id': e.id_evento,
+        'nome': e.nome,
+        'descricao': e.descricao,
+        'local': e.local,
+        'data': e.data_de_saida.strftime('%Y-%m-%d'),
+        'preco': float(e.preco),
+        'vagas': e.vagas,
+        'organizador': e.organizador.nome_empresa
+    } for e in eventos])
+
+@routes.route('/api/comentarios/<int:id_evento>')
+def api_comentarios(id_evento):
+    comentarios = ComentarioEvento.query.filter_by(id_evento=id_evento)\
+        .join(Usuario).all()
+    return jsonify([{
+        'id': c.id_comentario,
+        'texto': c.texto,
+        'data': c.data_criacao.strftime('%d/%m/%Y %H:%M'),
+        'usuario': {
+            'id': c.usuario.id_usuario,
+            'nome': c.usuario.nome
+        }
+    } for c in comentarios])
+
+@routes.route('/api/mensagens/<int:id_usuario>')
+@login_required
+def api_mensagens(id_usuario):
+    mensagens = Mensagem.query.filter(
+        or_(
+            (Mensagem.id_remetente == current_user.id_usuario) & (Mensagem.id_destinatario == id_usuario),
+            (Mensagem.id_remetente == id_usuario) & (Mensagem.id_destinatario == current_user.id_usuario)
+        )
+    ).order_by(Mensagem.data_envio.asc()).all()
+    
+    return jsonify([{
+        'id': m.id_mensagem,
+        'texto': m.texto,
+        'data': m.data_envio.strftime('%d/%m/%Y %H:%M'),
+        'remetente': m.id_remetente == current_user.id_usuario,
+        'lida': m.lida
+    } for m in mensagens])
+
+# =============================================
+# Error Handlers
+# =============================================
+
+@routes.app_errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@routes.app_errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500

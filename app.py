@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_login import LoginManager
 from models.database import db, Usuario
@@ -74,5 +75,5 @@ connection = pymysql.connect(
 
 # Rodando o servidor
 if __name__ == '__main__':
-    app.run(host='localhost', port=5000, debug=True)
-    
+    app = create_app()
+    app.run(debug=True)
