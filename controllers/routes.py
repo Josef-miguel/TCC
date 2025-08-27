@@ -1,85 +1,85 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
-from flask_login import login_user, login_required, logout_user, current_user
-from models.database import db, Usuario, Evento, Organizador, Reserva, Favorito, ComentarioEvento, Mensagem
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, session, g
+
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy import or_
 from forms import (FirebaseRegistrationForm, FirebaseLoginForm, PerfilForm, 
                   SenhaForm, OrganizadorForm, EventoForm, ComentarioForm, MensagemForm)
-from flask_login import UserMixin
-from flask import current_app
-import firebase_admin
 from firebase_admin import auth
 from firebase_admin.exceptions import FirebaseError
+
+from app import db
 import logging
-from app import db, login_manager
 
-from flask_login import LoginManager
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)  
 
-
-# Configura o user_loader
-@login_manager.user_loader
-def load_user(user_id):
-    from models.database import Usuario  # Importação local para evitar circular
-    return Usuario.query.get(int(user_id))
-
-routes = Blueprint('routes', __name__)
-
-# Home - Lista de Eventos
-@routes.route('/')
-def home():
-    try:
-        eventos = Evento.query.options(db.joinedload(Evento.organizador))\
-            .order_by(Evento.data_de_saida.asc()).all()
-        return render_template('home.html', eventos=eventos)
-    except Exception as e:
-        logger.error(f"Home error: {str(e)}")
-        flash('Erro ao carregar eventos. Tente novamente.', 'error')
-        return render_template('home.html', eventos=[])
-
-
-
-# Login
-@routes.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('routes.dashboard'))
-
-    form = FirebaseLoginForm()
-
-    if form.validate_on_submit():
+def init_app(app):
+    # Home
+    @app.route("/")
+    def home():
         try:
-            # Autenticar com Firebase
-            firebase_user = auth.get_user_by_email(form.email.data)
-            db = get_db()
+            events = []
+            events_ref = db.collection('events').order_by('exit_date').stream()
             
-            # Buscar dados do usuário no Firestore
-            user_ref = db.collection('usuarios').document(firebase_user.uid)
-            user_doc = user_ref.get()
-            
-            if user_doc.exists:
-                user = FirebaseUser(firebase_user.uid, user_doc.to_dict())
-                login_user(user, remember=form.remember.data)
-                flash('Login realizado com sucesso!', 'success')
-                next_page = request.args.get('next')
-                return redirect(next_page or url_for('routes.dashboard'))
-            else:
-                flash('Usuário não cadastrado no sistema', 'error')
-                
-        except auth.UserNotFoundError:
-            flash('E-mail não cadastrado', 'error')
-        except FirebaseError as e:
-            logger.error(f"Firebase error: {str(e)}")
-            flash('Erro ao autenticar. Tente novamente.', 'error')
+            for doc in events_ref:
+                data = doc.to_dict()
+                data['id'] = doc.id
+
+                # opcional: carregar dados do organizador
+                # org_id = data.get('id_organizador')
+                # if org_id:
+                #     org_doc = db.collection('organizadores').document(org_id).get()
+                #     data['organizador'] = org_doc.to_dict() if org_doc.exists else None
+
+                events.append(data)
+
+            return render_template('home.html', events=events)
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            flash('Erro interno no servidor', 'error')
+            logger.exception(f"Home error: {e}")
+            flash('Erro ao carregar eventos. Tente novamente.', 'error')
+            return render_template('home.html', events=[])
 
-    return render_template('login.html', form=form)
 
-@routes.route('/register', methods=['GET', 'POST'])
-def register():
+
+
+
+    # Login
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        form = FirebaseLoginForm()
+
+        if form.validate_on_submit():
+            try:
+                # Autenticar com Firebase Auth
+                firebase_user = auth.get_user_by_email(form.email.data)
+
+                # Buscar dados do usuário no Firestore
+                user_ref = db.collection('usuarios').document(firebase_user.uid)
+                user_doc = user_ref.get()
+
+                if user_doc.exists:
+                    # Salva o UID no session ou g.user
+                    session['user_uid'] = firebase_user.uid
+                    g.user = user_doc.to_dict()
+                    flash('Login realizado com sucesso!', 'success')
+                    return redirect(url_for('routes.dashboard'))
+                else:
+                    flash('Usuário não cadastrado no sistema', 'error')
+
+            except auth.UserNotFoundError:
+                flash('E-mail não cadastrado', 'error')
+            except FirebaseError as e:
+                logger.error(f"Firebase error: {str(e)}")
+                flash('Erro ao autenticar. Tente novamente.', 'error')
+            except Exception as e:
+                logger.error(f"Unexpected error: {str(e)}")
+                flash('Erro interno no servidor', 'error')
+
+        return render_template('login.html', form=form)
+    
+    
+
+    @app.route('/register', methods=['GET', 'POST'])
+    def register():
     if current_user.is_authenticated:
         return redirect(url_for('routes.dashboard'))
 
@@ -133,9 +133,8 @@ def register():
 
     return render_template('register.html', form=form)
 
-@routes.route('/logout')
-@login_required
-def logout():
+    @app.route('/logout')
+    def logout():
     logout_user()
     return redirect(url_for('routes.home'))
 
@@ -143,8 +142,8 @@ def logout():
 # Rotas Principais
 # =============================================
 
-@routes.route('/')
-def home():
+# @app.route('/')
+# def home():
     try:
         db = get_db()
         eventos_ref = db.collection('eventos').order_by('data_de_saida').stream()
