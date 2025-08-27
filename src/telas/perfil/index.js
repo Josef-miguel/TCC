@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Modal,
   SafeAreaView,
+  Button
 } from 'react-native';
 import { Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
