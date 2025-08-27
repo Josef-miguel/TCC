@@ -32,8 +32,9 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
   const theme = themeContext?.theme || defaultTheme;
   const isDarkTheme = themeContext?.isDarkTheme ?? true;
   const toggleTheme = themeContext?.toggleTheme ?? (() => console.warn('ThemeContext não disponível'));
-  const [selectedValue, setSelectedValue] = useState("java");
-  const [visible, setVisible] = useState(false);
+
+  const [Idioma, setIdioma] = useState("PT-BR"); // variável que guarda a seleção
+  const [showPicker, setShowPicker] = useState(false);
 
   const styles = StyleSheet.create({
     overlay: {
@@ -80,6 +81,20 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
     closeText: {
       color: theme.primary,
       fontSize: 16,
+    },
+    right: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    selected: {
+      fontSize: 16,
+      marginRight: 8,
+      color: theme.primary,
+    },
+    pickerlng: {
+      backgroundColor: theme.backgroundDark,
+      fontSize: 16,
+      color: theme.primary,
     },
   });
 
@@ -130,31 +145,38 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
 
             {/* Idioma */}
             <TouchableOpacity
-            onPress={() => setVisible(true)}
-            style={styles.item}
+              onPress={() => setShowPicker(!showPicker)}
+              style={styles.item}
             >
               <View style={styles.left}>
                 <Icon name="translate" size={24} color={theme.primary} />
                 <Text style={styles.label}>Idioma</Text>
               </View>
-              <Icon name="chevron-right" size={24} color={theme.textTertiary} />
+              <View style={styles.right}>
+                <Text style={styles.selected}>{Idioma}</Text>
+                <Icon
+                  name={showPicker ? "chevron-up" : "chevron-down"}
+                  size={24}
+                  color={theme.textTertiary}
+                />
+              </View>
             </TouchableOpacity>
-            <Modal visible={visible} transparent={true} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedValue}
-              onValueChange={(itemValue) => setSelectedValue(itemValue)}
-            >
-              <Picker.Item label="Português (Brasileiro)" value="PT-BR" />
-              <Picker.Item label="English" value="ENG" />
-              <Picker.Item label="官话" value="CMN" />
-              <Picker.Item label="C#" value="csharp" />
-            </Picker>
-            <Button title="Fechar" onPress={() => setVisible(false)} />
-          </View>
-        </View>
-      </Modal>
+
+            {/* Picker exibido abaixo do botão */}
+            {showPicker && (
+              <Picker
+                style={styles.pickerlng}
+                selectedValue={Idioma}
+                onValueChange={(itemValue) => {
+                  setIdioma(itemValue);
+                  setShowPicker(false); // fecha após selecionar
+                }}
+              >
+                <Picker.Item label="Português (Brasileiro)" value="PT-BR" />
+                <Picker.Item label="English" value="ENG" />
+                <Picker.Item label="官话" value="CMN" />
+              </Picker>
+            )}
 
             {/* Alterar Senha */}
             <TouchableOpacity style={styles.item}>
