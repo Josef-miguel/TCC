@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, request, flash, session, g, jsonify
-from firebase_admin import auth
+from firebase_admin import auth, firestore
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,41 @@ def init_app(app, db):
             except Exception:
                 return jsonify({"success": False, "message": "Token inválido"}), 401
 
+    @app.route("/register", methods=["GET","POST"])
+    def register():
+        if request.method == "GET":
+            return render_template("register.html")
+
+        # POST JSON
+        data = request.get_json()
+        if not data or "token" not in data or "name" not in data:
+            return jsonify({"success": False, "message": "Token ou nome não enviados"}), 400
+
+        id_token = data["token"]
+        name = data["name"].strip()
+
+        try:
+            # verifica token Firebase
+            decoded = auth.verify_id_token(id_token)
+            uid = decoded["uid"]
+
+            # salva usuário no Firestore
+            user_ref = db.collection('user').document(uid)
+            user_ref.set({
+                "name": name,
+                "email": decoded.get("email"),
+                "created_at": firestore.SERVER_TIMESTAMP
+            })
+
+            # loga automaticamente
+            session['user_uid'] = uid
+
+            return jsonify({"success": True, "redirect": url_for("dashboard")})
+
+        except Exception as e:
+            logger.exception(f"Erro no registro: {e}")
+            return jsonify({"success": False, "message": "Token inválido ou erro ao salvar"}), 401
+
 
     @app.route("/dashboard")
     def dashboard():
@@ -59,3 +94,5 @@ def init_app(app, db):
         # pega display_name ou name do dicionário, ou usa 'usuário'
         user_name = g.user.get('display_name') or g.user.get('nome') or 'usuário'
         return f"Bem-vindo {user_name}!"
+
+    
