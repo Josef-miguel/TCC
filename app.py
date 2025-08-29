@@ -17,7 +17,7 @@ firebase_admin.initialize_app(cred, {
 
 # database do firestore pego
 db = firestore.client()
-routes.init_app(app)
+routes.init_app(app, db)
 
 @app.before_request
 def load_logged_in_user():
@@ -25,7 +25,7 @@ def load_logged_in_user():
     if user_uid is None:
         g.user = None
     else:
-        user_ref = db.collection("usuarios").document(user_uid).get()
+        user_ref = db.collection("user").document(user_uid).get()
         g.user = user_ref.to_dict() if user_ref.exists else None
 
 # Rodando o servidor

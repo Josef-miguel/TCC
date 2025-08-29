@@ -3,8 +3,6 @@ from wtforms import (StringField, PasswordField, BooleanField, TextAreaField,
                      SubmitField, DateField, DecimalField, IntegerField, SelectField)
 from wtforms.validators import (DataRequired, Email, EqualTo, Length, 
                                Regexp, NumberRange, ValidationError, Optional)
-from datetime import datetime
-from models.database import Usuario
 import re
 
 class FirebaseLoginForm(FlaskForm):
