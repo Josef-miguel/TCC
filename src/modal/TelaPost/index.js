@@ -33,6 +33,7 @@ const PostScreen = ({
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
 
+  const [optionsVisible, setOptionsVisible] = useState(false);
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [starRating, setStarRating] = useState(0);
@@ -113,6 +114,8 @@ const handleParticipar = async () => {
                   <Image source={{ uri: item }} style={styles.fullscreenImage} resizeMode="cover" />
                 )}
               />
+
+              {/* Botão de voltar flutuante */}
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => {
@@ -122,6 +125,26 @@ const handleParticipar = async () => {
               >
                 <Ionicons name="arrow-back" size={28} color="#fff" />
               </TouchableOpacity>
+
+              {/* Botão de opções (3 pontos) */}
+              <TouchableOpacity
+                style={styles.optionsButton}
+                onPress={() => setOptionsVisible(!optionsVisible)}
+              >
+                <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
+              </TouchableOpacity>
+
+              {/* Menu suspenso */}
+              {optionsVisible && (
+                <View style={styles.optionsMenu}>
+                  <TouchableOpacity onPress={() => { setOptionsVisible(false); alert("Reportar erro"); }}>
+                    <Text style={styles.optionText}>Reportar erro</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { setOptionsVisible(false); alert("Viagem salva!"); }}>
+                    <Text style={styles.optionText}>Salvar viagem</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
             {/* Rota */}
@@ -338,6 +361,33 @@ const styles = StyleSheet.create({
   radioInner: { width: 12, height: 12, borderRadius: 6 },
   partOptionText: { marginLeft: 10 },
   partButton: { marginTop: 20, padding: 12, borderRadius: 6, alignItems: 'center' },
+  optionsButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 8,
+    borderRadius: 50,
+  },
+  optionsMenu: {
+    position: "absolute",
+    top: 80,
+    right: 20,
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    elevation: 5, // sombra no Android
+    shadowColor: "#000", // sombra no iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  optionText: {
+    paddingVertical: 6,
+    fontSize: 14,
+    color: "#333",
+  },
 });
 
 export default PostScreen;
