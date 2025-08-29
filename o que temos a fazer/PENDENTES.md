@@ -27,24 +27,23 @@
 ## METAS
 
 > [!question]+ Miguel José  
-> * Dentro do customizar perfil  
->  * Criar uma verificação de identidade para o usuário se habilitar como organizador  
->  * Adicionar mais informações na tela de pagamento  
->  * 
->   
+> 
+
+
   
 
 > [!info]+  
 >  * Incluir o projeto web no firebase *Miguel Isack*
->  * Dentro do post  
+>  * _Incluir o projeto web no firebase_
+
+
+
+> [!warning]+ Rafael  
+>  *  * Dentro do post  
     * Colocar um ícone de três pontos para que seja possível reportar, salvar e não recomendar a excursão  
   Adicionar as informações da excursão como preço, dia de partida dia de chegada, vagas remanescentes
     Habilitar a seção de comentários   
     Salvar a participação da viagem   
     Separar no chat quem é o organizador e quem é o usuário  
-
-
-> [!warning]+ Rafael  
->  * _Incluir o projeto web no firebase_ *Rafaels*
 
 
