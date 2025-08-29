@@ -33,7 +33,7 @@ const PostScreen = ({
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
 
-  const [optionsVisible, setOptionsVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [starRating, setStarRating] = useState(0);
@@ -41,6 +41,10 @@ const PostScreen = ({
   const [comments, setComments] = useState(selectedPost?.comments || []);
   const [whoTravels, setWhoTravels] = useState("Outra pessoa");
   const [whoGoes, setWhoGoes] = useState("Jovens 15 a 17 anos (com acompanhante)");
+  const [isSaved, setIsSaved] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageZoomVisible, setImageZoomVisible] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   const handleStarPress = (rating) => {
     setStarRating(rating);
@@ -110,10 +114,110 @@ const handleParticipar = async () => {
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={(_, i) => i.toString()}
-                renderItem={({ item }) => (
-                  <Image source={{ uri: item }} style={styles.fullscreenImage} resizeMode="cover" />
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(event.nativeEvent.contentOffset.x / width);
+                  setCurrentImageIndex(index);
+                }}
+                getItemLayout={(data, index) => ({
+                  length: width,
+                  offset: width * index,
+                  index,
+                })}
+                ref={(ref) => {
+                  if (ref && currentImageIndex > 0) {
+                    ref.scrollToIndex({ index: currentImageIndex, animated: true });
+                  }
+                }}
+                renderItem={({ item, index }) => (
+                  <View style={styles.imageContainer}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setZoomedImage(item);
+                        setImageZoomVisible(true);
+                      }}
+                      activeOpacity={0.9}
+                    >
+                      <Image 
+                        source={{ uri: item }} 
+                        style={styles.fullscreenImage} 
+                        resizeMode="cover"
+                        onError={() => console.log(`Erro ao carregar imagem ${index}`)}
+                      />
+                    </TouchableOpacity>
+                    
+                    {/* Overlay de informações da imagem */}
+                    <View style={styles.imageOverlay}>
+                      <Text style={styles.imageCounter}>
+                        {index + 1} / {selectedPost.images?.length || 1}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                ListEmptyComponent={() => (
+                  <View style={[styles.imageContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <Ionicons name="image-outline" size={64} color="#ccc" />
+                    <Text style={{ color: "#ccc", marginTop: 10, fontSize: 16 }}>
+                      Nenhuma imagem disponível
+                    </Text>
+                  </View>
                 )}
               />
+
+              {/* Indicadores de página */}
+              {selectedPost.images && selectedPost.images.length > 1 && (
+                <View style={styles.paginationContainer}>
+                  {selectedPost.images.map((_, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.paginationDot,
+                        {
+                          backgroundColor: index === currentImageIndex 
+                            ? theme?.primary || "#f37100" 
+                            : "rgba(255, 255, 255, 0.5)"
+                        }
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+
+              {/* Botões de navegação */}
+              {selectedPost.images && selectedPost.images.length > 1 && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.navButton, styles.prevButton]}
+                    onPress={() => {
+                      if (currentImageIndex > 0) {
+                        setCurrentImageIndex(currentImageIndex - 1);
+                      }
+                    }}
+                    disabled={currentImageIndex === 0}
+                  >
+                    <Ionicons 
+                      name="chevron-back" 
+                      size={24} 
+                      color={currentImageIndex === 0 ? "rgba(255,255,255,0.3)" : "#fff"} 
+                    />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.navButton, styles.nextButton]}
+                    onPress={() => {
+                      if (currentImageIndex < (selectedPost.images?.length || 1) - 1) {
+                        setCurrentImageIndex(currentImageIndex + 1);
+                      }
+                    }}
+                    disabled={currentImageIndex === (selectedPost.images?.length || 1) - 1}
+                  >
+                    <Ionicons 
+                      name="chevron-forward" 
+                      size={24} 
+                      color={currentImageIndex === (selectedPost.images?.length || 1) - 1 ? "rgba(255,255,255,0.3)" : "#fff"} 
+                    />
+                  </TouchableOpacity>
+                </>
+              )}
 
               {/* Botão de voltar flutuante */}
               <TouchableOpacity
@@ -129,22 +233,10 @@ const handleParticipar = async () => {
               {/* Botão de opções (3 pontos) */}
               <TouchableOpacity
                 style={styles.optionsButton}
-                onPress={() => setOptionsVisible(!optionsVisible)}
+                onPress={() => setSidebarVisible(!sidebarVisible)}
               >
                 <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
               </TouchableOpacity>
-
-              {/* Menu suspenso */}
-              {optionsVisible && (
-                <View style={styles.optionsMenu}>
-                  <TouchableOpacity onPress={() => { setOptionsVisible(false); alert("Reportar erro"); }}>
-                    <Text style={styles.optionText}>Reportar erro</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => { setOptionsVisible(false); alert("Viagem salva!"); }}>
-                    <Text style={styles.optionText}>Salvar viagem</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
             </View>
 
             {/* Rota */}
@@ -257,6 +349,156 @@ const handleParticipar = async () => {
             </TouchableOpacity>
           </ScrollView>
         </View>
+
+        {/* Sidebar de Opções */}
+        {sidebarVisible && (
+          <View style={[styles.sidebarOverlay, { backgroundColor: theme?.overlay }]}>
+            <TouchableOpacity 
+              style={styles.sidebarOverlayTouch}
+              onPress={() => setSidebarVisible(false)}
+            />
+            <View style={[styles.sidebar, { backgroundColor: theme?.backgroundSecondary }]}>
+              <View style={styles.sidebarHeader}>
+                <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>Opções</Text>
+                <TouchableOpacity onPress={() => setSidebarVisible(false)}>
+                  <Ionicons name="close" size={24} color={theme?.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.sidebarContent}>
+                {/* Salvar Viagem */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setIsSaved(!isSaved);
+                    alert(isSaved ? "Viagem removida dos favoritos!" : "Viagem salva nos favoritos!");
+                  }}
+                >
+                  <Ionicons 
+                    name={isSaved ? "bookmark" : "bookmark-outline"} 
+                    size={24} 
+                    color={theme?.primary} 
+                  />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    {isSaved ? "Remover dos favoritos" : "Salvar viagem"}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Compartilhar */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    alert("Compartilhando viagem...");
+                  }}
+                >
+                  <Ionicons name="share-outline" size={24} color={theme?.primary} />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    Compartilhar
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Copiar Link */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    alert("Link copiado para a área de transferência!");
+                  }}
+                >
+                  <Ionicons name="link-outline" size={24} color={theme?.primary} />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    Copiar link
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Ver perfil do organizador */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    navigation.navigate("Perfil");
+                  }}
+                >
+                  <Ionicons name="person-outline" size={24} color={theme?.primary} />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    Ver perfil do organizador
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Denunciar */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    alert("Abrindo formulário de denúncia...");
+                  }}
+                >
+                  <Ionicons name="flag-outline" size={24} color="#ff6b6b" />
+                  <Text style={[styles.sidebarOptionText, { color: "#ff6b6b" }]}>
+                    Denunciar
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Reportar erro */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    alert("Reportando erro técnico...");
+                  }}
+                >
+                  <Ionicons name="bug-outline" size={24} color={theme?.primary} />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    Reportar erro
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Informações da viagem */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    alert("Mostrando informações detalhadas da viagem...");
+                  }}
+                >
+                  <Ionicons name="information-circle-outline" size={24} color={theme?.primary} />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    Informações da viagem
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Histórico de preços */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    alert("Mostrando histórico de preços...");
+                  }}
+                >
+                  <Ionicons name="trending-up-outline" size={24} color={theme?.primary} />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    Histórico de preços
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Viagens similares */}
+                <TouchableOpacity 
+                  style={styles.sidebarOption}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    alert("Buscando viagens similares...");
+                  }}
+                >
+                  <Ionicons name="search-outline" size={24} color={theme?.primary} />
+                  <Text style={[styles.sidebarOptionText, { color: theme?.textPrimary }]}>
+                    Viagens similares
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
+        )}
       </Modal>
 
       {/* Modal de Participação embutido */}
@@ -303,11 +545,35 @@ const handleParticipar = async () => {
               <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Confirmar</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+                 </View>
+       </Modal>
 
-    
-    </View>
+       {/* Modal de Zoom da Imagem */}
+       <Modal visible={imageZoomVisible} transparent animationType="fade">
+         <View style={styles.zoomOverlay}>
+           <TouchableOpacity 
+             style={styles.zoomCloseButton}
+             onPress={() => setImageZoomVisible(false)}
+           >
+             <Ionicons name="close" size={28} color="#fff" />
+           </TouchableOpacity>
+           
+           <TouchableOpacity 
+             style={styles.zoomImageContainer}
+             onPress={() => setImageZoomVisible(false)}
+             activeOpacity={1}
+           >
+             <Image 
+               source={{ uri: zoomedImage }} 
+               style={styles.zoomedImage} 
+               resizeMode="contain"
+             />
+           </TouchableOpacity>
+         </View>
+       </Modal>
+
+     
+     </View>
   );
 };
 
@@ -316,6 +582,56 @@ const styles = StyleSheet.create({
   modalScroll: { flex: 1 },
   modalInner: { padding: 16 },
   fullscreenImage: { width, height: height * 0.4 },
+  imageContainer: {
+    width: width,
+    height: height * 0.4,
+    position: "relative",
+  },
+  imageOverlay: {
+    position: "absolute",
+    top: 60,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  imageCounter: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  paginationContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  navButton: {
+    position: "absolute",
+    top: "50%",
+    transform: [{ translateY: -20 }],
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 12,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  prevButton: {
+    left: 15,
+  },
+  nextButton: {
+    right: 15,
+  },
   backButton: {
     position: "absolute", top: 40, left: 20,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -369,24 +685,83 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 50,
   },
-  optionsMenu: {
+  // Sidebar de Opções
+  sidebarOverlay: {
     position: "absolute",
-    top: 80,
-    right: 20,
-    backgroundColor: "#fff",
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    elevation: 5, // sombra no Android
-    shadowColor: "#000", // sombra no iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "row",
   },
-  optionText: {
-    paddingVertical: 6,
-    fontSize: 14,
-    color: "#333",
+  sidebarOverlayTouch: {
+    flex: 1,
+  },
+  sidebar: {
+    width: width * 0.8,
+    height: "100%",
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  sidebarHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.1)",
+  },
+  sidebarTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  sidebarContent: {
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  sidebarOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    marginVertical: 2,
+    borderRadius: 8,
+  },
+  sidebarOptionText: {
+    marginLeft: 15,
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  // Modal de Zoom
+  zoomOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  zoomCloseButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 10,
+    borderRadius: 25,
+    zIndex: 1000,
+  },
+  zoomImageContainer: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  zoomedImage: {
+    width: width,
+    height: height * 0.8,
   },
 });
 
