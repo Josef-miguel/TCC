@@ -12,12 +12,13 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import ParticiparPost from "../ParticiparPost";
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { ThemeContext } from "../../context/ThemeContext";
-import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../../../services/firebase";
+import { doc, updateDoc,onSnapshot, arrayUnion } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
 
 
 const { width, height } = Dimensions.get("window");
@@ -37,17 +38,39 @@ const PostScreen = ({
   const [starRating, setStarRating] = useState(0);
   const [newText, setNewText] = useState("");
   const [comments, setComments] = useState(selectedPost?.comments || []);
+  const [whoTravels, setWhoTravels] = useState("Outra pessoa");
+  const [whoGoes, setWhoGoes] = useState("Jovens 15 a 17 anos (com acompanhante)");
 
-  
   const handleStarPress = (rating) => {
     setStarRating(rating);
   };
+const auth = getAuth();
+
+const handleParticipar = async () => {
+  if (!auth.currentUser || !selectedPost?.id) {
+    console.log("Usuário não autenticado ou evento sem ID");
+    return;
+  }
+
+  try {
+    console.log("Salvando participação para evento:", selectedPost.id);
+    const userRef = doc(db, "user", auth.currentUser.uid);
+    await updateDoc(userRef, {
+      joinedEvents: arrayUnion(selectedPost.id),
+    });
+
+    console.log("Participação salva no Firebase!");
+    setParticipationModalVisible(false);
+  } catch (error) {
+    console.error("Erro ao salvar participação:", error);
+  }
+};
 
   const handleSendComment = () => {
     if (newText.trim() === '') return;
     const commentObj = {
       user_id: "",
-      username : "",
+      username: "",
       comment_text: newText.trim(),
       created_at: new Date().toISOString(),
       numStars: starRating,
@@ -56,6 +79,7 @@ const PostScreen = ({
     setComments([...comments, commentObj]);
     setNewText("");
   };
+
   useEffect(() => {
     if (!selectedPost?.id) return;
 
@@ -67,15 +91,17 @@ const PostScreen = ({
 
     return () => unsub();
   }, [selectedPost]);
-    if (!selectedPost || !modalVisible) return null;
+
+  if (!selectedPost || !modalVisible) return null;
   
+
   return (
     <View style={{ flex: 1 }}>
       <Modal visible={modalVisible} animationType="slide" transparent={false}>
-        <View style={[styles.modalContainer, { backgroundColor: theme?.background }] }>
+        <View style={[styles.modalContainer, { backgroundColor: theme?.background }]}>
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
 
-            {/* Carrossel fullscreen */}
+            {/* Carrossel de imagens */}
             <View style={{ position: "relative" }}>
               <FlatList
                 data={selectedPost.images || []}
@@ -87,7 +113,6 @@ const PostScreen = ({
                   <Image source={{ uri: item }} style={styles.fullscreenImage} resizeMode="cover" />
                 )}
               />
-              {/* Botão de voltar flutuante */}
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => {
@@ -121,16 +146,8 @@ const PostScreen = ({
                       longitudeDelta: 0.2,
                     }}
                   >
-                    <Marker
-                      coordinate={selectedPost.route.start}
-                      title="Início"
-                      pinColor="green"
-                    />
-                    <Marker
-                      coordinate={selectedPost.route.end}
-                      title="Destino"
-                      pinColor="red"
-                    />
+                    <Marker coordinate={selectedPost.route.start} title="Início" pinColor="green" />
+                    <Marker coordinate={selectedPost.route.end} title="Destino" pinColor="red" />
                     <Polyline
                       coordinates={selectedPost.route.coordinates}
                       strokeColor={theme?.primary || "#f37100"}
@@ -146,12 +163,12 @@ const PostScreen = ({
             <View style={[styles.infoBox, { borderColor: theme?.border }]}>
               <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Descrição: </Text>
               <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.desc}</Text>
-              {/* <Text style={styles.commentText}>Vamos sair em: {selectedPost?.exit_date}</Text>
-              <Text style={styles.commentText}>Vamos voltar em: {selectedPost?.return_date}</Text> */}
               <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Quantas vagas estão disponíveis: </Text>
               <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.numSlots}</Text>
               <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Essa viagem é uma: </Text>
-              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}</Text>
+              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
+                {(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}
+              </Text>
             </View>
 
             {/* Avaliação */}
@@ -178,7 +195,7 @@ const PostScreen = ({
                   <Text style={[styles.commentText, { color: theme?.textSecondary }]}>"{c.comment_text}"</Text>
                 </View>
               ))}
-            
+
               <View style={styles.commentInputContainer}>
                 <TextInput
                   style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
@@ -193,14 +210,22 @@ const PostScreen = ({
               </View>
             </View>
 
-
             {/* Botões de ação */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={[styles.modalButton, styles.joinButton, { backgroundColor: theme?.primary }]}
               onPress={() => setParticipationModalVisible(true)}
             >
               <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Participar da viagem</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
+            <TouchableOpacity
+      style={[styles.partButton, { backgroundColor: theme?.primary }]}
+  onPress={() => setParticipationModalVisible(true)}
+>
+  <Text style={[styles.buttonText, { color: theme?.textInverted }]}>
+    Confirmar participação
+  </Text>
+</TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.chatButton, styles.modalButton]}
               onPress={() => navigation.navigate("Chat")}
@@ -211,137 +236,108 @@ const PostScreen = ({
         </View>
       </Modal>
 
-      {/* Modal de Participação */}
-      <ParticiparPost
-        participationModalVisible={participationModalVisible}
-        setParticipationModalVisible={setParticipationModalVisible}
-      />
+      {/* Modal de Participação embutido */}
+      <Modal visible={participationModalVisible} transparent animationType="slide">
+        <View style={[styles.partContainer, { backgroundColor: theme?.overlay }]}>
+          <View style={[styles.partContent, { backgroundColor: theme?.backgroundSecondary }]}>
+            <Text style={[styles.partTitle, { color: theme?.textPrimary }]}>Quem vai viajar...</Text>
+            {['Sou eu', 'Outra pessoa'].map(opt => (
+              <TouchableOpacity
+                key={opt}
+                style={styles.partOption}
+                onPress={() => setWhoTravels(opt)}
+              >
+                <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
+                  {whoTravels === opt && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
+                </View>
+                <Text style={[styles.partOptionText, { color: theme?.textSecondary }]}>{opt}</Text>
+              </TouchableOpacity>
+            ))}
 
-      {/* Modal de Chat */}
-      <Modal visible={chatModalVisible} animationType="slide">
-        {/* Coloque o componente de chat aqui depois */}
+            <Text style={[styles.partTitle, { marginTop: 20, color: theme?.textPrimary }]}>Quem vai ir?</Text>
+            {[
+              'Criança de colo (com acompanhante)',
+              'Criança 6 de 14 anos (acompanhante)',
+              'Jovem 15 a 17 anos (acompanhante)',
+              'Idoso 60 anos ou mais'
+            ].map(opt => (
+              <TouchableOpacity
+                key={opt}
+                style={styles.partOption}
+                onPress={() => setWhoGoes(opt)}
+              >
+                <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
+                  {whoGoes === opt && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
+                </View>
+                <Text style={[styles.partOptionText, { color: theme?.textSecondary }]}>{opt}</Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={[styles.partButton, { backgroundColor: theme?.primary }]}
+              onPress={handleParticipar}
+            >
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Confirmar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
+
+    
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-  },
-  modalScroll: {
-    flex: 1,
-  },
-  modalInner: {
-    padding: 16,
-  },
-  fullscreenImage: {
-    width: width,
-    height: height * 0.4,
-  },
+  modalContainer: { flex: 1 },
+  modalScroll: { flex: 1 },
+  modalInner: { padding: 16 },
+  fullscreenImage: { width, height: height * 0.4 },
   backButton: {
-    position: "absolute",
-    top: 40,
-    left: 20,
+    position: "absolute", top: 40, left: 20,
     backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 8,
-    borderRadius: 50,
+    padding: 8, borderRadius: 50,
   },
-  sectionTitle: {
-    fontWeight: "bold",
-    marginTop: 12,
-    marginBottom: 6,
-    fontSize: 16,
-  },
-  commentTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    paddingBottom: 4,
-  },
+  sectionTitle: { fontWeight: "bold", marginTop: 12, marginBottom: 6, fontSize: 16 },
+  commentTitle: { fontWeight: "bold", fontSize: 16, paddingBottom: 4 },
   routeBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 6,
-    marginBottom: 12,
-    flexWrap: 'wrap',
-    width: '100%',
+    flexDirection: "row", alignItems: "flex-start", padding: 10,
+    borderWidth: 1, borderRadius: 6, marginBottom: 12, flexWrap: 'wrap', width: '100%',
   },
-  routeText: {
-    fontSize: 14,
-    marginBottom: 4,
-    flexShrink: 1,
-    flexWrap: 'wrap',
-  },
-  infoBox: {
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 6,
-    marginBottom: 12,
-  },
-  starContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  starButton: {
-    marginHorizontal: 4,
-  },
-  starText: {
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  commentsBox: {
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 6,
-    marginBottom: 12,
-  },
-  commentText: {
-    marginBottom: 4,
-    fontStyle: "italic",
-  },
+  routeText: { fontSize: 14, marginBottom: 4, flexShrink: 1, flexWrap: 'wrap' },
+  infoBox: { padding: 10, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
+  starContainer: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+  starButton: { marginHorizontal: 4 },
+  starText: { marginLeft: 8, fontSize: 16 },
+  commentsBox: { padding: 10, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
+  commentText: { marginBottom: 4, fontStyle: "italic" },
   commentInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderColor: '#444',
-    paddingTop: 10,
+    flexDirection: 'row', alignItems: 'center', marginTop: 10,
+    borderTopWidth: 1, borderColor: '#444', paddingTop: 10,
   },
-  commentInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 6,
-    padding: 8,
-    marginRight: 8,
-  },
-  modalButton: {
-    padding: 12,
-    borderRadius: 6,
-    marginBottom: 8,
-    alignItems: "center",
-  },
-  joinButton: {
-  },
-  chatButton: {
-    backgroundColor: "#f65a65",
-  },
-  buttonText: {
-    fontWeight: "bold",
-  },
+  commentInput: { flex: 1, borderWidth: 1, borderRadius: 6, padding: 8, marginRight: 8 },
+  modalButton: { padding: 12, borderRadius: 6, marginBottom: 8, alignItems: "center" },
+  chatButton: { backgroundColor: "#f65a65" },
+  buttonText: { fontWeight: "bold" },
   mapContainer: {
-    height: 200,
-    width: '100%',
-    borderRadius: 6,
-    overflow: 'hidden',
-    marginBottom: 12,
-    borderWidth: 1,
+    height: 200, width: '100%',
+    borderRadius: 6, overflow: 'hidden',
+    marginBottom: 12, borderWidth: 1,
   },
-  map: {
-    ...StyleSheet.absoluteFillObject,
+  map: { ...StyleSheet.absoluteFillObject },
+
+  // Modal de Participação
+  partContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  partContent: { width: '80%', borderRadius: 8, padding: 16 },
+  partTitle: { fontWeight: 'bold', fontSize: 16, marginBottom: 12 },
+  partOption: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  radioOuter: {
+    width: 20, height: 20, borderRadius: 10,
+    borderWidth: 1, justifyContent: 'center', alignItems: 'center',
   },
+  radioInner: { width: 12, height: 12, borderRadius: 6 },
+  partOptionText: { marginLeft: 10 },
+  partButton: { marginTop: 20, padding: 12, borderRadius: 6, alignItems: 'center' },
 });
 
 export default PostScreen;
