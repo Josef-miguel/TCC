@@ -32,7 +32,7 @@
         
         <div class="form-group">
           <label for="datanasc">Date de Nascimento</label>
-          <input type="date" id="datanas" required class="form-control">
+          <input type="date" id="datanasc" required class="form-control">
         </div>
 
         <button id="registerButton" type="submit" class="btn-register">Cadastrar</button>
@@ -70,6 +70,8 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  const cpf = document.getElementById("CPF").value;
+  const dataNasc = new Date(document.getElementById("datanasc").value).toISOString().split('T')[0];
 
   const alertDiv = document.getElementById("formAlert");
 
@@ -88,7 +90,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     const resp = await fetch("/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: idToken, name })
+      body: JSON.stringify({ token: idToken, name, cpf, dataNasc })
     });
 
     const data = await resp.json();

@@ -74,7 +74,12 @@ def init_app(app, db):
             user_ref.set({
                 "name": name,
                 "email": decoded.get("email"),
-                "created_at": firestore.SERVER_TIMESTAMP
+                "cpf": data.get("cpf"),
+                "dataNasc": data.get("dataNasc"),
+                "isOrganizer" : False,
+                "joinedEvents": [],
+                "created_at": firestore.SERVER_TIMESTAMP,
+                "uid" : uid
             })
 
             # loga automaticamente
