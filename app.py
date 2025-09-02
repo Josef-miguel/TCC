@@ -1,12 +1,11 @@
 from flask import Flask, session, g
-from flask_login import LoginManager
 # from models.database import db, Usuario
 from controllers import routes
 import firebase_admin
-from firebase_admin import credentials, initialize_app, firestore
+from firebase_admin import credentials, firestore
 
 app = Flask(__name__, template_folder='views')
-app.secret_key = "chave_secrots"
+app.secret_key = "chave secrots"
 
 # um erro aqui. é preciso pegar o storagebucket e inicializar o app
 cred = credentials.Certificate("./config/firebaseConfig.json")

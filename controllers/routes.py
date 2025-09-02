@@ -94,10 +94,18 @@ def init_app(app, db):
 
     @app.route("/dashboard")
     def dashboard():
-        if not g.user:
-            return "Não autorizado", 401
-        # pega display_name ou name do dicionário, ou usa 'usuário'
-        user_name = g.user.get('display_name') or g.user.get('nome') or 'usuário'
-        return f"Bem-vindo {user_name}!"
+            try:
+                events_list = []
+                # pega todos os eventos da collection 'events', ordenando pela data de saída
+                events_ref = db.collection('events').order_by('exit_date').stream()
+                for doc in events_ref:
+                    data = doc.to_dict()
+                    data['id'] = doc.id  # adiciona o ID do doc
+                    events_list.append(data)
+
+                # envia para o template
+                return render_template("dashboard_usuario.html", events=events_list)
+            except Exception as e:
+                return f"Erro ao carregar eventos: {e}"
 
     
