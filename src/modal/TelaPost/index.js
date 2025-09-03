@@ -16,7 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
-import { doc, updateDoc,onSnapshot, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import ReportarProblema from "../ReportarProblema";
 
@@ -57,11 +57,34 @@ const PostScreen = ({
     setReportarProblemaVisible(true);
   };
 
-  const handleSalvarPost = () => {
-    setSidebarVisible(false);
-    setIsSaved(!isSaved);
-    // Aqui você pode implementar a lógica para salvar o post no Firebase
-    console.log("Post salvo/removido dos salvos");
+  const handleSalvarPost = async () => {
+    if (!auth.currentUser || !selectedPost?.id) {
+      console.log("Usuário não autenticado ou evento sem ID");
+      return;
+    }
+
+    try {
+      setSidebarVisible(false);
+      const userRef = doc(db, "user", auth.currentUser.uid);
+      
+      if (isSaved) {
+        // Remove dos salvos
+        await updateDoc(userRef, {
+          savedPosts: arrayRemove(selectedPost.id)
+        });
+        setIsSaved(false);
+        console.log("Post removido dos salvos!");
+      } else {
+        // Adiciona aos salvos
+        await updateDoc(userRef, {
+          savedPosts: arrayUnion(selectedPost.id)
+        });
+        setIsSaved(true);
+        console.log("Post salvo!");
+      }
+    } catch (error) {
+      console.error("Erro ao salvar/remover post:", error);
+    }
   };
 
   const handleVisualizarPerfil = () => {
@@ -117,6 +140,28 @@ const handleParticipar = async () => {
 
     return () => unsub();
   }, [selectedPost]);
+
+  // Verifica se o post está salvo quando carrega
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!auth.currentUser || !selectedPost?.id) return;
+      
+      try {
+        const userRef = doc(db, "user", auth.currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const savedPosts = userData.savedPosts || [];
+          setIsSaved(savedPosts.includes(selectedPost.id));
+        }
+      } catch (error) {
+        console.error("Erro ao verificar se post está salvo:", error);
+      }
+    };
+
+    checkIfSaved();
+  }, [selectedPost?.id, auth.currentUser]);
 
   if (!selectedPost || !modalVisible) return null;
   
