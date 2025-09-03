@@ -1,97 +1,92 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Criar Nova Excursão</h3>
-                </div>
-                <div class="card-body">
-                    <form method="POST" novalidate>
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="mb-3">
-                            {{ form.destino.label(class="form-label") }}
-                            {{ form.destino(class="form-control") }}
-                            {% for error in form.destino.errors %}
-                                <div class="invalid-feedback d-block">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.local_saida.label(class="form-label") }}
-                            {{ form.local_saida(class="form-control") }}
-                            {% for error in form.local_saida.errors %}
-                                <div class="invalid-feedback d-block">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.data_de_saida.label(class="form-label") }}
-                                {{ form.data_de_saida(class="form-control") }}
-                                {% for error in form.data_de_saida.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.data_de_retorno.label(class="form-label") }}
-                                {{ form.data_de_retorno(class="form-control") }}
-                                {% for error in form.data_de_retorno.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.preco.label(class="form-label") }}
-                                {{ form.preco(class="form-control") }}
-                                {% for error in form.preco.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.n_vagas.label(class="form-label") }}
-                                {{ form.n_vagas(class="form-control") }}
-                                {% for error in form.n_vagas.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.descricao.label(class="form-label") }}
-                            {{ form.descricao(class="form-control", rows=4) }}
-                        </div>
-                        
-                        <div class="d-grid gap-2">
-                            {{ form.submit(class="btn btn-primary") }}
-                            <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary">Cancelar</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="container">
+  <div class="card">
+    <h3>Cadastrar Novo Evento</h3>
+    <form id="eventoForm">
+      <div class="form-group">
+        <label for="title">Título</label>
+        <input type="text" id="title" name="title" required class="form-control">
+      </div>
 
+      <div class="form-group">
+        <label for="desc">Descrição</label>
+        <textarea id="desc" name="desc" required class="form-control"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="price">Preço</label>
+        <input type="number" id="price" name="price" required class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="numSlots">Número de vagas</label>
+        <input type="number" id="numSlots" name="numSlots" required class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="exit_date">Data de saída</label>
+        <input type="datetime-local" id="exit_date" name="exit_date" required class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="return_date">Data de retorno</label>
+        <input type="datetime-local" id="return_date" name="return_date" required class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="type">Tipo</label>
+        <select id="type" name="type" class="form-control">
+          <option value="1">Passeio</option>
+          <option value="2">Excursão</option>
+          <option value="3">Viagem longa</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Cadastrar</button>
+      <div id="formAlert" style="margin-top:12px"></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Validação de datas
-    const dataSaida = document.getElementById('data_de_saida');
-    const dataRetorno = document.getElementById('data_de_retorno');
-    
-    dataSaida.addEventListener('change', function() {
-        if (dataRetorno.value && new Date(dataRetorno.value) <= new Date(dataSaida.value)) {
-            alert('Data de retorno deve ser após a data de saída');
-            dataRetorno.value = '';
-        }
+document.getElementById("eventoForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    title: form.title.value,
+    desc: form.desc.value,
+    price: form.price.value,
+    numSlots: form.numSlots.value,
+    exit_date: form.exit_date.value,
+    return_date: form.return_date.value,
+    type: form.type.value
+  };
+
+  try {
+    const resp = await fetch("/novo_evento", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     });
+
+    const result = await resp.json();
+    const alertDiv = document.getElementById("formAlert");
+
+    if (resp.ok && result.success) {
+      alertDiv.innerHTML = `<div style="color:green">${result.message}</div>`;
+      form.reset();
+    } else {
+      alertDiv.innerHTML = `<div style="color:red">${result.message}</div>`;
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("formAlert").innerHTML =
+      `<div style="color:red">Erro na requisição</div>`;
+  }
 });
 </script>
 {% endblock %}
-
-

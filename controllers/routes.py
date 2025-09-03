@@ -107,5 +107,34 @@ def init_app(app, db):
                 return render_template("dashboard_usuario.html", events=events_list)
             except Exception as e:
                 return f"Erro ao carregar eventos: {e}"
+    
+    @app.route("/new_event")     
+    def new_event():
+        if request.method == "GET":
+            return render_template("novo_evento.html")
 
+        # POST (recebe JSON ou formulário)
+        data = request.get_json() if request.is_json else request.form
+        try:
+            event = {
+                "title": data.get("title"),
+                "desc": data.get("desc"),
+                "price": data.get("price"),
+                "numSlots": data.get("numSlots"),
+                "exit_date": firestore.SERVER_TIMESTAMP,   # você pode converter de string depois
+                "return_date": firestore.SERVER_TIMESTAMP,
+                "type": int(data.get("type", 0)),
+                "comments": [],
+                "numAcess": 0,
+                "created_at": firestore.SERVER_TIMESTAMP,
+            }
+
+            # salva no Firestore
+            db.collection("events").add(event)
+
+            return jsonify({"success": True, "message": "Evento cadastrado com sucesso!"})
+        except Exception as e:
+            logger.exception(f"Erro ao cadastrar evento: {e}")
+            return jsonify({"success": False, "message": "Erro ao cadastrar evento"}), 500
+        
     
