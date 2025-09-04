@@ -1,4 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash, session, g, jsonify
+import traceback
+from datetime import datetime
 from firebase_admin import auth, firestore
 import logging
 
@@ -108,24 +110,32 @@ def init_app(app, db):
             except Exception as e:
                 return f"Erro ao carregar eventos: {e}"
     
-    @app.route("/new_event")     
+    @app.route("/new_event", methods=["GET", "POST"])     
     def new_event():
         if request.method == "GET":
             return render_template("novo_evento.html")
 
-        # POST (recebe JSON ou formulário)
-        data = request.get_json() if request.is_json else request.form
+        
         try:
+            data = request.get_json(force=True) if request.is_json else request.form
+            if not data:
+                return jsonify({"sucess" : False, "message" : "Nenhum dado recebido"}), 400
+            
+            exit_date = datetime.fromisoformat(data["exit_date"]) if data.get("exit_date") else None
+            return_date = datetime.fromisoformat(data["return_date"]) if data.get("return_date") else None
+
+            
             event = {
                 "title": data.get("title"),
                 "desc": data.get("desc"),
                 "price": data.get("price"),
                 "numSlots": data.get("numSlots"),
-                "exit_date": firestore.SERVER_TIMESTAMP,   # você pode converter de string depois
-                "return_date": firestore.SERVER_TIMESTAMP,
+                "exit_date": exit_date,   
+                "return_date": return_date,
                 "type": int(data.get("type", 0)),
                 "comments": [],
                 "numAcess": 0,
+                "images": data.get("image_urls", []),
                 "created_at": firestore.SERVER_TIMESTAMP,
             }
 
@@ -135,6 +145,7 @@ def init_app(app, db):
             return jsonify({"success": True, "message": "Evento cadastrado com sucesso!"})
         except Exception as e:
             logger.exception(f"Erro ao cadastrar evento: {e}")
+            traceback.print_exc()
             return jsonify({"success": False, "message": "Erro ao cadastrar evento"}), 500
         
     

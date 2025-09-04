@@ -11,6 +11,14 @@
       </div>
 
       <div class="form-group">
+        <label for="image_urls">URLs das Imagens</label>
+        <textarea id="image_urls" name="image_urls" class="form-control" rows="3" placeholder="Cole uma URL por linha"></textarea>
+      </div>
+
+      <div id="imagePreview" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:12px;"></div>
+
+
+      <div class="form-group">
         <label for="desc">Descrição</label>
         <textarea id="desc" name="desc" required class="form-control"></textarea>
       </div>
@@ -53,40 +61,140 @@
 
 {% block scripts %}
 <script>
-document.getElementById("eventoForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const form = e.target;
-  const data = {
-    title: form.title.value,
-    desc: form.desc.value,
-    price: form.price.value,
-    numSlots: form.numSlots.value,
-    exit_date: form.exit_date.value,
-    return_date: form.return_date.value,
-    type: form.type.value
-  };
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("eventoForm");
+  const imageTextarea = document.getElementById("image_urls");
+  const previewDiv = document.getElementById("imagePreview");
+  const alertDiv = document.getElementById("formAlert");
 
-  try {
-    const resp = await fetch("/novo_evento", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+  // Função que atualiza as previews
+  function updatePreviews() {
+    const urls = imageTextarea.value
+      .split("\n")
+      .map(u => u.trim())
+      .filter(u => u);
+
+    previewDiv.innerHTML = ""; // limpa previews
+
+    const max = 12; // limite de previews (evita flood)
+    urls.slice(0, max).forEach(url => {
+      // validação simples
+      if (!/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(url)) {
+        // ignora urls que não parecem imagens (ou mostra aviso)
+        const warning = document.createElement("div");
+        warning.style.width = "150px";
+        warning.style.fontSize = "12px";
+        warning.style.color = "#b34747";
+        warning.style.border = "1px dashed #f0c0c0";
+        warning.style.padding = "6px";
+        warning.style.borderRadius = "8px";
+        warning.innerText = "URL inválida ou não é imagem\n" + url;
+        previewDiv.appendChild(warning);
+        return;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.style.width = "150px";
+      wrapper.style.height = "100px";
+      wrapper.style.display = "flex";
+      wrapper.style.alignItems = "center";
+      wrapper.style.justifyContent = "center";
+      wrapper.style.overflow = "hidden";
+      wrapper.style.borderRadius = "12px";
+      wrapper.style.boxShadow = "0 2px 8px rgba(0,0,0,0.12)";
+      wrapper.style.background = "#f6f6f6";
+
+      const img = document.createElement("img");
+      img.style.maxWidth = "100%";
+      img.style.maxHeight = "100%";
+      img.alt = "Prévia da imagem";
+      img.src = url;
+
+      // spinner enquanto carrega
+      const spinner = document.createElement("div");
+      spinner.innerText = "carregando…";
+      spinner.style.fontSize = "12px";
+      spinner.style.color = "#666";
+
+      wrapper.appendChild(spinner);
+      previewDiv.appendChild(wrapper);
+
+      img.onload = () => {
+        wrapper.removeChild(spinner);
+        wrapper.appendChild(img);
+      };
+      img.onerror = () => {
+        wrapper.removeChild(spinner);
+        const err = document.createElement("div");
+        err.style.fontSize = "12px";
+        err.style.color = "#b34747";
+        err.style.padding = "6px";
+        err.innerText = "Não foi possível carregar a imagem";
+        wrapper.appendChild(err);
+      };
     });
 
-    const result = await resp.json();
-    const alertDiv = document.getElementById("formAlert");
-
-    if (resp.ok && result.success) {
-      alertDiv.innerHTML = `<div style="color:green">${result.message}</div>`;
-      form.reset();
-    } else {
-      alertDiv.innerHTML = `<div style="color:red">${result.message}</div>`;
+    // se havia mais URLs que o limite, avisa
+    if (urls.length > 12) {
+      const more = document.createElement("div");
+      more.style.width = "100%";
+      more.style.fontSize = "12px";
+      more.style.color = "#444";
+      more.style.marginTop = "6px";
+      more.innerText = `Mostrando 12 de ${urls.length} imagens. Remova algumas ou aumente o limite.`;
+      previewDiv.appendChild(more);
     }
-  } catch (err) {
-    console.error(err);
-    document.getElementById("formAlert").innerHTML =
-      `<div style="color:red">Erro na requisição</div>`;
   }
+
+  // registra listener fora do submit (funciona em tempo real)
+  imageTextarea.addEventListener("input", updatePreviews);
+
+  // submit do form
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = {
+      title: form.title.value,
+      desc: form.desc.value,
+      price: form.price.value,
+      numSlots: form.numSlots.value,
+      exit_date: form.exit_date.value,
+      return_date: form.return_date.value,
+      type: form.type.value,
+      image_urls: form.image_urls.value
+        .split("\n")
+        .map(u => u.trim())
+        .filter(u => u)
+    };
+
+    try {
+      const resp = await fetch("/new_event", { // confere se essa rota bate com o backend
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      // pega texto bruto caso não venha JSON
+      const text = await resp.text();
+      let result;
+      try { result = JSON.parse(text); } catch (_) { result = null; console.log("Resposta bruta do servidor:", text); }
+
+      if (resp.ok && result && result.success) {
+        alertDiv.innerHTML = `<div style="color:green">${result.message}</div>`;
+        form.reset();
+        previewDiv.innerHTML = "";
+      } else {
+        const msg = (result && result.message) ? result.message : `Erro: ${resp.status}`;
+        alertDiv.innerHTML = `<div style="color:red">${msg}</div>`;
+      }
+    } catch (err) {
+      console.error(err);
+      alertDiv.innerHTML = `<div style="color:red">Erro na requisição</div>`;
+    }
+  });
+
+  // opcional: atualiza previews logo ao abrir a página se já tiver algo no campo
+  if (imageTextarea.value.trim()) updatePreviews();
 });
 </script>
 {% endblock %}
+
