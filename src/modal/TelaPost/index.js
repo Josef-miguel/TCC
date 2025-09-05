@@ -47,6 +47,12 @@ const PostScreen = ({
   const [imageZoomVisible, setImageZoomVisible] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
   const [reportarProblemaVisible, setReportarProblemaVisible] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("Cartão de Crédito");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
 
   const handleStarPress = (rating) => {
     setStarRating(rating);
@@ -110,6 +116,7 @@ const handleParticipar = async () => {
 
     console.log("Participação salva no Firebase!");
     setParticipationModalVisible(false);
+    setPaymentModalVisible(true);
   } catch (error) {
     console.error("Erro ao salvar participação:", error);
   }
@@ -529,6 +536,84 @@ const handleParticipar = async () => {
          </View>
        </Modal>
 
+       <Modal visible={paymentModalVisible} transparent animationType="slide">
+          <View style={[styles.paymentOverlay, { backgroundColor: theme?.overlay }]}>
+            <View style={[styles.paymentContainer, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Text style={[styles.partTitle, { color: theme?.textPrimary, fontSize: 20 }]}>
+                Pagamento Simulado
+              </Text>
+
+              <Text style={[styles.label, { color: theme?.textSecondary, marginTop: 10 }]}>Método:</Text>
+              {["Cartão de Crédito", "Pix", "Boleto"].map((method) => (
+                <TouchableOpacity
+                  key={method}
+                  style={styles.partOption}
+                  onPress={() => setPaymentMethod(method)}
+                >
+                  <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
+                    {paymentMethod === method && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
+                  </View>
+                  <Text style={[styles.partOptionText, { color: theme?.textSecondary }]}>{method}</Text>
+                </TouchableOpacity>
+              ))}
+
+              {paymentMethod === "Cartão de Crédito" && (
+                <>
+                  <TextInput
+                    style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
+                    placeholder="Número do cartão"
+                    placeholderTextColor={theme?.textTertiary}
+                    keyboardType="numeric"
+                    value={cardNumber}
+                    onChangeText={setCardNumber}
+                  />
+                  <TextInput
+                    style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
+                    placeholder="Nome no cartão"
+                    placeholderTextColor={theme?.textTertiary}
+                    value={cardName}
+                    onChangeText={setCardName}
+                  />
+                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                    <TextInput
+                      style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary, flex: 1, marginRight: 5 }]}
+                      placeholder="MM/AA"
+                      placeholderTextColor={theme?.textTertiary}
+                      value={expiry}
+                      onChangeText={setExpiry}
+                    />
+                    <TextInput
+                      style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary, flex: 1, marginLeft: 5 }]}
+                      placeholder="CVV"
+                      placeholderTextColor={theme?.textTertiary}
+                      keyboardType="numeric"
+                      value={cvv}
+                      onChangeText={setCvv}
+                    />
+                  </View>
+                </>
+              )}
+
+              <TouchableOpacity
+                style={[styles.partButton, { backgroundColor: theme?.primary, marginTop: 20 }]}
+                onPress={() => {
+                  alert("Pagamento simulado realizado com sucesso!");
+                  setPaymentModalVisible(false);
+                }}
+              >
+                <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Pagar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ marginTop: 10, alignSelf: "center" }}
+                onPress={() => setPaymentModalVisible(false)}
+              >
+                <Text style={{ color: theme?.primary }}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
        {/* Modal de Reportar Problema */}
        <ReportarProblema 
          visible={reportarProblemaVisible} 
@@ -719,6 +804,24 @@ const handleParticipar = async () => {
   zoomedImage: {
     width: width,
     height: height * 0.8,
+  },
+  // Modal de Pagamento
+  paymentOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  paymentContainer: {
+    width: "85%",
+    borderRadius: 8,
+    padding: 16,
+    alignItems: "stretch",
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 6,
   },
 });
 
