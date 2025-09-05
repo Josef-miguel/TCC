@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Modal,
   SafeAreaView,
+  Button
 } from 'react-native';
 import { Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -72,7 +73,7 @@ export default function Perfil() {
         <MenuItem icon="account-outline" label="Minha conta" onPress={() => setEditModalVisible(true)} />
         <MenuItem icon="cog" label="Configurações" onPress={() => setConfigModalVisible(true)} />
         <MenuItem icon="account-search-outline" label="Avaliações" onPress={() => {}} />
-        <MenuItem icon="heart-outline" label="Minhas Viagens" onPress={() => navigation.navigate('Favoritos')} />
+        <MenuItem icon="heart-outline" label="Minhas Viagens" onPress={() => navigation.navigate('MinhasViagens')} />
         <MenuItem icon="logout" label="Sair" onPress={() => setLogoutVisible(true)} />
       </ScrollView>
 

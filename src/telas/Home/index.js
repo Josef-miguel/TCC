@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, ScrollView, SafeAreaView, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { onSnapshot, collection, query } from 'firebase/firestore';
+import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 
@@ -49,13 +49,34 @@ export default function Home({ navigation }) {
   
   useEffect(() => {
     const q = query(collection(db, 'events'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const fetchedPosts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        fav: doc.data().fav || false,
+        fav: false, // Será atualizado abaixo
         theme: doc.data().theme || ''
       }));
+      
+      // Verifica quais posts estão favoritados pelo usuário
+      if (auth.currentUser) {
+        try {
+          const userRef = doc(db, 'user', auth.currentUser.uid);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const favoritePostIds = userData.favoritePosts || [];
+            
+            // Marca os posts favoritados
+            fetchedPosts.forEach(post => {
+              post.fav = favoritePostIds.includes(post.id);
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao verificar favoritos:', error);
+        }
+      }
+      
       setPosts(fetchedPosts);
     }, (error) => {
       console.error('Erro ao buscar eventos:', error);
@@ -69,10 +90,36 @@ export default function Home({ navigation }) {
     // Logs removidos para limpeza do código
   }, [posts, filteredRecommended, filteredPopular]);
   
-  // Alterna o estado de favorito de um post (Ajustar o id para o firebase)
-  
-  const toggleFav = (id) => {
-    setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
+  // Alterna o estado de favorito de um post no Firebase
+  const toggleFav = async (id) => {
+    if (!auth.currentUser) {
+      console.log("Usuário não autenticado");
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "user", auth.currentUser.uid);
+      const post = posts.find(p => p.id === id);
+      
+      if (post?.fav) {
+        // Remove dos favoritos
+        await updateDoc(userRef, {
+          favoritePosts: arrayRemove(id)
+        });
+        console.log("Post removido dos favoritos!");
+      } else {
+        // Adiciona aos favoritos
+        await updateDoc(userRef, {
+          favoritePosts: arrayUnion(id)
+        });
+        console.log("Post adicionado aos favoritos!");
+      }
+      
+      // Atualiza o estado local
+      setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
+    } catch (error) {
+      console.error("Erro ao favoritar/desfavoritar post:", error);
+    }
   };
   
   const toggleSidebar = () => {
