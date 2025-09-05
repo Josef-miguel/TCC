@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, S
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
+import { useTranslation } from 'react-i18next';
 
 import TelaPost from '../../modal/TelaPost';
 import { db, auth } from '../../../services/firebase';
@@ -12,6 +13,7 @@ import { ThemeContext } from '../../context/ThemeContext';
 
 
 export default function Home({ navigation }) {
+  const { t } = useTranslation();
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -98,11 +100,11 @@ export default function Home({ navigation }) {
           style={styles.cardImage}
           />
         <View style={styles.cardContent}>
-          <Text style={[styles.cardTitle, { color: theme?.textPrimary }]}>{item.title || 'Sem título'}</Text>
+          <Text style={[styles.cardTitle, { color: theme?.textPrimary }]}>{item.title || t('home.noTitle')}</Text>
           <Text style={[styles.cardSubtitle, { color: theme?.textTertiary }]}>
             {typeof item.desc === 'string'
               ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
-              : 'Sem descrição disponível'}
+              : t('home.noDescription')}
           </Text>
         </View>
         <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
@@ -124,7 +126,7 @@ export default function Home({ navigation }) {
             color: theme?.textPrimary,
             borderColor: theme?.primary
           }]}
-          placeholder="Quero ir para...."
+          placeholder={t('home.searchPlaceholder')}
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
@@ -140,35 +142,35 @@ export default function Home({ navigation }) {
         backgroundColor: theme?.backgroundDark,
         transform: [{ translateX: sidebarAnimation }] 
       }]}>
-        <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>Menu</Text>
+        <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>{t('home.menu')}</Text>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Agenda</Text>
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>{t('home.agenda')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
           const favoritos = posts.filter(p => p.fav);
           navigation.navigate('Favoritos', { favoritos });
           toggleSidebar();
         }}>
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>{t('home.favorites')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: theme?.primary }]} onPress={toggleSidebar}>
-          <Text style={{ color: theme?.textInverted, textAlign: 'center' }}>Fechar</Text>
+          <Text style={{ color: theme?.textInverted, textAlign: 'center' }}>{t('home.close')}</Text>
         </TouchableOpacity>
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Recomendados</Text>
+        <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('home.recommended')}</Text>
         {posts.length > 0 ? (
           filteredRecommended.map(item => renderCard(item))
         ) : (
-          <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>Carregando eventos...</Text>
+          <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>{t('home.loadingEvents')}</Text>
         )}
 
-        <Text style={[styles.popularesTxt, { color: theme?.textPrimary }]}>Populares recentemente</Text>
+        <Text style={[styles.popularesTxt, { color: theme?.textPrimary }]}>{t('home.popularRecently')}</Text>
         {posts.length > 0 ? (
           filteredPopular.map(item => renderCard(item))
         ) : (
-          <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>Carregando eventos...</Text>
+          <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>{t('home.loadingEvents')}</Text>
         )}
       </ScrollView>
 

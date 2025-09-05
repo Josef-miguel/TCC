@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   Modal,
   View,
@@ -11,6 +11,8 @@ import {
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { ThemeContext } from "../../context/ThemeContext";
 import { Picker } from "@react-native-picker/picker";
+import { useTranslation } from "react-i18next";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Fallback theme para quando o contexto não estiver disponível
 const defaultTheme = {
@@ -21,7 +23,7 @@ const defaultTheme = {
   overlay: 'rgba(0,0,0,0.5)',
   backgroundDark: '#363942',
   primaryLight: '#ff8c29',
-  textTertiary: '#a0a4ad'
+  textTertiary: '#a0a0a0'
 };
 
 export default function Configuracoes({ modalVisible, setModalVisible }) {
@@ -33,8 +35,38 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
   const isDarkTheme = themeContext?.isDarkTheme ?? true;
   const toggleTheme = themeContext?.toggleTheme ?? (() => console.warn('ThemeContext não disponível'));
 
-  const [Idioma, setIdioma] = useState("PT-BR"); // variável que guarda a seleção
+  const { t, i18n } = useTranslation();
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language); 
   const [showPicker, setShowPicker] = useState(false);
+
+  // Carregar idioma salvo ao abrir o modal
+  useEffect(() => {
+    const loadLanguage = async () => {
+      try {
+        const savedLanguage = await AsyncStorage.getItem('@app_language');
+        if (savedLanguage) {
+          setSelectedLanguage(savedLanguage);
+        }
+      } catch (error) {
+        console.error('Error loading language:', error);
+      }
+    };
+
+    if (modalVisible) {
+      loadLanguage();
+    }
+  }, [modalVisible]);
+
+  const changeLanguage = async (language) => {
+    try {
+      setSelectedLanguage(language);
+      await i18n.changeLanguage(language);
+      await AsyncStorage.setItem('@app_language', language);
+      setShowPicker(false);
+    } catch (error) {
+      console.error('Error changing language:', error);
+    }
+  };
 
   const styles = StyleSheet.create({
     overlay: {
@@ -55,19 +87,21 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
       color: theme.textPrimary,
       fontWeight: "bold",
       marginBottom: 20,
+      textAlign: "center",
     },
     item: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 20,
-      backgroundColor: theme.backgroundSecondary,
+      marginBottom: 15,
+      backgroundColor: theme.backgroundDark,
       padding: 12,
       borderRadius: 8,
     },
     left: {
       flexDirection: "row",
       alignItems: "center",
+      flex: 1,
     },
     label: {
       marginLeft: 10,
@@ -77,44 +111,64 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
     closeBtn: {
       alignSelf: "center",
       marginTop: 10,
+      padding: 10,
+      backgroundColor: theme.primary,
+      borderRadius: 5,
     },
     closeText: {
-      color: theme.primary,
+      color: "white",
       fontSize: 16,
+      fontWeight: "bold",
     },
     right: {
       flexDirection: "row",
       alignItems: "center",
     },
     selected: {
-      fontSize: 16,
+      fontSize: 14,
       marginRight: 8,
       color: theme.primary,
     },
-    pickerlng: {
+    pickerContainer: {
       backgroundColor: theme.backgroundDark,
-      fontSize: 16,
-      color: theme.primary,
+      borderRadius: 8,
+      marginBottom: 15,
+      overflow: "hidden",
+    },
+    picker: {
+      height: 50,
+      width: "100%",
+      color: theme.textPrimary,
     },
   });
+
+  // Função para obter o nome do idioma
+  const getLanguageName = (code) => {
+    switch (code) {
+      case 'pt': return 'Português';
+      case 'en': return 'English';
+      case 'zh': return '中文';
+      default: return code;
+    }
+  };
 
   return (
     <Modal visible={modalVisible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Configurações</Text>
+          <Text style={styles.title}>{t("settings.title")}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Notificações */}
             <View style={styles.item}>
               <View style={styles.left}>
                 <Icon name="bell-ring-outline" size={24} color={theme.primary} />
-                <Text style={styles.label}>Notificações</Text>
+                <Text style={styles.label}>{t("settings.notifications")}</Text>
               </View>
               <Switch
                 value={notificacoes}
                 onValueChange={setNotificacoes}
-                thumbColor={notificacoes ? theme.primary : "#888"}
+                thumbColor={notificacoes ? theme.primary : "#f4f3f4"}
                 trackColor={{
                   false: theme.backgroundDark,
                   true: theme.primaryLight,
@@ -130,12 +184,12 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
                   size={24}
                   color={theme.primary}
                 />
-                <Text style={styles.label}>Tema claro</Text>
+                <Text style={styles.label}>{t("settings.lightTheme")}</Text>
               </View>
               <Switch
                 value={!isDarkTheme}
                 onValueChange={toggleTheme}
-                thumbColor={!isDarkTheme ? theme.primary : "#888"}
+                thumbColor={!isDarkTheme ? theme.primary : "#f4f3f4"}
                 trackColor={{
                   false: theme.backgroundDark,
                   true: theme.primaryLight,
@@ -150,10 +204,10 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
             >
               <View style={styles.left}>
                 <Icon name="translate" size={24} color={theme.primary} />
-                <Text style={styles.label}>Idioma</Text>
+                <Text style={styles.label}>{t("settings.language")}</Text>
               </View>
               <View style={styles.right}>
-                <Text style={styles.selected}>{Idioma}</Text>
+                <Text style={styles.selected}>{getLanguageName(selectedLanguage)}</Text>
                 <Icon
                   name={showPicker ? "chevron-up" : "chevron-down"}
                   size={24}
@@ -164,25 +218,24 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
 
             {/* Picker exibido abaixo do botão */}
             {showPicker && (
-              <Picker
-                style={styles.pickerlng}
-                selectedValue={Idioma}
-                onValueChange={(itemValue) => {
-                  setIdioma(itemValue);
-                  setShowPicker(false); // fecha após selecionar
-                }}
-              >
-                <Picker.Item label="Português (Brasileiro)" value="PT-BR" />
-                <Picker.Item label="English" value="ENG" />
-                <Picker.Item label="官话" value="CMN" />
-              </Picker>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={selectedLanguage}
+                  onValueChange={changeLanguage}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Português" value="pt" />
+                  <Picker.Item label="English" value="en" />
+                  <Picker.Item label="中文" value="zh" />
+                </Picker>
+              </View>
             )}
 
             {/* Alterar Senha */}
             <TouchableOpacity style={styles.item}>
               <View style={styles.left}>
                 <Icon name="lock-reset" size={24} color={theme.primary} />
-                <Text style={styles.label}>Alterar senha</Text>
+                <Text style={styles.label}>{t("settings.changePassword")}</Text>
               </View>
               <Icon name="chevron-right" size={24} color={theme.textTertiary} />
             </TouchableOpacity>
@@ -192,7 +245,7 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
               <View style={styles.left}>
                 <Icon name="delete-outline" size={24} color="red" />
                 <Text style={[styles.label, { color: "red" }]}>
-                  Excluir conta
+                  {t("settings.deleteAccount")}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -205,7 +258,7 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
                   size={24}
                   color={theme.primary}
                 />
-                <Text style={styles.label}>Termos e Suporte</Text>
+                <Text style={styles.label}>{t("settings.termsSupport")}</Text>
               </View>
               <Icon name="chevron-right" size={24} color={theme.textTertiary} />
             </TouchableOpacity>
@@ -215,7 +268,7 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
               onPress={() => setModalVisible(false)}
               style={styles.closeBtn}
             >
-              <Text style={styles.closeText}>Fechar</Text>
+              <Text style={styles.closeText}>{t("settings.close")}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>

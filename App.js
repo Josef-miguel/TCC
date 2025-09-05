@@ -1,4 +1,5 @@
 import React, { useState, createContext, useContext } from "react";
+import { LanguageProvider } from './src/i18n';
 import {
   StyleSheet,
   Text,
@@ -37,6 +38,8 @@ export const appContext = createContext();
 import { Ionicons } from "@expo/vector-icons";
 import { Provider as PaperProvider } from 'react-native-paper';
 import { ThemeProvider, ThemeContext } from './src/context/ThemeContext';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './src/i18n/index';
 
 
 const Tab = createBottomTabNavigator();
@@ -93,6 +96,7 @@ function Tabs() {
   };
 
   return (
+    
       <appContext.Provider value={{ organizerMode, isOrganizer, toggleOrganizer: () => {} }}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
@@ -142,6 +146,7 @@ function Tabs() {
 export default function App() {
   const Stack = createStackNavigator();
   return (
+    <I18nextProvider i18n={i18n}>
     <ThemeProvider>
       <AuthProvider>
         <SafeAreaProvider style={{ flex: 1 }}>
@@ -219,6 +224,7 @@ export default function App() {
         </SafeAreaProvider>
       </AuthProvider>
     </ThemeProvider>
+    </I18nextProvider>
   );
 }
 
