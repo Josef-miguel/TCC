@@ -1,0 +1,64 @@
+{
+    "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "close": "关闭",
+    "save": "保存",
+    "delete": "删除",
+    "back": "返回",
+    "continue": "继续"
+    },
+    "nav": {
+    "home": "首页",
+    "settings": "设置",
+    "profile": "个人资料",
+    "termsSupport": "条款与支持",
+    "changePassword": "更改密码",
+    "deleteAccount": "删除账户"
+    },
+    "settings": {
+    "title": "设置",
+    "notifications": "通知",
+    "lightTheme": "亮色主题",
+    "language": "语言",
+    "languages": {
+    "ptBR": "葡萄牙语（巴西）",
+    "en": "英语",
+    "zhCN": "官话（简体中文）"
+    }
+    },
+    "auth": {
+    "loginTitle": "登录",
+    "registerTitle": "创建账户",
+    "email": "电子邮箱",
+    "password": "密码",
+    "loginButton": "登录",
+    "registerButton": "注册",
+    "forgotPassword": "忘记密码",
+    "username": "用户名",
+    "loginSuccess": "登录成功",
+    "welcome": "欢迎！",
+    "loginError": "登录错误 - 邮箱或密码无效",
+    "saveError": "保存错误",
+    "fillFields": "请输入邮箱和密码。",
+    "noUserData": "用户在Firestore中没有保存的数据。",
+    "registerLink": "还没有账户？注册"
+    },
+    "home": {
+    "title": "欢迎",
+    "cta": "开始使用",
+    "searchPlaceholder": "我想去....",
+    "menu": "菜单",
+    "agenda": "日程",
+    "favorites": "收藏",
+    "close": "关闭",
+    "recommended": "推荐",
+    "loadingEvents": "正在加载活动...",
+    "popularRecently": "最近热门",
+    "noTitle": "无标题",
+    "noDescription": "无可用描述"
+    },
+    "dialogs": {
+    "confirmDelete": "确定要删除您的账户吗？"
+    }
+    }

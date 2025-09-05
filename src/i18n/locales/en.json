@@ -1,0 +1,64 @@
+{
+    "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back",
+    "continue": "Continue"
+    },
+    "nav": {
+    "home": "Home",
+    "settings": "Settings",
+    "profile": "Profile",
+    "termsSupport": "Terms & Support",
+    "changePassword": "Change password",
+    "deleteAccount": "Delete account"
+    },
+    "settings": {
+    "title": "Settings",
+    "notifications": "Notifications",
+    "lightTheme": "Light theme",
+    "language": "Language",
+    "languages": {
+    "ptBR": "Portuguese (Brazil)",
+    "en": "English",
+    "zhCN": "Mandarin (Simplified)"
+    }
+    },
+    "auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Sign in",
+    "registerButton": "Register",
+    "forgotPassword": "Forgot password",
+    "username": "Username",
+    "loginSuccess": "Login Successful",
+    "welcome": "Welcome!",
+    "loginError": "Login error - invalid email or password",
+    "saveError": "Save Error",
+    "fillFields": "Please enter email and password.",
+    "noUserData": "User does not have saved data in Firestore.",
+    "registerLink": "Don't have an account? Register"
+    },
+    "home": {
+    "title": "Welcome",
+    "cta": "Get started",
+    "searchPlaceholder": "I want to go to....",
+    "menu": "Menu",
+    "agenda": "Agenda",
+    "favorites": "Favorites",
+    "close": "Close",
+    "recommended": "Recommended",
+    "loadingEvents": "Loading events...",
+    "popularRecently": "Popular recently",
+    "noTitle": "No title",
+    "noDescription": "No description available"
+    },
+    "dialogs": {
+    "confirmDelete": "Are you sure you want to delete your account?"
+    }
+    }
