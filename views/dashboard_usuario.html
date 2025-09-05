@@ -1,30 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
-
 <h1>Todos os Eventos</h1>
-<ul>
+<ul style="list-style:none; padding:0;">
   {% for event in events %}
-    <div style="border: black 1px solid;padding: 5px;"></div>
-        <li>
-          <h2>{{ event.title }}</h2>
-          <div style="border: black 1px solid;padding: 5px;">
-            {% for image in event.images %}
-                <img src="{{image}}">
-            {% endfor %}
-          </div>
-          <p>{{ event.desc }}</p>
-          <p>Saída: {{ event.exit_date }}</p>
-          <p>Retorno: {{ event.return_date }}</p>
-          <p>Preço: R$ {{ event.price }}</p>
-          <p>Vagas: {{ event.numSlots }}</p>
-        </li>
-    </div>
-    <hr>
+    <li style="border: black 1px solid; padding: 12px; margin-bottom:16px;">
+      <h2>{{ event.title }}</h2>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        {% for image in event.images %}
+          <img src="{{ image }}" style="height: 120px; object-fit:cover; border-radius:8px;">
+        {% endfor %}
+      </div>
+
+      <p>{{ event.desc }}</p>
+      <p>Saída: {{ event.exit_date }}</p>
+      <p>Retorno: {{ event.return_date }}</p>
+      <p>Preço: R$ {{ event.price }}</p>
+      <p>Vagas: {{ event.numSlots }}</p>
+
+      
+    </li>
   {% endfor %}
 </ul>
 
+<a href="{{ url_for('new_event') }}">Criar post</a>
+{% endblock %}
 
-<a href="{{url_for('new_event')}}">criar post</a>
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // seleciona todas as divs de mapas
+  const mapDivs = document.querySelectorAll('.map');
+
+mapDivs.forEach((div, idx) => {
+  const route = JSON.parse(div.dataset.route || 'null');
+  if (!route || !route.start || !route.end) return;
+
+  const centerLat = (route.start.lat + route.end.lat) / 2;
+  const centerLng = (route.start.lng + route.end.lng) / 2;
+
+  // Usa o id da div
+  const map = L.map(div.id).setView([centerLat, centerLng], 8);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+  }).addTo(map);
+
+  // Marcadores
+  L.marker([route.start.lat, route.start.lng]).addTo(map).bindPopup(route.display_start || "Saída");
+  L.marker([route.end.lat, route.end.lng]).addTo(map).bindPopup(route.display_end || "Chegada");
+
+  // Rota
+  L.Routing.control({
+    waypoints: [
+      L.latLng(route.start.lat, route.start.lng),
+      L.latLng(route.end.lat, route.end.lng)
+    ],
+    lineOptions: { styles: [{ color: 'blue', opacity: 0.7, weight: 4 }] },
+    addWaypoints: false,
+    draggableWaypoints: false,
+    routeWhileDragging: false,
+    fitSelectedRoutes: true,
+    showAlternatives: false
+  }).addTo(map);
+});
+
+});
+</script>
 {% endblock %}

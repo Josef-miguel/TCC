@@ -136,6 +136,7 @@ def init_app(app, db):
                 "comments": [],
                 "numAcess": 0,
                 "images": data.get("image_urls", []),
+                "route": data.get("route", []),
                 "created_at": firestore.SERVER_TIMESTAMP,
             }
 
