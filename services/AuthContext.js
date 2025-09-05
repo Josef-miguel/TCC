@@ -14,9 +14,9 @@ export function AuthProvider({ children }) {
     let unsubscribeIsOrganizer = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const userRef = doc(db, 'user', user.uid);
+              if (user) {
+          try {
+            const userRef = doc(db, 'user', user.uid);
           const docSnapshot = await getDoc(userRef);
 
           if (docSnapshot.exists()) {

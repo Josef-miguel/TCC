@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   StyleSheet,
   Text,
@@ -17,8 +17,13 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { auth, db } from "../../../services/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
+import { ThemeContext } from "../../context/ThemeContext";
 
 export default function Cadastro({ navigation }) {
+  // Contexto de tema
+  const themeContext = useContext(ThemeContext);
+  const theme = themeContext?.theme;
+
   // Controle de animações: deslocamento vertical e opacidade
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
   const [opac] = useState(new Animated.Value(0));
@@ -148,7 +153,7 @@ export default function Cadastro({ navigation }) {
   };
 
   return (
-    <View style={styles.background}>
+    <View style={[styles.background, { backgroundColor: theme?.background }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
@@ -168,6 +173,25 @@ export default function Cadastro({ navigation }) {
               style={styles.logo}
               resizeMode="contain"
             />
+            
+            <Text style={[styles.title, { color: theme?.textPrimary }]}>
+              Criar Conta
+            </Text>
+            <Text style={[styles.subtitle, { color: theme?.textSecondary }]}>
+              Preencha os dados para começar
+            </Text>
+            
+            {/* Botão para alternar tema */}
+            <TouchableOpacity 
+              style={[styles.themeToggle, { backgroundColor: theme?.backgroundSecondary }]}
+              onPress={themeContext?.toggleTheme}
+            >
+              <Feather 
+                name={themeContext?.isDarkTheme ? "sun" : "moon"} 
+                size={20} 
+                color={theme?.primary} 
+              />
+            </TouchableOpacity>
           </Animated.View>
 
           <Animated.View
@@ -177,36 +201,36 @@ export default function Cadastro({ navigation }) {
             ]}
           >
             {/* Campo Usuário */}
-            <View style={styles.inputWrapper}>
-              <Feather name="user" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="user" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme?.textPrimary }]}
                 placeholder="Usuário"
-                placeholderTextColor="#667"
+                placeholderTextColor={theme?.textTertiary}
                 value={user}
                 onChangeText={(text) => setUser(text)}
               />
             </View>
 
             {/* Campo E-mail */}
-            <View style={styles.inputWrapper}>
-              <Feather name="mail" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="mail" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme?.textPrimary }]}
                 placeholder="E-mail"
-                placeholderTextColor="#667"
+                placeholderTextColor={theme?.textTertiary}
                 value={email}
                 onChangeText={(text) => setEmail(text)}
               />
             </View>
 
             {/* Campo Senha */}
-            <View style={styles.inputWrapper}>
-              <Feather name="lock" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="lock" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme?.textPrimary }]}
                 placeholder="Senha"
-                placeholderTextColor="#667"
+                placeholderTextColor={theme?.textTertiary}
                 value={password}
                 secureTextEntry={true}
                 onChangeText={(text) => setPassword(text)}
@@ -214,25 +238,25 @@ export default function Cadastro({ navigation }) {
             </View>
 
             {/* Campo CPF */}
-            <View style={styles.inputWrapper}>
-              <Feather name="clipboard" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="clipboard" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme?.textPrimary }]}
                 placeholder="CPF"
-                placeholderTextColor="#667"
+                placeholderTextColor={theme?.textTertiary}
                 value={cpf}
                 keyboardType="numeric"
                 onChangeText={(text) => setCpf(text)}
               />
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Feather name="calendar" size={20} style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Feather name="calendar" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TouchableOpacity
                 style={styles.input}
                 onPress={() => setShow(true)}
               >
-                <Text style={{ color: "#fff", fontSize: 16 }}>
+                <Text style={[styles.dateText, { color: theme?.textPrimary }]}>
                   {dataNasc.toLocaleDateString()}
                 </Text>
               </TouchableOpacity>
@@ -247,13 +271,18 @@ export default function Cadastro({ navigation }) {
               />
             )}
 
-            <TouchableOpacity style={styles.button} onPress={saveData}>
-              <Text style={styles.buttonText}>Registrar</Text>
+            <TouchableOpacity 
+              style={[styles.button, { backgroundColor: theme?.primary }]} 
+              onPress={saveData}
+            >
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Registrar</Text>
             </TouchableOpacity>
 
             {/* Link para ir ao login */}
             <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-              <Text style={styles.linkText}>Já possui conta? Faça login</Text>
+              <Text style={[styles.linkText, { color: theme?.textPrimary }]}>
+                Já possui conta? Faça login
+              </Text>
             </TouchableOpacity>
 
 
@@ -266,7 +295,7 @@ export default function Cadastro({ navigation }) {
 
 // Definição de estilos para a tela de cadastro
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: "#1a1b21" },
+  background: { flex: 1 },
   scroll: { flexGrow: 1 },
   container: {
     flex: 1,
@@ -274,13 +303,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
-  logoContainer: { marginBottom: 30, alignItems: "center" },
+  logoContainer: { marginBottom: 30, alignItems: "center", position: "relative" },
   logo: { width: 100, height: 100, borderRadius: 0 },
+  title: { fontSize: 24, fontWeight: "bold", marginTop: 15, marginBottom: 5 },
+  subtitle: { fontSize: 16, marginBottom: 20, textAlign: "center" },
   form: { width: "100%" },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2b2c33",
     borderRadius: 25,
     paddingHorizontal: 15,
     marginBottom: 15,
@@ -291,10 +321,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  icon: { color: "#f37100", marginRight: 10 },
-  input: { flex: 1, fontSize: 16, color: "#fff" },
+  icon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 16 },
+  dateText: { fontSize: 16 },
   button: {
-    backgroundColor: "#f37100",
     borderRadius: 25,
     height: 50,
     alignItems: "center",
@@ -306,11 +336,22 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 4,
   },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  buttonText: { fontSize: 18, fontWeight: "bold" },
   linkText: {
-    color: "#fff",
     textAlign: "center",
     marginTop: 10,
     textDecorationLine: "underline",
+  },
+  themeToggle: {
+    position: "absolute",
+    top: -50,
+    right: 0,
+    padding: 10,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
