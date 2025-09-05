@@ -82,7 +82,13 @@ const pickImage = async () => {
     };
 
      try {
-      const userRef = doc(db, 'user', userData?.userInfo?.uid);
+      // Use uid direto do contexto (userData.uid) se disponível. fallback para userInfo.uid ou null
+      const uid = userData?.uid || userData?.userInfo?.uid || null;
+      if (!uid) {
+        console.error('UID do usuário indefinido. Não é possível atualizar o perfil. userData:', userData);
+        return;
+      }
+      const userRef = doc(db, 'user', uid);
       await updateDoc(userRef, updObj);
       console.log('Dados atualizados com sucesso!');
       console.log("isOrganizer: " + userData?.isOrganizer);
