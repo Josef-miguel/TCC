@@ -1,0 +1,64 @@
+{
+    "common": {
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "back": "Voltar",
+    "continue": "Continuar"
+    },
+    "nav": {
+    "home": "Início",
+    "settings": "Configurações",
+    "profile": "Perfil",
+    "termsSupport": "Termos e Suporte",
+    "changePassword": "Alterar senha",
+    "deleteAccount": "Excluir conta"
+    },
+    "settings": {
+    "title": "Configurações",
+    "notifications": "Notificações",
+    "lightTheme": "Tema claro",
+    "language": "Idioma",
+    "languages": {
+    "ptBR": "Português (Brasileiro)",
+    "en": "English",
+    "zhCN": "官话 (简体中文)"
+    }
+    },
+    "auth": {
+    "loginTitle": "Entrar",
+    "registerTitle": "Criar conta",
+    "email": "E-mail",
+    "password": "Senha",
+    "loginButton": "Entrar",
+    "registerButton": "Cadastrar",
+    "forgotPassword": "Esqueci minha senha",
+    "username": "Usuário",
+    "loginSuccess": "Login Bem-Sucedido",
+    "welcome": "Bem-vindo!",
+    "loginError": "Erro ao logar e-mail ou senha inválidos",
+    "saveError": "Erro ao Salvar",
+    "fillFields": "Informe e-mail e senha.",
+    "noUserData": "Usuário não possui dados salvos no Firestore.",
+    "registerLink": "Ainda não possui conta? Registre-se"
+    },
+    "home": {
+    "title": "Bem-vindo",
+    "cta": "Começar",
+    "searchPlaceholder": "Quero ir para....",
+    "menu": "Menu",
+    "agenda": "Agenda",
+    "favorites": "Favoritos",
+    "close": "Fechar",
+    "recommended": "Recomendados",
+    "loadingEvents": "Carregando eventos...",
+    "popularRecently": "Populares recentemente",
+    "noTitle": "Sem título",
+    "noDescription": "Sem descrição disponível"
+    },
+    "dialogs": {
+    "confirmDelete": "Tem certeza que deseja excluir sua conta?"
+    }
+    }

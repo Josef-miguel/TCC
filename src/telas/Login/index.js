@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { showMessage } from 'react-native-flash-message';
 import {auth, db} from '../../../services/firebase';
@@ -23,6 +24,7 @@ import { ThemeContext } from '../../context/ThemeContext';
 
 // Tela de Login principal
 export default function Login({ navigation }) {
+  const { t } = useTranslation();
   // Contexto agora atualiza sozinho após login; não é necessário setUserData aqui
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
@@ -151,7 +153,7 @@ async function handleLogin(obj) {
               <Feather name="user" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
                 style={[styles.input, { color: theme?.textPrimary }]}
-                placeholder="Usuário"
+                placeholder={t('auth.username')}
                 placeholderTextColor={theme?.textTertiary || "#666"}
                 autoCapitalize="none"
                 value={user}
