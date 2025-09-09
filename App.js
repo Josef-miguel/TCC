@@ -25,6 +25,8 @@ import Formapagamento from "./src/telas/Formapagamento";
 import Chat from "./src/telas/Chat";
 import MinhasViagens from "./src/telas/MinhasViagens";
 import Perfil from "./src/telas/Perfil";
+import Avaliacoes from "./src/telas/Avaliacoes";
+
 
 import Post from "./src/telas/Post";
 import Favoritos from "./src/telas/Favoritos";
@@ -217,6 +219,12 @@ export default function App() {
                 component={Chat}
                 options={{ headerShown: false }}
               />
+              <Stack.Screen 
+                name="Avaliacoes" 
+                component={Avaliacoes}
+                options={{ headerShown: false }}
+              />
+
             </Stack.Navigator>
           </NavigationContainer>
             <FlashMessage position="top" style={{paddingVertical: 10}}/>
