@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+<a href="{{url_for('perfil')}}">perfil</a>
 <h1>Todos os Eventos</h1>
 <ul style="list-style:none; padding:0;">
   {% for event in events %}
@@ -20,7 +21,15 @@
       <p>Vagas: {{ event.numSlots }}</p>
 
       
+      <div class="map"
+           id="map-{{ loop.index }}"
+           data-route="{{ event.route | tojson | safe }}"
+           style="height:300px; width:100%; border-radius:12px; margin-top:8px; border: 1px solid red;">
+      </div>
+      <pre>{{ event.route | tojson }}</pre>
+
     </li>
+
   {% endfor %}
 </ul>
 
@@ -42,8 +51,8 @@ mapDivs.forEach((div, idx) => {
   const route = JSON.parse(div.dataset.route || 'null');
   if (!route || !route.start || !route.end) return;
 
-  const centerLat = (route.start.lat + route.end.lat) / 2;
-  const centerLng = (route.start.lng + route.end.lng) / 2;
+  const centerLat = (route.start.latitude + route.end.latitude) / 2;
+  const centerLng = (route.start.longitude + route.end.longitude) / 2;
 
   // Usa o id da div
   const map = L.map(div.id).setView([centerLat, centerLng], 8);
@@ -52,15 +61,20 @@ mapDivs.forEach((div, idx) => {
     attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
   }).addTo(map);
 
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 200);
+
+
   // Marcadores
-  L.marker([route.start.lat, route.start.lng]).addTo(map).bindPopup(route.display_start || "Saída");
-  L.marker([route.end.lat, route.end.lng]).addTo(map).bindPopup(route.display_end || "Chegada");
+  L.marker([route.start.latitude, route.start.longitude]).addTo(map).bindPopup(route.display_start || "Saída");
+  L.marker([route.end.latitude, route.end.longitude]).addTo(map).bindPopup(route.display_end || "Chegada");
 
   // Rota
   L.Routing.control({
     waypoints: [
-      L.latLng(route.start.lat, route.start.lng),
-      L.latLng(route.end.lat, route.end.lng)
+      L.latLng(route.start.latitude, route.start.longitude),
+      L.latLng(route.end.latitude, route.end.longitude)
     ],
     lineOptions: { styles: [{ color: 'blue', opacity: 0.7, weight: 4 }] },
     addWaypoints: false,

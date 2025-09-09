@@ -117,9 +117,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const routeData = {
       display_start: "Ponto inicial",
-      start: { lat: waypoints[0].lat, lng: waypoints[0].lng },
+      start: { latitude: waypoints[0].lat, longitude: waypoints[0].lng },
       display_end: "Ponto final",
-      end: { lat: waypoints[1].lat, lng: waypoints[1].lng }
+      end: { latitude: waypoints[1].lat, longitude: waypoints[1].lng }
     };
 
     routeInput.value = JSON.stringify(routeData);

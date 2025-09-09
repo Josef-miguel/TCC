@@ -106,7 +106,7 @@ def init_app(app, db):
                     events_list.append(data)
 
                 # envia para o template
-                return render_template("dashboard_usuario.html", events=events_list)
+                return render_template("dashboard.html", events=events_list)
             except Exception as e:
                 return f"Erro ao carregar eventos: {e}"
     
@@ -138,6 +138,7 @@ def init_app(app, db):
                 "images": data.get("image_urls", []),
                 "route": data.get("route", []),
                 "created_at": firestore.SERVER_TIMESTAMP,
+                "uid" : g.user['uid'] if g.user else None
             }
 
             # salva no Firestore
@@ -149,4 +150,11 @@ def init_app(app, db):
             traceback.print_exc()
             return jsonify({"success": False, "message": "Erro ao cadastrar evento"}), 500
         
+    
+    @app.route("/perfil")
+    def perfil():
+        if not g.user:
+            return redirect(url_for('login'))
+        
+        return render_template("perfil.html", user=g.user)
     
