@@ -1,12 +1,117 @@
-{% extends "base.html" %}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JustSetGo - Sua próxima aventura começa aqui</title>
 
-{% block content %}
+  <!-- CSS global -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+  <header>
     <div class="container">
-        <h1>Bem-vindo à Página Inicial</h1>
-        <p>Este é o conteúdo específico da página inicial.</p>
+      <div class="brand">
+        <div class="logo-placeholder"><img src="..\..\static\img\JSGlogo.png" class="logo-img"></div>
+        <span>JustSetGo</span>
+      </div>
+      
+      <div class="nav-container">
+        <div class="search-bar">
+          <input type="text" placeholder="Pesquisar viagens...">
+        </div>
+        <a href="{{url_for('login')}}" class="btn">Login</a>
+      </div>
+    </div>
+  </header>
 
-        <a href="{{ url_for('login') }}">Login</a>
-        <a href="{{ url_for('register') }}">Register</a>
-    </div>  
+  <main>
+    <!-- Hero section com carrossel -->
+    <section class="hero">
+      <div class="carousel">
+        <div class="carousel-slide active" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?paris');">
+          <div class="slide-content">
+            <h2>Descubra Paris</h2>
+            <a href="#" class="btn">Comece Agora</a>
+          </div>
+        </div>
+        <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?tokyo');">
+          <div class="slide-content">
+            <h2>Explore Tóquio</h2>
+            <a href="#" class="btn">Comece Agora</a>
+          </div>
+        </div>
+        <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?bali');">
+          <div class="slide-content">
+            <h2>Relaxe em Bali</h2>
+            <a href="#" class="btn">Comece Agora</a>
+          </div>
+        </div>
+      </div>
+    </section>
 
-{% endblock %}
+    <!-- Seção de desenvolvedores -->
+    <section class="developers container">
+      <h2>Nossa Equipe</h2>
+      <div class="developer-cards">
+        <div class="developer-card">
+          <div class="developer-avatar">D1</div>
+          <h3>Desenvolvedor 1</h3>
+          <p>Front-end Specialist</p>
+        </div>
+        <div class="developer-card">
+          <div class="developer-avatar">D2</div>
+          <h3>Desenvolvedor 2</h3>
+          <p>Back-end Engineer</p>
+        </div>
+        <div class="developer-card">
+          <div class="developer-avatar">D3</div>
+          <h3>Desenvolvedor 3</h3>
+          <p>UI/UX Designer</p>
+        </div>
+      </div>
+      <div class="dots-container">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 - JustSetGo</p>
+  </footer>
+
+  <script>
+    // Script simples para o carrossel
+    document.addEventListener('DOMContentLoaded', function() {
+      const slides = document.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.dot');
+      let currentSlide = 0;
+      
+      function showSlide(n) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        currentSlide = (n + slides.length) % slides.length;
+        
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+      }
+      
+      // Adiciona eventos aos dots
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+          showSlide(index);
+        });
+      });
+      
+      // Auto-rotacionar o carrossel
+      setInterval(() => {
+        showSlide(currentSlide + 1);
+      }, 5000);
+    });
+  </script>
+</body>
+</html>

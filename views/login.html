@@ -2,41 +2,48 @@
 
 {% block content %}
 <div class="container">
-  <div class="login-card">
-    <div class="login-header">
-      <h3 class="login-title">Entrar</h3>
+  <div class="card login-card">
+    <div class="login-header" style="text-align:center; margin-bottom:1.5rem">
+      <h3 class="login-title" style="font-size:2rem; font-weight:700; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+        Entrar
+      </h3>
     </div>
 
     <div class="login-body">
       <form id="loginForm" novalidate>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:1rem">
           <label for="email" class="form-label">E-mail</label>
-          <input type="email" id="email" required class="form-control">
+          <input type="email" id="email" required class="form-control" placeholder="Digite seu e-mail">
         </div>
 
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:1rem">
           <label for="password" class="form-label">Senha</label>
-          <input type="password" id="password" required class="form-control">
+          <input type="password" id="password" required class="form-control" placeholder="Digite sua senha">
         </div>
 
-        <div class="form-check">
+        <!-- Checkbox estilizada -->
+        <div class="form-check" style="margin:0.8rem 0 1.2rem">
           <input type="checkbox" id="remember" class="form-check-input">
           <label for="remember" class="form-check-label">Manter-me conectado</label>
         </div>
 
-        <button id="loginButton" type="submit" class="btn-login">Entrar</button>
-        <div id="formAlert" style="margin-top:12px"></div>
+        <button id="loginButton" type="submit" class="btn" style="width:100%">Entrar</button>
+        <div id="formAlert" style="margin-top:12px; text-align:center"></div>
       </form>
 
-      <div class="social-login" style="margin-top:1.5rem">
-        <p class="mb-0">— Ou entre com —</p>
-        <div class="social-buttons" style="margin-top:8px">
-          <button id="googleLogin" class="social-btn google-btn" type="button">G</button>
-          <button id="facebookLogin" class="social-btn facebook-btn" type="button">f</button>
+      <!-- Login Social -->
+      <div class="social-login" style="margin-top:2rem; text-align:center">
+        <p class="mb-0" style="color:var(--text-secondary)">— Ou entre com —</p>
+        <div class="social-buttons" style="margin-top:12px; display:flex; gap:1rem; justify-content:center">
+          <button id="googleLogin" class="social-btn" type="button" style="background:#DB4437; color:white; border:none; width:42px; height:42px; border-radius:50%; font-weight:bold; font-size:1.2rem; cursor:pointer;">G</button>
+          <button id="facebookLogin" class="social-btn" type="button" style="background:#4267B2; color:white; border:none; width:42px; height:42px; border-radius:50%; font-weight:bold; font-size:1.2rem; cursor:pointer;">f</button>
         </div>
       </div>
 
-      <p class="register-text">Não tem conta? <a href="#" class="login-link">Cadastre-se</a></p>
+      <!-- Cadastro -->
+      <p class="register-text" style="margin-top:2rem; text-align:center">
+        Não tem conta? <a href="{{url_for('register')}}" class="login-link" style="color:var(--primary); font-weight:600">Cadastre-se</a>
+      </p>
     </div>
   </div>
 </div>
@@ -55,13 +62,15 @@ const firebaseConfig = {
     messagingSenderId: "658782512097",
     appId: "1:658782512097:web:55b0728c26a4fa9e16a8a0",
     measurementId: "G-W9QE4LFFN3"
-  };
+};
 
+// Inicializa Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const alertDiv = document.getElementById("formAlert");
 const btn = document.getElementById("loginButton");
 
+// Função de login com backend
 async function loginWithToken(idToken) {
   console.log('loginWithToken -> iniciando fetch /login');
   try {
@@ -71,38 +80,27 @@ async function loginWithToken(idToken) {
       body: JSON.stringify({ token: idToken })
     });
 
-    console.log('Resposta status:', resp.status, 'redirected:', resp.redirected, 'content-type:', resp.headers.get('content-type'));
-
     const ct = (resp.headers.get('content-type') || '').toLowerCase();
-
-    // se o servidor retornou JSON, parseia; se não, obtém texto pra debug
     let data;
+
     if (ct.includes('application/json')) {
       data = await resp.json();
-      console.log('Resposta JSON:', data);
     } else {
       const text = await resp.text();
-      console.warn('Resposta NÃO é JSON. Texto de resposta:', text.slice(0,200));
-      // tenta parsear como JSON só se parecer JSON
-      try { data = JSON.parse(text); }
-      catch(e) { data = null; }
+      try { data = JSON.parse(text); } catch(e) { data = null; }
     }
 
     if (resp.ok && data && data.success) {
-      console.log('login OK, redirecionando...', data.redirect);
-      document.getElementById('formAlert').innerHTML = '<div style="color:green">Login efetuado! Redirecionando...</div>';
+      alertDiv.innerHTML = '<div style="color:green">Login efetuado! Redirecionando...</div>';
       window.location.href = data.redirect || '/dashboard';
     } else {
-      // Se deu errado, mostra a mensagem do JSON ou uma mensagem padrão
       const msg = (data && data.message) ? data.message : ('Erro no login (status ' + resp.status + ')');
-      console.error('loginWithToken -> erro:', msg);
-      document.getElementById('formAlert').innerHTML = `<div style="color:red">${msg}</div>`;
+      alertDiv.innerHTML = `<div style="color:red">${msg}</div>`;
       btn.disabled = false;
       btn.innerText = 'Entrar';
     }
   } catch (err) {
-    console.error('fetch /login falhou:', err);
-    document.getElementById('formAlert').innerHTML = `<div style="color:red">${err.message || 'Falha na requisição'}</div>`;
+    alertDiv.innerHTML = `<div style="color:red">${err.message || 'Falha na requisição'}</div>`;
     btn.disabled = false;
     btn.innerText = 'Entrar';
   }
@@ -126,7 +124,6 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const idToken = await userCredential.user.getIdToken();
     await loginWithToken(idToken);
   } catch (err) {
-    console.error(err);
     alertDiv.innerHTML = `<div style="color:red">${err.message}</div>`;
     btn.disabled = false;
     btn.innerText = "Entrar";
@@ -140,7 +137,6 @@ async function socialLogin(provider) {
     const idToken = await result.user.getIdToken();
     await loginWithToken(idToken);
   } catch (err) {
-    console.error(err);
     alertDiv.innerHTML = `<div style="color:red">${err.message || 'Erro no login social'}</div>`;
   }
 }

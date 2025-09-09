@@ -3,43 +3,47 @@
 
 {% block content %}
 <div class="container">
-  <div class="register-card">
-    <div class="register-header">
-      <h3 class="register-title">Cadastrar-se</h3>
+  <div class="card register-card">
+    <div class="register-header" style="text-align:center; margin-bottom:1.5rem">
+      <h3 class="register-title" style="font-size:2rem; font-weight:700; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+        Criar Conta
+      </h3>
     </div>
 
     <div class="register-body">
       <form id="registerForm" novalidate>
-        <div class="form-group">
-          <label for="name">Nome</label>
-          <input type="text" id="name" required class="form-control">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label for="name" class="form-label">Nome</label>
+          <input type="text" id="name" required class="form-control" placeholder="Digite seu nome completo">
         </div>
 
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" required class="form-control">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label for="email" class="form-label">E-mail</label>
+          <input type="email" id="email" required class="form-control" placeholder="Digite seu e-mail">
         </div>
 
-        <div class="form-group">
-          <label for="password">Senha</label>
-          <input type="password" id="password" required class="form-control">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label for="password" class="form-label">Senha</label>
+          <input type="password" id="password" required class="form-control" placeholder="Crie uma senha segura">
         </div>
 
-        <div class="form-group">
-          <label for="cpf">CPF</label>
-          <input type="number" id="CPF" required class="form-control">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label for="cpf" class="form-label">CPF</label>
+          <input type="text" id="CPF" required class="form-control" placeholder="Digite seu CPF">
         </div>
         
-        <div class="form-group">
-          <label for="datanasc">Date de Nascimento</label>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label for="datanasc" class="form-label">Data de Nascimento</label>
           <input type="date" id="datanasc" required class="form-control">
         </div>
 
-        <button id="registerButton" type="submit" class="btn-register">Cadastrar</button>
-        <div id="formAlert" style="margin-top:12px"></div>
+        <button id="registerButton" type="submit" class="btn" style="width:100%">Cadastrar</button>
+        <div id="formAlert" style="margin-top:12px; text-align:center"></div>
       </form>
 
-      <p class="login-text">Já tem conta? <a href="{{ url_for('login') }}">Entre aqui</a></p>
+      <p class="login-text" style="margin-top:2rem; text-align:center">
+        Já tem conta? <a href="{{ url_for('login') }}" class="login-link" style="color:var(--primary); font-weight:600">Entre aqui</a>
+      </p>
     </div>
   </div>
 </div>
@@ -58,8 +62,7 @@ const firebaseConfig = {
     messagingSenderId: "658782512097",
     appId: "1:658782512097:web:55b0728c26a4fa9e16a8a0",
     measurementId: "G-W9QE4LFFN3"
-  };
-
+};
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
@@ -77,7 +80,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
 
   const alertDiv = document.getElementById("formAlert");
 
-  if (!name || !email || !password) {
+  if (!name || !email || !password || !cpf || !dataNasc) {
     alertDiv.innerHTML = `<div style="color:red">Preencha todos os campos</div>`;
     btn.disabled = false;
     btn.innerText = "Cadastrar";
@@ -86,10 +89,8 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
 
   try {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const idToken = await userCredential.user.getIdToken(true)  ;
-    console.log("ID token (inicio):", idToken.slice(0,30), "...", idToken.slice(-30));
+    const idToken = await userCredential.user.getIdToken(true);
 
-    // envia para o backend via fetch
     const resp = await fetch("/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -99,7 +100,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     const data = await resp.json();
     if (resp.ok && data.success) {
       alertDiv.innerHTML = `<div style="color:green">Cadastro efetuado! Redirecionando...</div>`;
-      setTimeout(() => window.location.href = data.redirect || "/dashboard", 1000);
+      setTimeout(() => window.location.href = data.redirect || "/dashboard", 1200);
     } else {
       alertDiv.innerHTML = `<div style="color:red">${data.message || 'Erro no cadastro'}</div>`;
       btn.disabled = false;
