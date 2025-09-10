@@ -93,7 +93,7 @@ def init_app(app, db):
             logger.exception(f"Erro no registro: {e}")
             return jsonify({"success": False, "message": "Token inválido ou erro ao salvar"}), 401
 
-
+    
     @app.route("/dashboard")
     def dashboard():
             try:
@@ -101,14 +101,32 @@ def init_app(app, db):
                 # pega todos os eventos da collection 'events', ordenando pela data de saída
                 events_ref = db.collection('events').order_by('exit_date').stream()
                 for doc in events_ref:
-                    data = doc.to_dict()
-                    data['id'] = doc.id  # adiciona o ID do doc
-                    events_list.append(data)
+                  data = doc.to_dict()
+                  data['id'] = doc.id
+        
+                  # Corrige o route para JSON serializável
+                  route = data.get('route')
+                  if route and isinstance(route, dict):
+                      start = route.get('start')
+                      end = route.get('end')
+                      if start and end:
+                          route['start'] = {
+                              'latitude': start.get('latitude'),
+                              'longitude': start.get('longitude')
+                          }
+                          route['end'] = {
+                              'latitude': end.get('latitude'),
+                              'longitude': end.get('longitude')
+                          }
+                      data['route'] = route
+        
+                  events_list.append(data)
 
                 # envia para o template
                 return render_template("dashboard.html", events=events_list)
             except Exception as e:
                 return f"Erro ao carregar eventos: {e}"
+    
     
     @app.route("/new_event", methods=["GET", "POST"])     
     def new_event():

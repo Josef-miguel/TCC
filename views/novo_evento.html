@@ -112,13 +112,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  function saveRoute() {
+  async function getAddress(lat, lng) {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+    const resp = await fetch(url, { headers: { 'User-Agent': 'JSG/1.0' } });
+    if (!resp.ok) return `${lat}, ${lng}`;
+    const data = await resp.json();
+    return data.display_name || `${lat}, ${lng}`;
+  }
+
+
+  async function saveRoute() {
     if (waypoints.length < 2) return;
 
+    const startAddr = await getAddress(waypoints[0].lat, waypoints[0].lng);
+    const endAddr   = await getAddress(waypoints[1].lat, waypoints[1].lng);
+
     const routeData = {
-      display_start: "Ponto inicial",
+      display_start: startAddr,
       start: { latitude: waypoints[0].lat, longitude: waypoints[0].lng },
-      display_end: "Ponto final",
+      display_end: endAddr,
       end: { latitude: waypoints[1].lat, longitude: waypoints[1].lng }
     };
 
