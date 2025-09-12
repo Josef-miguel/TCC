@@ -31,6 +31,7 @@ import Avaliacoes from "./src/telas/Avaliacoes";
 import Post from "./src/telas/Post";
 import Favoritos from "./src/telas/Favoritos";
 import Algoritmo from "./src/telas/Algoritmo";
+import VisualizarPerfil from "./src/telas/VisualizarPerfil";
 
 import CriarPost from "./src/modal/CriarPost";
 import VerificacaoIdentidade from "./src/telas/VerificacaoIdentidade";
@@ -219,12 +220,18 @@ export default function App() {
                 component={Chat}
                 options={{ headerShown: false }}
               />
+
               <Stack.Screen 
                 name="Avaliacoes" 
                 component={Avaliacoes} 
-                options={{ headerShown: false }} // importante para usar o botão customizado
-              />
+                options={{ headerShown: false }}
+              /> 
+              <Stack.Screen
+                name="VisualizarPerfil"
+                component={VisualizarPerfil}
+                options={{ headerShown: false }}
 
+              />
             </Stack.Navigator>
           </NavigationContainer>
             <FlashMessage position="top" style={{paddingVertical: 10}}/>

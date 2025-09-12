@@ -10,10 +10,12 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import axios from 'axios';
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
 import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
@@ -43,6 +45,7 @@ const PostScreen = ({
   const [starRating, setStarRating] = useState(0);
   const [newText, setNewText] = useState("");
   const [comments, setComments] = useState(selectedPost?.comments || []);
+  const [routeCoords, setRouteCoords] = useState((selectedPost?.route && selectedPost.route.coordinates) ? selectedPost.route.coordinates : []);
   const [whoTravels, setWhoTravels] = useState("Outra pessoa");
   const [whoGoes, setWhoGoes] = useState("Jovens 15 a 17 anos (com acompanhante)");
   const [isSaved, setIsSaved] = useState(false);
@@ -98,8 +101,43 @@ const PostScreen = ({
 
   const handleVisualizarPerfil = () => {
     setSidebarVisible(false);
-    // Navegar para a tela de perfil do organizador
-    navigation.navigate("Perfil", { userId: selectedPost?.userId });
+
+    // Attempt to resolve a stable uid for the creator from several legacy/variant fields
+    let targetUserId = selectedPost?.uid
+      || selectedPost?.creator?.id
+      || selectedPost?.creator?.uid
+      || selectedPost?.userId
+      || selectedPost?.user?.uid
+      || selectedPost?.ownerId
+      || null;
+
+    // Defensive: if we have an object instead of string (sometimes creator is a user object), try common properties
+    if (targetUserId && typeof targetUserId !== 'string') {
+      // e.g. { uid: 'abc' } or { id: 'abc' }
+      if (typeof targetUserId.uid === 'string') targetUserId = targetUserId.uid;
+      else if (typeof targetUserId.id === 'string') targetUserId = targetUserId.id;
+      else targetUserId = String(targetUserId);
+    }
+
+    // Trim and final validation
+    if (typeof targetUserId === 'string') {
+      targetUserId = targetUserId.trim();
+      if (targetUserId === '') targetUserId = null;
+    }
+
+    if (!targetUserId) {
+      console.warn('TelaPost: Could not resolve creator uid for post', selectedPost?.id || selectedPost);
+      Alert.alert('Perfil indisponível', 'Não foi possível encontrar o usuário associado a este post.', [{ text: 'OK' }]);
+      return;
+    }
+
+    // Pass explicit uid and also include any lightweight creator object if available as a convenience
+    const creatorObj = (selectedPost?.creator && typeof selectedPost.creator === 'object')
+      ? selectedPost.creator
+      : (selectedPost?.user && typeof selectedPost.user === 'object') ? selectedPost.user : null;
+
+    console.log('TelaPost: navigating to VisualizarPerfil with uid=', targetUserId, 'creatorObj=', !!creatorObj, 'selectedPostId=', selectedPost?.id);
+    navigation.navigate('VisualizarPerfil', { uid: targetUserId, user: creatorObj });
   };
 
 const auth = getAuth();
@@ -185,6 +223,7 @@ const handleParticipar = async () => {
     return () => unsub();
   }, [selectedPost]);
 
+
   useEffect(() => {
     if (!selectedPost?.id) return;
 
@@ -205,6 +244,22 @@ const handleParticipar = async () => {
 
   return () => unsub();
 }, [selectedPost]);
+
+  // When selectedPost changes, ensure we have route coordinates derived from start/end
+  useEffect(() => {
+    if (selectedPost?.route?.start && selectedPost?.route?.end) {
+      // If coordinates are already stored on the post, use them directly
+      if (selectedPost.route.coordinates && selectedPost.route.coordinates.length) {
+        setRouteCoords(selectedPost.route.coordinates);
+      } else {
+        // Use fallback to straight line instead of API call to avoid 404 errors
+        setRouteCoords([selectedPost.route.start, selectedPost.route.end]);
+      }
+    } else {
+      setRouteCoords([]);
+    }
+  }, [selectedPost]);
+
 
   // Verifica se o post está salvo quando carrega
   useEffect(() => {
@@ -229,11 +284,40 @@ const handleParticipar = async () => {
   }, [selectedPost?.id, auth.currentUser]);
 
   if (!selectedPost || !modalVisible) return null;
+
+  // Centralized close handler to reset modal state when closing
+  const handleCloseModal = () => {
+    try {
+      setModalVisible(false);
+      // Reset transient states to ensure clean reopen
+      setSelectedPost(null);
+      setCurrentImageIndex(0);
+      setStarRating(0);
+      setNewText("");
+      setComments([]);
+      setRouteCoords([]);
+      setImageZoomVisible(false);
+      setZoomedImage(null);
+      setSidebarVisible(false);
+      setParticipationModalVisible(false);
+      setChatModalVisible(false);
+      setReportarProblemaVisible(false);
+      setPaymentModalVisible(false);
+    } catch (e) {
+      // no-op fail safe
+    }
+  };
   
 
   return (
     <View style={{ flex: 1 }}>
-      <Modal visible={modalVisible} animationType="slide" transparent={false}>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={handleCloseModal}
+        onDismiss={handleCloseModal}
+      >
         <View style={[styles.modalContainer, { backgroundColor: theme?.background }]}>
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
 
@@ -353,10 +437,7 @@ const handleParticipar = async () => {
               {/* Botão de voltar flutuante */}
               <TouchableOpacity
                 style={styles.backButton}
-                onPress={() => {
-                  setModalVisible(false);
-                  setSelectedPost(null);
-                }}
+                onPress={handleCloseModal}
               >
                 <Ionicons name="arrow-back" size={28} color="#fff" />
               </TouchableOpacity>
