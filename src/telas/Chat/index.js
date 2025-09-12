@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Animated } from 'react-native';
 import { auth, db } from '../../../services/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDoc, doc } from "firebase/firestore";
+import { useAuth } from '../../../services/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
 
@@ -10,13 +11,42 @@ export default function Chat() {
   const { theme } = useContext(ThemeContext);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const { userData } = useAuth();
+  const [userCache, setUserCache] = useState({}); // { uid: { userInfo, isOrganizer, uid } }
   const scrollViewRef = useRef();
   const fadeAnim = useRef(new Animated.Value(0)).current; // For fade-in animation
 
   useEffect(() => {
     const q = query(collection(db, 'messages'), orderBy('timestamp'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMessages(msgs);
+
+      // Verifica userIds sem username para buscar dados
+      const missingIds = Array.from(new Set(msgs
+        .map(m => m.userId)
+        .filter(uid => uid && !userCache[uid]
+      )));
+
+      if (missingIds.length > 0) {
+        // Busca perfis faltantes
+        Promise.all(missingIds.map(async (uid) => {
+          try {
+            const ref = doc(db, 'user', uid);
+            const snap = await getDoc(ref);
+            if (snap.exists()) return { uid, ...snap.data() };
+            return { uid, userInfo: {} };
+          } catch (e) {
+            return { uid, userInfo: {} };
+          }
+        })).then(results => {
+          setUserCache(prev => {
+            const next = { ...prev };
+            results.forEach(r => { next[r.uid] = { userInfo: r.userInfo || r, uid: r.uid }; });
+            return next;
+          });
+        });
+      }
     });
     // Fade-in animation for messages
     Animated.timing(fadeAnim, {
@@ -30,10 +60,14 @@ export default function Chat() {
   const sendMessage = async () => {
     if (!input) return;
 
+    const uid = auth.currentUser?.uid;
+    const username = userData?.userInfo?.nome || '';
+
     await addDoc(collection(db, 'messages'), {
       text: input,
       timestamp: serverTimestamp(),
-      userId : auth.currentUser.uid
+      userId: uid,
+      username: username,
     });
 
     setInput('');
@@ -54,21 +88,26 @@ export default function Chat() {
         ref={scrollViewRef}
         onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
       >
-        {messages.map((msg, index) => (
-          <Animated.View
-            key={msg.id}
-            style={[
-              styles.messageBubble,
-              index % 2 === 0 ? [styles.sent, { backgroundColor: theme?.primary }] : [styles.received, { backgroundColor: theme?.cardBackground, borderColor: theme?.primary }],
-              { opacity: fadeAnim }
-            ]}
-          >
-            <Text style={[
-              index % 2 === 0 ? styles.messageText : styles.messageTextReceived,
-              { color: index % 2 === 0 ? theme?.textInverted : theme?.textPrimary }
-            ]}>{msg.text}</Text>
-          </Animated.View>
-        ))}
+        {messages.map((msg) => {
+          const isOwn = msg.userId === auth.currentUser?.uid;
+          const senderName = msg.username || (userCache[msg.userId]?.userInfo?.nome) || (isOwn ? 'Você' : 'Anônimo');
+          return (
+            <Animated.View
+              key={msg.id}
+              style={[
+                styles.messageBubble,
+                isOwn ? [styles.sent, { backgroundColor: theme?.primary }] : [styles.received, { backgroundColor: theme?.cardBackground, borderColor: theme?.primary }],
+                { opacity: fadeAnim }
+              ]}
+            >
+              {!isOwn && <Text style={[styles.senderName, { color: theme?.textSecondary }]}>{senderName}</Text>}
+              <Text style={[
+                isOwn ? styles.messageText : styles.messageTextReceived,
+                { color: isOwn ? theme?.textInverted : theme?.textPrimary }
+              ]}>{msg.text}</Text>
+            </Animated.View>
+          );
+        })}
       </ScrollView>
 
       <View style={[styles.inputContainer, { backgroundColor: theme?.backgroundSecondary, borderTopColor: theme?.primary }]}>
@@ -130,6 +169,11 @@ const styles = StyleSheet.create({
   messageTextReceived: {
     fontSize: 16,
     lineHeight: 22,
+  },
+  senderName: {
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: '600',
   },
   inputContainer: {
     flexDirection: 'row',

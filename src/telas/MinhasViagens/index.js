@@ -13,10 +13,11 @@ export default function MinhasViagens({ navigation, route }) {
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
   
-  // Estados para posts salvos e favoritados
+  // Estados para posts salvos, favoritados e criados por mim
   const [savedPosts, setSavedPosts] = useState([]);
   const [favoritePosts, setFavoritePosts] = useState([]);
-  const [activeTab, setActiveTab] = useState('saved'); // 'saved' ou 'favorites'
+  const [myPosts, setMyPosts] = useState([]);
+  const [activeTab, setActiveTab] = useState('saved'); // 'saved' | 'favorites' | 'mine'
   const [loading, setLoading] = useState(true);
 
   // Função para buscar posts salvos do usuário
@@ -47,6 +48,48 @@ export default function MinhasViagens({ navigation, route }) {
       }
     } catch (error) {
       console.error('Erro ao buscar posts salvos:', error);
+    }
+  };
+
+  // Função para buscar posts criados pelo usuário logado
+  const fetchMyPosts = async () => {
+    if (!userData?.uid) return;
+    try {
+      const uid = userData.uid.trim();
+      const postsMap = new Map();
+
+      // Tente múltiplos campos conhecidos para o autor
+      const authorFields = ['uid', 'creatorId', 'userUID', 'userId', 'ownerId'];
+      for (const field of authorFields) {
+        try {
+          const q = query(collection(db, 'events'), where(field, '==', uid));
+          const snap = await getDocs(q);
+          snap.forEach(d => postsMap.set(d.id, { id: d.id, ...d.data() }));
+        } catch (e) {
+          // ignore field errors
+        }
+      }
+
+      // Se nada foi encontrado (ou para cobrir campos aninhados), faça um fallback lendo e filtrando
+      if (postsMap.size === 0) {
+        const eventsSnapshot = await getDocs(collection(db, 'events'));
+        eventsSnapshot.docs.forEach(docSnap => {
+          const ev = { id: docSnap.id, ...docSnap.data() };
+          const candidates = [
+            ev?.creator?.uid,
+            ev?.creator?.id,
+            ev?.user?.uid,
+            ev?.user?.id,
+          ].filter(Boolean);
+          if (candidates.some(v => (typeof v === 'string' ? v.trim() : String(v)) === uid)) {
+            postsMap.set(ev.id, ev);
+          }
+        });
+      }
+
+      setMyPosts(Array.from(postsMap.values()));
+    } catch (error) {
+      console.error('Erro ao buscar posts do usuário:', error);
     }
   };
 
@@ -86,7 +129,7 @@ export default function MinhasViagens({ navigation, route }) {
     React.useCallback(() => {
       if (userData?.uid) {
         setLoading(true);
-        Promise.all([fetchSavedPosts(), fetchFavoritePosts()])
+        Promise.all([fetchSavedPosts(), fetchFavoritePosts(), fetchMyPosts()])
           .finally(() => setLoading(false));
       }
     }, [userData?.uid])
@@ -155,21 +198,23 @@ export default function MinhasViagens({ navigation, route }) {
           {item.route?.display_start} → {item.route?.display_end}
         </Text>
       </View>
-      {/* Ícone para remover */}
-      <TouchableOpacity 
-        onPress={() => activeTab === 'saved' ? removeFromSaved(item.id) : removeFromFavorites(item.id)} 
-        style={styles.cardIcon}
-      >
-        <Ionicons 
-          name={activeTab === 'saved' ? 'bookmark' : 'heart'} 
-          size={24} 
-          color={activeTab === 'saved' ? theme?.primary : 'red'} 
-        />
-      </TouchableOpacity>
+      {/* Ícone para remover (apenas nas abas salvos/favoritos) */}
+      {(activeTab === 'saved' || activeTab === 'favorites') && (
+        <TouchableOpacity 
+          onPress={() => activeTab === 'saved' ? removeFromSaved(item.id) : removeFromFavorites(item.id)} 
+          style={styles.cardIcon}
+        >
+          <Ionicons 
+            name={activeTab === 'saved' ? 'bookmark' : 'heart'} 
+            size={24} 
+            color={activeTab === 'saved' ? theme?.primary : 'red'} 
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 
-  const currentData = activeTab === 'saved' ? savedPosts : favoritePosts;
+  const currentData = activeTab === 'saved' ? savedPosts : activeTab === 'favorites' ? favoritePosts : myPosts;
 
   return (
     <View style={[styles.container, { backgroundColor: theme?.background }]}>
@@ -200,6 +245,16 @@ export default function MinhasViagens({ navigation, route }) {
           <Ionicons name="heart-outline" size={20} color={activeTab === 'favorites' ? theme?.primary : theme?.textSecondary} />
           <Text style={[styles.tabText, { color: activeTab === 'favorites' ? theme?.primary : theme?.textSecondary }]}>
             Favoritos ({favoritePosts.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'mine' && styles.activeTab, { borderBottomColor: theme?.primary }]}
+          onPress={() => setActiveTab('mine')}
+        >
+          <Ionicons name="create-outline" size={20} color={activeTab === 'mine' ? theme?.primary : theme?.textSecondary} />
+          <Text style={[styles.tabText, { color: activeTab === 'mine' ? theme?.primary : theme?.textSecondary }]}>
+            Criadas por mim ({myPosts.length})
           </Text>
         </TouchableOpacity>
       </View>

@@ -14,6 +14,7 @@ import axios from 'axios';
 
 import { collection, addDoc } from "firebase/firestore";
 import {db} from '../../../services/firebase'
+import { getAuth } from 'firebase/auth';
 import { ThemeContext } from '../../context/ThemeContext';
 
 
@@ -61,6 +62,65 @@ const [mapMarker, setMapMarker] = useState(null);
   }
 
   async function saveData() {
+
+    if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0) {
+      showMessage({
+        message: "Erro ao Salvar",
+        description: 'Preencha os Campos Obrigatórios!',
+        type: "warning",
+      });
+      return;
+    }
+
+    console.log("tentar");
+
+    try {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid || null;
+
+  await addDoc(collection(db, 'events', ), {
+        title: postName || '',
+        desc: description || '',
+        type: tripType || '',
+        images: imageUri || [],
+        numSlots: Number(numSlots) || 0,
+        price: Number(tripPrice) || 0,
+        exit_date: exit_date || '',
+        return_date: return_date || '',
+        route: {
+          start: mapStart,
+          end: mapEnd,
+          coordinates: routeCoords,
+          display_start: MapDisplayName[0],
+          display_end: MapDisplayName[1]
+        }
+
+  ,
+  uid: uid,
+  createdAt: new Date().toISOString(),
+
+      });
+
+      showMessage({
+        message: "Criação de post bem-Sucedida",
+        description: "Bem-vindo!",
+        type: "success",
+        duration: 1800,
+      });
+      setModalVisible(false);
+      limparCampos();
+    } catch (error) {
+      showMessage({
+        message: "Ocorreu algum erro: " + error,
+        description: "erro",
+        type: 'warning',
+        duration: 2000
+      });
+      console.log(error);
+    }
+
+    console.log("rodando");
+
   if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0) {
     showMessage({
       message: "Erro ao Salvar",
@@ -68,6 +128,7 @@ const [mapMarker, setMapMarker] = useState(null);
       type: "warning",
     });
     return;
+
   }
 
   try {
