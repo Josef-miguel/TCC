@@ -19,6 +19,9 @@ import { db } from "../../../services/firebase";
 import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import ReportarProblema from "../ReportarProblema";
+import { collection, addDoc, serverTimestamp, increment } from "firebase/firestore";
+import { auth } from "../../../services/firebase";
+
 
 
 
@@ -122,19 +125,53 @@ const handleParticipar = async () => {
   }
 };
 
-  const handleSendComment = () => {
-    if (newText.trim() === '') return;
-    const commentObj = {
-      user_id: "",
-      username: "",
-      comment_text: newText.trim(),
-      created_at: new Date().toISOString(),
-      numStars: starRating,
-    }
+  const handleSendComment = async () => {
+  if (newText.trim() === "") return;
 
-    setComments([...comments, commentObj]);
-    setNewText("");
+  const postId = selectedPost?.id;
+  if (!postId) {
+    alert("Post inválido.");
+    return;
+  }
+
+  const user = auth.currentUser;
+    const commentObj = {
+      user_id: user?.uid || null,
+      username: user?.displayName || user?.email || "Usuário",
+      comment_text: newText.trim(),
+      nota: starRating || 0,
+      createdAt: serverTimestamp()
+    };
+
+    try {
+      // 1) cria documento em events/{postId}/avaliacoes
+      const colRef = collection(db, "events", postId, "avaliacoes");
+      await addDoc(colRef, commentObj);
+
+      // 2) opcionalmente atualizar agregados no doc do evento (contagem/soma)
+      // (recomendo ter campos ratingCount e ratingSum no evento para cálculo rápido)
+      const eventRef = doc(db, "events", postId);
+      await updateDoc(eventRef, {
+        ratingCount: increment(1),
+        ratingSum: increment(commentObj.nota)
+      });
+
+      // 3) atualiza UI local imediatamente (opcional)
+      setComments(prev => [
+        ...prev,
+        {
+          ...commentObj,
+          createdAt: new Date().toISOString() // mostrar instantaneamente (serverTimestamp é no servidor)
+        }
+      ]);
+      setNewText("");
+      setStarRating(0); // opcional: limpar estrelas
+    } catch (error) {
+      console.error("Erro ao enviar comentário:", error);
+      alert("Erro ao enviar avaliação: " + (error?.message || error));
+    }
   };
+
 
   useEffect(() => {
     if (!selectedPost?.id) return;
@@ -147,6 +184,27 @@ const handleParticipar = async () => {
 
     return () => unsub();
   }, [selectedPost]);
+
+  useEffect(() => {
+    if (!selectedPost?.id) return;
+
+    // Escuta a subcoleção 'avaliacoes' em tempo real
+    const unsub = onSnapshot(
+      collection(db, "events", selectedPost.id, "avaliacoes"),
+      (querySnapshot) => {
+        const commentsData = [];
+        querySnapshot.forEach((doc) => {
+          commentsData.push({ id: doc.id, ...doc.data() });
+        });
+        setComments(commentsData);
+      },
+      (error) => {
+        console.error("Erro ao buscar comentários:", error);
+      }
+    );
+
+  return () => unsub();
+}, [selectedPost]);
 
   // Verifica se o post está salvo quando carrega
   useEffect(() => {
@@ -375,11 +433,15 @@ const handleParticipar = async () => {
                   >
                     <Marker coordinate={selectedPost.route.start} title="Início" pinColor="green" />
                     <Marker coordinate={selectedPost.route.end} title="Destino" pinColor="red" />
-                    <Polyline
-                      coordinates={selectedPost.route.coordinates}
-                      strokeColor={theme?.primary || "#f37100"}
-                      strokeWidth={4}
-                    />
+                    
+                    {/* Polyline com verificação de null */}
+                    {selectedPost.route?.coordinates && selectedPost.route.coordinates.length > 0 && (
+                      <Polyline
+                        coordinates={selectedPost.route.coordinates}
+                        strokeColor={theme?.primary || "#f37100"}
+                        strokeWidth={4}
+                      />
+                    )}
                   </MapView>
                 </View>
               )}
@@ -398,11 +460,18 @@ const handleParticipar = async () => {
               </Text>
             </View>
 
+            <TouchableOpacity onPress={() => navigation.navigate('Avaliacoes', { eventId: selectedPost.id })}>
+              <Text>Ver avaliações</Text>
+            </TouchableOpacity>
             {/* Avaliação */}
             <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Avaliação</Text>
             <View style={styles.starContainer}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <TouchableOpacity key={i} onPress={() => handleStarPress(i)} style={styles.starButton}>
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => handleStarPress(i)}
+                  style={styles.starButton}
+                >
                   <Ionicons
                     name={i <= starRating ? "star" : "star-outline"}
                     size={30}
@@ -410,29 +479,47 @@ const handleParticipar = async () => {
                   />
                 </TouchableOpacity>
               ))}
-              <Text style={[styles.starText, { color: theme?.textPrimary }]}>{starRating} de 5</Text>
+              <Text style={[styles.starText, { color: theme?.textPrimary }]}>
+                {starRating} de 5
+              </Text>
             </View>
 
             {/* Comentários */}
             <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Comentários</Text>
             <View style={[styles.commentsBox, { borderColor: theme?.border }]}>
-              {comments.map((c, idx) => (
-                <View key={idx} style={{ marginBottom: 8 }}>
-                  <Text style={{ color: theme?.textPrimary, fontWeight: "bold" }}>{c.username}</Text>
-                  <Text style={[styles.commentText, { color: theme?.textSecondary }]}>"{c.comment_text}"</Text>
-                </View>
-              ))}
+              {comments.length === 0 ? (
+                <Text style={{ color: theme?.textSecondary }}>Ainda não há comentários.</Text>
+              ) : (
+                comments.map((c, idx) => (
+                  <View key={idx} style={{ marginBottom: 8 }}>
+                    <Text style={{ color: theme?.textPrimary, fontWeight: "bold" }}>
+                      {c.username || "Usuário Anônimo"}
+                    </Text>
+                    <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
+                      "{c.comment_text}"
+                    </Text>
+                  </View>
+                ))
+              )}
 
+              {/* Input de comentário */}
               <View style={styles.commentInputContainer}>
                 <TextInput
-                  style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
+                  style={[
+                    styles.commentInput,
+                    { borderColor: theme?.primary, color: theme?.textPrimary },
+                  ]}
                   placeholder="Digite um comentário..."
                   placeholderTextColor={theme?.textTertiary || "#aaa"}
                   value={newText}
                   onChangeText={setNewText}
                 />
                 <TouchableOpacity onPress={handleSendComment}>
-                  <Ionicons name="send" size={24} color={theme?.primary || "#f37100"} />
+                  <Ionicons
+                    name="send"
+                    size={24}
+                    color={theme?.primary || "#f37100"}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
