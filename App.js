@@ -221,8 +221,8 @@ export default function App() {
               />
               <Stack.Screen 
                 name="Avaliacoes" 
-                component={Avaliacoes}
-                options={{ headerShown: false }}
+                component={Avaliacoes} 
+                options={{ headerShown: false }} // importante para usar o botão customizado
               />
 
             </Stack.Navigator>
