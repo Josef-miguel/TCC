@@ -25,6 +25,8 @@ import Formapagamento from "./src/telas/Formapagamento";
 import Chat from "./src/telas/Chat";
 import MinhasViagens from "./src/telas/MinhasViagens";
 import Perfil from "./src/telas/Perfil";
+import Avaliacoes from "./src/telas/Avaliacoes";
+
 
 import Post from "./src/telas/Post";
 import Favoritos from "./src/telas/Favoritos";

@@ -62,6 +62,7 @@ const [mapMarker, setMapMarker] = useState(null);
   }
 
   async function saveData() {
+
     if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0) {
       showMessage({
         message: "Erro ao Salvar",
@@ -119,7 +120,59 @@ const [mapMarker, setMapMarker] = useState(null);
     }
 
     console.log("rodando");
+
+  if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0) {
+    showMessage({
+      message: "Erro ao Salvar",
+      description: 'Preencha os Campos Obrigatórios!',
+      type: "warning",
+    });
+    return;
+
   }
+
+  try {
+    // cria o documento no Firestore
+    const docRef = await addDoc(collection(db, 'events'), {
+      title: postName || '',
+      desc: description || '',
+      type: tripType || '',
+      images: imageUri || [],
+      numSlots: Number(numSlots) || 0,
+      price: Number(tripPrice) || 0,
+      exit_date: exit_date || '',
+      return_date: return_date || '',
+      route: {
+        start: mapStart,
+        end: mapEnd,
+        coordinates: routeCoords,
+        display_start: MapDisplayName[0],
+        display_end: MapDisplayName[1]
+      }
+    });
+
+    // adiciona o próprio id dentro do documento
+    await setDoc(docRef, { id: docRef.id }, { merge: true });
+
+    showMessage({
+      message: "Criação de post bem-sucedida",
+      description: "Bem-vindo!",
+      type: "success",
+      duration: 1800,
+    });
+
+    setModalVisible(false);
+    limparCampos();
+  } catch (error) {
+    showMessage({
+      message: "Ocorreu algum erro: " + error,
+      description: "erro",
+      type: 'warning',
+      duration: 2000
+    });
+    console.log(error);
+  }
+}
 
 
 
