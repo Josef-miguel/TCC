@@ -14,6 +14,7 @@ import axios from 'axios';
 
 import { collection, addDoc } from "firebase/firestore";
 import {db} from '../../../services/firebase'
+import { getAuth } from 'firebase/auth';
 import { ThemeContext } from '../../context/ThemeContext';
 
 
@@ -73,7 +74,10 @@ const [mapMarker, setMapMarker] = useState(null);
     console.log("tentar");
 
     try {
-      await addDoc(collection(db, 'events', ), {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid || null;
+
+  await addDoc(collection(db, 'events', ), {
         title: postName || '',
         desc: description || '',
         type: tripType || '',
@@ -89,6 +93,10 @@ const [mapMarker, setMapMarker] = useState(null);
           display_start: MapDisplayName[0],
           display_end: MapDisplayName[1]
         }
+
+  ,
+  uid: uid,
+  createdAt: new Date().toISOString(),
 
       });
 
