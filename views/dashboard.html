@@ -2,6 +2,8 @@
 
 {% block content %}
 <a href="{{url_for('perfil')}}">perfil</a>
+<a href="{{url_for('agenda')}}">agenda</a>
+
 <h1>Todos os Eventos</h1>
 <ul style="list-style:none; padding:0;">
   {% for event in events %}
@@ -26,7 +28,16 @@
            data-route='{{ event.route | default({}) | tojson | safe }}'
            style="height:300px; width:100%; border-radius:12px; margin-top:8px; border: 1px solid red;">
       </div>
-
+      <form action="{{url_for('chat')}}" method="post">
+        <input type="hidden" name="org_uid" value="{{ event.uid }}">
+        <button>Falar com o organizador</button>
+      </form>
+      
+      <form action="{{url_for('joinEvent')}}" method="post">
+        <input type="hidden" name="event_id" value="{{ event.id }}">
+        <pre>{{event.uid}}</pre>
+        <button>Participar da viagem</button>
+      </form>
 
       <pre>{{ event.route | tojson }}</pre>
 
@@ -50,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const mapDivs = document.querySelectorAll('.map');
 
   mapDivs.forEach(div => {
-    console.log("Route é:", div.dataset);
+    
     let route;
     try {
       route = JSON.parse(div.dataset.route);

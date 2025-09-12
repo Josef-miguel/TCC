@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<pre>{{org_uid}}}</pre>
+
+<div id="chat-container">
+  <div id="messages" style="height:400px; overflow-y:scroll; border:1px solid #ccc; padding:10px;"></div>
+
+  <input type="text" id="message-input" placeholder="Digite sua mensagem">
+  <button id="send-btn">Enviar</button>
+</div>
+
+<script>
+const orgUid = "{{ org_uid }}";
+const userUid = "{{ g.user['uid'] }}";
+const messagesDiv = document.getElementById('messages');
+let lastTimestamp = null; // Para paginação, se quiser scroll infinito
+
+async function fetchMessages() {
+    if (!orgUid) return;
+
+    let url = `/get_messages?org_uid=${orgUid}&limit=50`;
+    if(lastTimestamp) url += `&last_timestamp=${lastTimestamp}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.success){
+        messagesDiv.innerHTML = '';
+        data.messages.forEach(m => {
+            const msgEl = document.createElement('div');
+            const ts = m.timestamp._seconds ? new Date(m.timestamp._seconds*1000) : new Date();
+            const sender = m.uid_sender === userUid ? "Você" : "Organizador";
+            msgEl.textContent = `${sender}: ${m.text} (${ts.toLocaleTimeString()})`;
+            messagesDiv.appendChild(msgEl);
+            lastTimestamp = ts.toISOString(); // salva para paginação futura
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+}
+
+// Enviar mensagem
+document.getElementById('send-btn').addEventListener('click', async () => {
+    const text = document.getElementById('message-input').value;
+    if(!text) return;
+
+    await fetch('/send_message', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({text, org_uid: orgUid})
+    });
+
+    document.getElementById('message-input').value = '';
+    fetchMessages();
+});
+
+// Atualiza mensagens a cada 3s
+fetchMessages();
+setInterval(fetchMessages, 3000);
+</script>
+
+{% endblock %}

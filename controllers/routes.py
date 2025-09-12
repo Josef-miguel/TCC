@@ -176,3 +176,160 @@ def init_app(app, db):
         
         return render_template("perfil.html", user=g.user)
     
+    @app.route("/join_event", methods=["POST"])
+    def joinEvent():
+        if not g.user:
+            return redirect(url_for('login'))
+        
+        event_id = request.form.get("event_id")
+        if not event_id:
+            flash("ID do evento não fornecido.", "error")
+            return redirect(url_for('dashboard'))
+        try:
+            event_ref = db.collection('events').document(event_id)
+            event = event_ref.get()
+            if not event.exists:
+                flash("Evento não encontrado.", "error")
+                return redirect(url_for('dashboard'))
+            
+            user_ref = db.collection('user').document(g.user['uid'])
+            user = user_ref.get()
+            if not user.exists:
+                flash("Usuário não encontrado.", "error")
+                return redirect(url_for('login'))
+            
+            user_data = user.to_dict()
+            joined_events = user_data.get('joinedEvents', [])
+            if event_id in joined_events:
+                flash("Você já está participando deste evento.", "info")
+                return redirect(url_for('dashboard'))
+            
+            joined_events.append(event_id)
+            user_ref.update({'joinedEvents': joined_events})
+            
+            flash("Você agora está participando do evento!", "success")
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            logger.exception(f"Erro ao participar do evento: {e}")
+            flash("Erro ao participar do evento. Tente novamente.", "error")
+            return redirect(url_for('dashboard'))
+    
+    @app.route("/agenda")
+    def agenda():
+        if not g.user:
+            return redirect(url_for("login"))
+
+        return render_template("agenda.html", user=g.user)
+
+
+
+    @app.route("/agenda_api_all")
+    def agenda_api_all():
+        if not g.user:
+            return jsonify({"success": False, "events": [], "error": "Não logado"}), 401
+
+        try:
+            events = []
+            events_ref = db.collection("events").where("uid", "==", g.user["uid"]).stream()
+            for doc in events_ref:
+                data = doc.to_dict()
+                exit_date = data.get("exit_date")
+                return_date = data.get("return_date")
+
+                if isinstance(exit_date, datetime):
+                    data["exit_date"] = exit_date.strftime("%Y-%m-%d")
+                if isinstance(return_date, datetime):
+                    data["return_date"] = return_date.strftime("%Y-%m-%d")
+
+                data["id"] = doc.id
+                events.append(data)
+
+            return jsonify({"success": True, "events": events})
+        except Exception as e:
+            logger.exception(f"Erro ao carregar agenda (all): {e}")
+            return jsonify({"success": False, "events": [], "error": str(e)}), 500
+    
+    @app.route("/chat", methods=["POST"])
+    def chat():
+        if not g.user:
+            return redirect(url_for("login"))
+        org_uid = request.form.get("org_uid")
+        return render_template("chat.html", org_uid=org_uid, user=g.user)
+    
+    
+    @app.route("/send_message", methods=["POST"])
+    def send_message():
+        if not g.user:
+            return jsonify({"success": False, "message": "Não logado"}), 401
+    
+        data = request.get_json()
+        text = data.get("text")
+        org_uid = data.get("org_uid")
+        user_uid = g.user['uid']
+    
+        if not text or not org_uid:
+            return jsonify({"success": False, "message": "Mensagem ou organizador vazios"}), 400
+    
+        # ID do chat previsível
+        chat_id = f"{min(user_uid, org_uid)}_{max(user_uid, org_uid)}"
+    
+        # Cria/atualiza documento do chat com uids do usuário e do organizador
+        chat_ref = db.collection("chats").document(chat_id)
+        chat_ref.set({
+            "user_uid": user_uid,
+            "org_uid": org_uid,
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }, merge=True)  # merge=True mantém campos existentes
+    
+        # Documento da mensagem na subcoleção
+        message_doc = {
+            "text": text,
+            "timestamp": firestore.SERVER_TIMESTAMP,
+            "uid_sender": user_uid,
+            "read": False
+        }
+    
+        try:
+            chat_ref.collection("messages").add(message_doc)
+            return jsonify({"success": True})
+        except Exception as e:
+            logger.exception(f"Erro ao enviar mensagem: {e}")
+            return jsonify({"success": False, "message": "Erro ao enviar mensagem"}), 500
+
+    
+    
+    @app.route("/get_messages")
+    def get_messages():
+        if not g.user:
+            return jsonify({"success": False, "message": "Não logado"}), 401
+
+        org_uid = request.args.get("org_uid")
+        limit = int(request.args.get("limit", 50))
+        last_timestamp = request.args.get("last_timestamp")  # opcional, para paginação
+        user_uid = g.user['uid']
+
+        if not org_uid:
+            return jsonify({"success": False, "message": "Organizador não especificado"}), 400
+
+        chat_id = f"{min(user_uid, org_uid)}_{max(user_uid, org_uid)}"
+
+        try:
+            messages_ref = db.collection("chats").document(chat_id).collection("messages")\
+                .order_by("timestamp", direction=firestore.Query.ASCENDING)\
+                .limit(limit)
+
+            if last_timestamp:
+                # Converte para Timestamp do Firestore
+                from google.protobuf.timestamp_pb2 import Timestamp
+                ts = Timestamp()
+                ts.FromJsonString(last_timestamp)
+                messages_ref = messages_ref.start_after({"timestamp": ts})
+
+            messages = [doc.to_dict() for doc in messages_ref.stream()]
+
+            return jsonify({"success": True, "messages": messages})
+        except Exception as e:
+            logger.exception(f"Erro ao buscar mensagens: {e}")
+            return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
+
+    

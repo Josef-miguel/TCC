@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<a href="{{ url_for('perfil') }}">perfil</a>
+<a href="{{ url_for('dashboard') }}">todos os eventos</a>
+
+<h1>Minha Agenda</h1>
+
+<!-- O container do calendário precisa ter altura definida -->
+<div id="calendar" style="max-width: 900px; margin: 0 auto; background: #fff; padding: 10px; border-radius: 8px;"></div>
+
+<div id="agendaPosts" style="margin-top:20px;"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+
+
+<style>
+  #calendar {
+    margin: 20px auto;
+    max-width: 900px;
+  }
+  .fc { 
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const calendarEl = document.getElementById("calendar");
+
+  // busca os eventos do backend
+  const res = await fetch("/agenda_api_all");
+  const data = await res.json();
+
+  const events = data.success
+    ? data.events.map(ev => ({
+        id: ev.id,
+        title: ev.title,
+        start: ev.exit_date,
+        end: ev.return_date || ev.exit_date
+      }))
+    : [];
+
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: "dayGridMonth",
+    locale: "pt-br",
+    height: "auto",   // força ele ocupar altura
+    events: events,
+    dateClick: function(info) {
+      fetch(`/agenda_api/${info.dateStr}`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById("agendaPosts");
+          container.innerHTML = "";
+          if (data.success && data.events.length > 0) {
+            data.events.forEach(ev => {
+              const div = document.createElement("div");
+              div.style.border = "1px solid #ccc";
+              div.style.margin = "10px 0";
+              div.style.padding = "10px";
+              div.innerHTML = `
+                <h3>${ev.title}</h3>
+                <p>${ev.desc || ""}</p>
+                <small>Saída: ${ev.exit_date}</small>
+              `;
+              container.appendChild(div);
+            });
+          } else {
+            container.innerHTML = "<p>Nenhum evento nesse dia.</p>";
+          }
+        });
+    }
+  });
+
+  calendar.render();
+});
+</script>
+{% endblock %}
