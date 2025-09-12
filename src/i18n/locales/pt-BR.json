@@ -58,6 +58,15 @@
     "noTitle": "Sem título",
     "noDescription": "Sem descrição disponível"
     },
+    "profile": {
+    "profile": "Perfil",
+    "organizer": "Organizador",
+    "posts": "Posts",
+    "noPosts": "Nenhum post encontrado",
+    "userNotFound": "Usuário não encontrado",
+    "unknownUser": "Usuário desconhecido",
+    "loading": "Carregando..."
+    },
     "dialogs": {
     "confirmDelete": "Tem certeza que deseja excluir sua conta?"
     }

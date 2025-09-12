@@ -58,6 +58,15 @@
     "noTitle": "No title",
     "noDescription": "No description available"
     },
+    "profile": {
+    "profile": "Profile",
+    "organizer": "Organizer",
+    "posts": "Posts",
+    "noPosts": "No posts found",
+    "userNotFound": "User not found",
+    "unknownUser": "Unknown user",
+    "loading": "Loading..."
+    },
     "dialogs": {
     "confirmDelete": "Are you sure you want to delete your account?"
     }
