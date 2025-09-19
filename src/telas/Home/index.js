@@ -12,7 +12,7 @@ import { ThemeContext } from '../../context/ThemeContext';
 // import { Platform } from 'react-native';
 
 
-export default function Home({ navigation }) {
+export default function Home({ navigation, route }) {
   const { t } = useTranslation();
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
@@ -85,8 +85,21 @@ export default function Home({ navigation }) {
   
   // Log para verificar atualizações no estado
   useEffect(() => {
-    // Logs removidos para limpeza do código
-  }, [posts, filteredRecommended, filteredPopular]);
+      // Logs removidos para limpeza do código
+    }, [posts, filteredRecommended, filteredPopular]);
+
+    useEffect(() => {
+    if (route.params?.eventId) {
+      const id = route.params.eventId;
+      const ref = doc(db, "events", id);
+      getDoc(ref).then((snap) => {
+        if (snap.exists()) {
+          setSelectedPost({ id: snap.id, ...snap.data() });
+          setModalVisible(true);
+        }
+      });
+    }
+  }, [route.params?.eventId]);
   
   // Alterna o estado de favorito de um post no Firebase
   const toggleFav = async (id) => {
