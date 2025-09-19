@@ -2,32 +2,62 @@
 
 {% block content %}
 <div class="container">
-  <div class="agenda-header">
-    <h1>Minha Agenda</h1>
+  <!-- Navegação rápida -->
+  <div class="agenda-nav" style="margin-bottom: 20px;">
+    <a class="btn btn-outline" href="{{ url_for('perfil') }}">Perfil</a>
+    <a class="btn btn-outline" href="{{ url_for('dashboard') }}">Todos os Eventos</a>
   </div>
+
+  <h1>Minha Agenda</h1>
 
   <!-- Calendário -->
-  <div id="calendar" class="calendar-card"></div>
+  <div id="calendar" style="max-width: 900px; margin: 0 auto; background: var(--card-background); padding: 20px; border-radius: 12px; box-shadow: 0 6px 15px var(--card-shadow);"></div>
 
-  <!-- Lista de eventos -->
-  <div class="events-section">
-    <h2>Meus Eventos</h2>
-    <div id="agendaPosts" class="event-list"></div>
-  </div>
+  <!-- Container para eventos do dia selecionado -->
+  <div id="agendaPosts" style="margin-top: 20px;"></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
+<style>
+  #calendar {
+    margin: 20px auto;
+    max-width: 900px;
+  }
+
+  .fc {
+    background: var(--card-background);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 6px 15px var(--card-shadow);
+  }
+
+  #agendaPosts div {
+    border: 1px solid var(--border);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+  }
+
+  #agendaPosts div:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  }
+</style>
+
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const calendarEl = document.getElementById("calendar");
 
-  // busca os eventos do backend
+  // Busca os eventos do backend
   const res = await fetch("/agenda_api_all");
   const data = await res.json();
-  console.log("Eventos da API:", data);
+
   const events = data.success
     ? data.events.map(ev => ({
         id: ev.id,
@@ -43,32 +73,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     height: "auto",
     events: events,
     headerToolbar: {
-      left: "prev",
-      center: "title",
-      right: "next"
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
     dateClick: function(info) {
       fetch(`/agenda_api/${info.dateStr}`)
-        .then(res => res.json())
-        .then(data => {
-          const container = document.getElementById("agendaPosts");
-          container.innerHTML = "";
-          if (data.success && data.events.length > 0) {
-            data.events.forEach(ev => {
-              const div = document.createElement("div");
-              div.classList.add("event-card");
-              div.innerHTML = `
-                <h3>✈️ ${ev.title}</h3>
-                <p>${ev.desc || ""}</p>
-                <p><strong>Saída:</strong> ${ev.exit_date}</p>
-                <p><strong>Retorno:</strong> ${ev.return_date || "-"}</p>
-              `;
-              container.appendChild(div);
-            });
-          } else {
-            container.innerHTML = "<p class='no-event'>Nenhum evento nesse dia.</p>";
-          }
-        });
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById("agendaPosts");
+        container.innerHTML = "";
+
+        if (data.success && data.events.length > 0) {
+          data.events.forEach(ev => {
+            const div = document.createElement("div");
+            div.innerHTML = `
+              <h3>${ev.title}</h3>
+              <p>${ev.desc || ""}</p>
+              <small>Saída: ${ev.exit_date}</small>
+            `;
+            container.appendChild(div);
+          });
+        } else {
+          container.innerHTML = "<p>Nenhum evento nesse dia.</p>";
+        }
+      });
     }
   });
 
