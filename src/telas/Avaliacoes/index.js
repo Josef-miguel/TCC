@@ -54,8 +54,9 @@ export default function Avaliacoes() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme?.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: 24 }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+      <View style={[styles.header, { paddingTop: 44 }]}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home', { eventId })}>
+          
           <Ionicons name="arrow-back" size={32} color={theme?.primary || "#f37100"} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme?.primary }]}>Avaliações</Text>
