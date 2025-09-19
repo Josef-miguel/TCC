@@ -19,7 +19,7 @@ import axios from 'axios';
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
 import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+
 import ReportarProblema from "../ReportarProblema";
 import { collection, addDoc, serverTimestamp, increment } from "firebase/firestore";
 import { auth } from "../../../services/firebase";
@@ -140,8 +140,7 @@ const PostScreen = ({
     navigation.navigate('VisualizarPerfil', { uid: targetUserId, user: creatorObj });
   };
 
-const auth = getAuth();
-
+  
 const handleParticipar = async () => {
   if (!auth.currentUser || !selectedPost?.id) {
     console.log("Usuário não autenticado ou evento sem ID");
@@ -290,7 +289,7 @@ const handleParticipar = async () => {
     try {
       setModalVisible(false);
       // Reset transient states to ensure clean reopen
-      setSelectedPost(null);
+      // setSelectedPost(null);
       setCurrentImageIndex(0);
       setStarRating(0);
       setNewText("");
