@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, ScrollView, SafeAreaView, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+// import { getAuth, signInAnonymously } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 
 import TelaPost from '../../modal/TelaPost';
@@ -24,12 +24,10 @@ export default function Home({ navigation }) {
   const [posts, setPosts] = useState([]);
   // Populares passam a ser derivados de posts
 
+  // Removido login anônimo: exigir autenticação real em fluxos que precisam (Chat/Notificações)
   useEffect(() => {
-    if (!auth.currentUser) {
-      signInAnonymously(auth)
-      .then(() => console.log('Usuário logado anonimamente:', auth.currentUser?.uid))
-      .catch(error => console.error('Erro ao logar anonimamente:', error));
-    }
+    // Opcional: redirecionar para tela de login se necessário
+    // if (!auth.currentUser) navigation.navigate('Login');
   }, []);
   
   
@@ -178,8 +176,8 @@ export default function Home({ navigation }) {
           onChangeText={setSearchQuery}
           placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
           />
-        <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
-          <Ionicons name="person-circle-outline" size={32} color={theme?.primary || "#f37100"} />
+        <TouchableOpacity onPress={() => navigation.navigate('Notificacoes')}>
+          <Ionicons name="notifications-outline" size={32} color={theme?.primary || "#f37100"} />
         </TouchableOpacity>
       </View>
 

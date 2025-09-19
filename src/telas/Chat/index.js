@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Animated } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Animated, Alert } from 'react-native';
 import { auth, db } from '../../../services/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDoc, doc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import { useAuth } from '../../../services/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
 
 export default function Chat() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { theme } = useContext(ThemeContext);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -17,58 +18,158 @@ export default function Chat() {
   const fadeAnim = useRef(new Animated.Value(0)).current; // For fade-in animation
 
   useEffect(() => {
-    const q = query(collection(db, 'messages'), orderBy('timestamp'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setMessages(msgs);
+    const makeChatId = (a, b) => {
+      if (!a || !b) return null;
+      return [a, b].sort().join('_');
+    };
 
-      // Verifica userIds sem username para buscar dados
-      const missingIds = Array.from(new Set(msgs
-        .map(m => m.userId)
-        .filter(uid => uid && !userCache[uid]
-      )));
+    const { chatId: chatIdParam, otherUid } = route.params || {};
+    const myUid = auth.currentUser?.uid;
+    const chatId = chatIdParam || makeChatId(myUid, otherUid);
 
-      if (missingIds.length > 0) {
-        // Busca perfis faltantes
-        Promise.all(missingIds.map(async (uid) => {
-          try {
-            const ref = doc(db, 'user', uid);
-            const snap = await getDoc(ref);
-            if (snap.exists()) return { uid, ...snap.data() };
-            return { uid, userInfo: {} };
-          } catch (e) {
-            return { uid, userInfo: {} };
+    if (!chatId) return;
+
+    let unsubscribe = () => {};
+
+    (async () => {
+      try {
+        // Requer usuário autenticado
+        if (!myUid) {
+          try { Alert.alert('Atenção', 'Faça login para usar o chat.'); } catch (_) {}
+          return;
+        }
+
+        // Garante existência do documento de chat com updated_at
+        const chatRef = doc(db, 'chats', chatId);
+        // Evita leitura antes da criação para não exigir permissão de GET
+        await setDoc(chatRef, {
+          user_uid: myUid || null,
+          org_uid: otherUid || null,
+          participants: [myUid, otherUid].filter(Boolean),
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        }, { merge: true });
+
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp'));
+        unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            setMessages(msgs);
+
+            const missingIds = Array.from(new Set(
+              msgs.map(m => m.userId).filter(uid => uid && !userCache[uid])
+            ));
+
+            if (missingIds.length > 0) {
+              Promise.all(missingIds.map(async (uid) => {
+                try {
+                  const ref = doc(db, 'user', uid);
+                  const snap = await getDoc(ref);
+                  if (snap.exists()) return { uid, ...snap.data() };
+                  return { uid, userInfo: {} };
+                } catch (e) {
+                  return { uid, userInfo: {} };
+                }
+              })).then(results => {
+                setUserCache(prev => {
+                  const next = { ...prev };
+                  results.forEach(r => { next[r.uid] = { userInfo: r.userInfo || r, uid: r.uid }; });
+                  return next;
+                });
+              });
+            }
+          },
+          (err) => {
+            console.error('Chat.onSnapshot messages error:', err?.code, err?.message);
+            try { Alert.alert('Erro ao ler mensagens', `${err?.code || ''} ${err?.message || ''}`.trim()); } catch (_) {}
           }
-        })).then(results => {
-          setUserCache(prev => {
-            const next = { ...prev };
-            results.forEach(r => { next[r.uid] = { userInfo: r.userInfo || r, uid: r.uid }; });
-            return next;
-          });
-        });
+        );
+      } catch (e) {
+        console.error('Chat.useEffect init error:', e?.code, e?.message);
+        try { Alert.alert('Erro', 'Não foi possível preparar a conversa.'); } catch (_) {}
       }
-    });
-    // Fade-in animation for messages
+    })();
+
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
     }).start();
+
     return () => unsubscribe();
-  }, []);
+  }, [route.params]);
 
   const sendMessage = async () => {
     if (!input) return;
 
+    const makeChatId = (a, b) => {
+      if (!a || !b) return null;
+      return [a, b].sort().join('_');
+    };
+
+    // Requer usuário autenticado (não usar anônimo)
+    if (!auth.currentUser) {
+      Alert.alert('Atenção', 'Faça login para enviar mensagens.');
+      return;
+    }
+
     const uid = auth.currentUser?.uid;
     const username = userData?.userInfo?.nome || '';
+    const { chatId: chatIdParam, otherUid } = route.params || {};
+    const chatId = chatIdParam || makeChatId(uid, otherUid);
+    if (!chatId) return;
 
-    await addDoc(collection(db, 'messages'), {
-      text: input,
-      timestamp: serverTimestamp(),
-      userId: uid,
-      username: username,
-    });
+    // Garante que o documento do chat exista e contenha ambos participantes (sem GET prévio)
+    try {
+      const chatRef = doc(db, 'chats', chatId);
+      await setDoc(chatRef, {
+        user_uid: uid || null,
+        org_uid: otherUid || null,
+        participants: [uid, otherUid].filter(Boolean),
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+        last_message: input,
+      }, { merge: true });
+    } catch (e) {
+      console.error('Chat.sendMessage ensure chat error:', e?.code, e?.message);
+      Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
+      return;
+    }
+
+    try {
+      console.log('Chat.sendMessage -> chatId:', chatId, 'uid:', uid, 'otherUid:', otherUid);
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        text: input,
+        timestamp: serverTimestamp(),
+        userId: uid,
+        username: username || 'Usuário',
+      });
+    } catch (e) {
+      console.error('Chat.sendMessage addDoc error:', e?.code, e?.message);
+      Alert.alert('Erro ao enviar mensagem', `${e?.code || ''} ${e?.message || ''}`.trim());
+      return;
+    }
+
+    // Atualiza metadados da conversa
+    try {
+      await updateDoc(doc(db, 'chats', chatId), { updated_at: serverTimestamp(), last_message: input });
+    } catch (e) {
+      console.warn('Chat.sendMessage updateDoc error, trying setDoc:', e?.code, e?.message);
+      // Se o doc ainda não existir por algum motivo, cria-o
+      try {
+        await setDoc(doc(db, 'chats', chatId), {
+          user_uid: uid || null,
+          org_uid: otherUid || null,
+          participants: [uid, otherUid].filter(Boolean),
+          updated_at: serverTimestamp(),
+          last_message: input,
+        }, { merge: true });
+      } catch (ee) {
+        console.error('Chat.sendMessage setDoc fallback error:', ee?.code, ee?.message);
+        Alert.alert('Erro ao atualizar conversa', `${ee?.code || ''} ${ee?.message || ''}`.trim());
+      }
+    }
 
     setInput('');
   };
