@@ -30,20 +30,20 @@
            style="height:300px; width:100%; border-radius:12px; margin-top:8px; border: 1px solid red;">
       </div>
       {% for events in user.joinedEvents %}
-        {% if events == event.uid %}
+        {% if events == event.id %}
         <p style="color:green; font-weight:bold;">Você já está participando desta viagem!</p>
+
+        <form action="{{url_for('chat_group')}}" method="post"><pre>{{event.uid}}</pre>
+          <input type="hidden" name="org_uid" value="{{ event.id }}">
+          <button>Falar com o organizador</button>
+        </form>
+                <pre>{{event.id}}</pre>
         {% endif %}
         
       {% endfor %}
 
-      <!-- <form action="{{url_for('chat')}}" method="post">
-        <input type="hidden" name="org_uid" value="{{ event.uid }}">
-        <button>Falar com o organizador</button>
-      </form>
-       -->
       <form action="{{url_for('joinEvent')}}" method="post">
-        <input type="hidden" name="event_id" value="{{ event.id }}">
-        <pre>{{event.uid}}</pre>
+
         <button>Participar da viagem</button>
       </form>
 

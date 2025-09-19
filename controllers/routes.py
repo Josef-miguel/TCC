@@ -231,21 +231,22 @@ def init_app(app, db):
         try:
             events = []
             for ref in g.user["joinedEvents"]:
-               event_doc = db.collection("events").document(ref).get()
-               if event_doc.exists:
-                   data = event_doc.to_dict()
-                   exit_date = data.get("exit_date")
-                   return_date = data.get("return_date")
+              event_doc = db.collection("events").document(ref).get()
+              if event_doc.exists:
+                  data = event_doc.to_dict()
+                  exit_date = data.get("exit_date")
+                  return_date = data.get("return_date")
 
-                   if isinstance(exit_date, datetime):
-                       data["exit_date"] = exit_date.strftime("%Y-%m-%d")
-                   if isinstance(return_date, datetime):
-                       data["return_date"] = return_date.strftime("%Y-%m-%d")
+                  if isinstance(exit_date, datetime):
+                      data["exit_date"] = exit_date.strftime("%Y-%m-%d")
+                  if isinstance(return_date, datetime):
+                      data["return_date"] = return_date.strftime("%Y-%m-%d")
 
-                   data["id"] = event_doc.id
-                   events.append(data)
-               else:
-                   print(f"Evento com ID {ref} não encontrado.")
+                  data["id"] = event_doc.id
+                  events.append(data)
+              else:
+                  print(f"Evento com ID {ref} não encontrado.")
+
 
             return jsonify({"success": True, "events": events})
         except Exception as e:
@@ -277,7 +278,7 @@ def init_app(app, db):
         chat_id = f"{min(user_uid, org_uid)}_{max(user_uid, org_uid)}"
     
         # Cria/atualiza documento do chat com uids do usuário e do organizador
-        chat_ref = db.collection("chats").document(chat_id)
+        chat_ref = db.collection("chat-group").document(chat_id)
         chat_ref.set({
             "user_uid": user_uid,
             "org_uid": org_uid,
@@ -293,7 +294,7 @@ def init_app(app, db):
         }
     
         try:
-            chat_ref.collection("messages").add(message_doc)
+            db.collection("chat-group").document(f"group_{event_id}").set({...})
             return jsonify({"success": True})
         except Exception as e:
             logger.exception(f"Erro ao enviar mensagem: {e}")
@@ -306,7 +307,7 @@ def init_app(app, db):
         if not g.user:
             return jsonify({"success": False, "message": "Não logado"}), 401
 
-        org_uid = request.args.get("org_uid")
+        org_uid = request.args.get("event_id")
         limit = int(request.args.get("limit", 50))
         last_timestamp = request.args.get("last_timestamp")  # opcional, para paginação
         user_uid = g.user['uid']
@@ -335,5 +336,74 @@ def init_app(app, db):
             logger.exception(f"Erro ao buscar mensagens: {e}")
             return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
 
+    @app.route("/chat_group", methods=["POST"])
+    def chat_group():
+        if not g.user:
+            return redirect(url_for("login"))
+        
+        event_id = request.form.get("org_uid")
+        print(event_id)
+        if not event_id:
+            flash("ID do evento não informado.", "error")
+            return redirect(url_for("dashboard"))
+        
+        return render_template("chat_group.html", user=g.user, event_id=event_id)
     
     
+    @app.route("/send_group_message", methods=["POST"])
+    def send_group_message():
+        if not g.user:
+            return jsonify({"success": False, "message": "Não logado"}), 401
+
+        try:
+            data = request.get_json()
+            event_id = data.get("event_id")
+            text = data.get("text", "").strip()
+
+            # Validação básica
+            if not event_id or not text:
+                return jsonify({"success": False, "message": "Dados incompletos"}), 400
+
+            # Estrutura da mensagem
+            message_data = {
+                "text": text,
+                "timestamp": firestore.SERVER_TIMESTAMP,
+                "uid_sender": g.user["uid"],
+                "name": g.user.get("name", "Anônimo")
+            }
+
+            # Salva mensagem na subcoleção do grupo
+            db.collection("chat-group").document(f"group_{event_id}")\
+              .collection("messages").add(message_data)
+
+            return jsonify({"success": True})
+
+        except Exception as e:
+            logger.exception(f"Erro ao enviar mensagem no chat em grupo: {e}")
+            return jsonify({"success": False, "message": "Erro ao enviar"}), 500
+
+
+    @app.route("/get_group_messages")
+    def get_group_messages():
+        if not g.user:
+            return jsonify({"success": False, "message": "Não logado"}), 401
+
+        event_id = request.args.get("event_id")
+        limit = int(request.args.get("limit", 50))
+
+        if not event_id:
+            return jsonify({"success": False, "message": "ID do evento não fornecido"}), 400
+
+        try:
+            messages_ref = db.collection("chat-group") \
+                             .document(f"group_{event_id}") \
+                             .collection("messages") \
+                             .order_by("timestamp", direction=firestore.Query.ASCENDING) \
+                             .limit(limit)
+
+            messages = [doc.to_dict() for doc in messages_ref.stream()]
+
+            return jsonify({"success": True, "messages": messages})
+        except Exception as e:
+            logger.exception(f"Erro ao buscar mensagens do grupo: {e}")
+            return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
