@@ -1,33 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<a href="{{ url_for('perfil') }}">perfil</a>
-<a href="{{ url_for('dashboard') }}">todos os eventos</a>
+<div class="container">
+  <div class="agenda-header">
+    <h1>Minha Agenda</h1>
+  </div>
 
-<h1>Minha Agenda</h1>
+  <!-- Calendário -->
+  <div id="calendar" class="calendar-card"></div>
 
-<!-- O container do calendário precisa ter altura definida -->
-<div id="calendar" style="max-width: 900px; margin: 0 auto; background: #fff; padding: 10px; border-radius: 8px;"></div>
-
-<div id="agendaPosts" style="margin-top:20px;"></div>
+  <!-- Lista de eventos -->
+  <div class="events-section">
+    <h2>Meus Eventos</h2>
+    <div id="agendaPosts" class="event-list"></div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-
-
-
-<style>
-  #calendar {
-    margin: 20px auto;
-    max-width: 900px;
-  }
-  .fc { 
-    background: white;
-    border-radius: 8px;
-    padding: 10px;
-  }
-</style>
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
@@ -49,8 +40,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     locale: "pt-br",
-    height: "auto",   // força ele ocupar altura
+    height: "auto",
     events: events,
+    headerToolbar: {
+      left: "prev",
+      center: "title",
+      right: "next"
+    },
     dateClick: function(info) {
       fetch(`/agenda_api/${info.dateStr}`)
         .then(res => res.json())
@@ -60,18 +56,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (data.success && data.events.length > 0) {
             data.events.forEach(ev => {
               const div = document.createElement("div");
-              div.style.border = "1px solid #ccc";
-              div.style.margin = "10px 0";
-              div.style.padding = "10px";
+              div.classList.add("event-card");
               div.innerHTML = `
-                <h3>${ev.title}</h3>
+                <h3>✈️ ${ev.title}</h3>
                 <p>${ev.desc || ""}</p>
-                <small>Saída: ${ev.exit_date}</small>
+                <p><strong>Saída:</strong> ${ev.exit_date}</p>
+                <p><strong>Retorno:</strong> ${ev.return_date || "-"}</p>
               `;
               container.appendChild(div);
             });
           } else {
-            container.innerHTML = "<p>Nenhum evento nesse dia.</p>";
+            container.innerHTML = "<p class='no-event'>Nenhum evento nesse dia.</p>";
           }
         });
     }

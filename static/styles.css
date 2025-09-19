@@ -584,4 +584,75 @@ h4 {
     top: -2px;
     left: 2px;
   }
+  /* ============================
+   Agenda / Calendário
+============================ */
+.agenda-header {
+    text-align: center;
+    margin: 2rem 0;
+  }
+  
+  .calendar-card {
+    background: var(--card-background);
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px var(--card-shadow);
+    margin-bottom: 2rem;
+  }
+  
+  .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  .fc-button {
+    background: var(--primary) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.4rem 0.8rem !important;
+    color: var(--text-inverted) !important;
+    transition: all 0.3s ease;
+  }
+  .fc-button:hover {
+    background: var(--primary-dark) !important;
+  }
+  
+  .events-section {
+    background: var(--background-secondary);
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px var(--card-shadow);
+  }
+  
+  .events-section h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+  }
+  
+  .event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .event-card {
+    background: var(--card-background);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px var(--card-shadow);
+  }
+  
+  .event-card h3 {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+  }
+  
+  .no-event {
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 1rem 0;
+  }
   
