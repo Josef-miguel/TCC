@@ -123,7 +123,7 @@ def init_app(app, db):
                   events_list.append(data)
 
                 # envia para o template
-                return render_template("dashboard.html", events=events_list)
+                return render_template("dashboard.html", events=events_list, user=g.user)
             except Exception as e:
                 return f"Erro ao carregar eventos: {e}"
     
