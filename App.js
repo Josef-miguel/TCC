@@ -35,6 +35,7 @@ import VisualizarPerfil from "./src/telas/VisualizarPerfil";
 
 import CriarPost from "./src/modal/CriarPost";
 import VerificacaoIdentidade from "./src/telas/VerificacaoIdentidade";
+import Notificacoes from "./src/telas/Notificacoes";
 
 export const appContext = createContext();
 
@@ -218,6 +219,11 @@ export default function App() {
               <Stack.Screen
                 name="Chat"
                 component={Chat}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Notificacoes"
+                component={Notificacoes}
                 options={{ headerShown: false }}
               />
 

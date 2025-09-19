@@ -19,7 +19,6 @@ import axios from 'axios';
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
 import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 import ReportarProblema from "../ReportarProblema";
 import { collection, addDoc, serverTimestamp, increment } from "firebase/firestore";
 import { auth } from "../../../services/firebase";
@@ -140,7 +139,48 @@ const PostScreen = ({
     navigation.navigate('VisualizarPerfil', { uid: targetUserId, user: creatorObj });
   };
 
-const auth = getAuth();
+// Abre chat privado com o organizador usando a coleção 'chats'
+const handleOpenPrivateChat = async () => {
+  try {
+    // Resolve uid do organizador do post (mesma lógica de handleVisualizarPerfil)
+    let targetUserId = selectedPost?.uid
+      || selectedPost?.creator?.id
+      || selectedPost?.creator?.uid
+      || selectedPost?.userId
+      || selectedPost?.user?.uid
+      || selectedPost?.ownerId
+      || null;
+
+    if (targetUserId && typeof targetUserId !== 'string') {
+      if (typeof targetUserId.uid === 'string') targetUserId = targetUserId.uid;
+      else if (typeof targetUserId.id === 'string') targetUserId = targetUserId.id;
+      else targetUserId = String(targetUserId);
+    }
+    if (typeof targetUserId === 'string') {
+      targetUserId = targetUserId.trim();
+      if (targetUserId === '') targetUserId = null;
+    }
+
+    // Requer usuário autenticado (não usar anônimo)
+    if (!auth.currentUser) {
+      Alert.alert('Atenção', 'Faça login para conversar com o organizador.');
+      return;
+    }
+    const myUid = auth.currentUser?.uid || null;
+    if (!myUid || !targetUserId) {
+      console.warn('TelaPost: Chat privado indisponível. myUid=', myUid, 'targetUserId=', targetUserId);
+      Alert.alert('Chat indisponível', 'Não foi possível iniciar a conversa.');
+      return;
+    }
+
+    const makeChatId = (a, b) => [a, b].sort().join('_');
+    const chatId = makeChatId(myUid, targetUserId);
+
+    navigation.navigate('Chat', { chatId, otherUid: targetUserId });
+  } catch (e) {
+    // noop
+  }
+};
 
 const handleParticipar = async () => {
   if (!auth.currentUser || !selectedPost?.id) {
@@ -623,7 +663,7 @@ const handleParticipar = async () => {
 
             <TouchableOpacity
               style={[styles.chatButton, styles.modalButton]}
-              onPress={() => navigation.navigate("Chat")}
+              onPress={handleOpenPrivateChat}
             >
               <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Conversar com o organizador</Text>
             </TouchableOpacity>
