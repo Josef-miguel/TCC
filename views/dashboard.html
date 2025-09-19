@@ -30,7 +30,7 @@
            style="height:300px; width:100%; border-radius:12px; margin-top:8px; border: 1px solid red;">
       </div>
       {% for events in user.joinedEvents %}
-        {% if events.uid == event.uid %}
+        {% if events == event.uid %}
         <p style="color:green; font-weight:bold;">Você já está participando desta viagem!</p>
         {% endif %}
         

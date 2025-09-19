@@ -230,19 +230,22 @@ def init_app(app, db):
 
         try:
             events = []
-            events_ref = db.collection("events").where("uid", "==", g.user["uid"]).stream()
-            for doc in events_ref:
-                data = doc.to_dict()
-                exit_date = data.get("exit_date")
-                return_date = data.get("return_date")
+            for ref in g.user["joinedEvents"]:
+               event_doc = db.collection("events").document(ref).get()
+               if event_doc.exists:
+                   data = event_doc.to_dict()
+                   exit_date = data.get("exit_date")
+                   return_date = data.get("return_date")
 
-                if isinstance(exit_date, datetime):
-                    data["exit_date"] = exit_date.strftime("%Y-%m-%d")
-                if isinstance(return_date, datetime):
-                    data["return_date"] = return_date.strftime("%Y-%m-%d")
+                   if isinstance(exit_date, datetime):
+                       data["exit_date"] = exit_date.strftime("%Y-%m-%d")
+                   if isinstance(return_date, datetime):
+                       data["return_date"] = return_date.strftime("%Y-%m-%d")
 
-                data["id"] = doc.id
-                events.append(data)
+                   data["id"] = event_doc.id
+                   events.append(data)
+               else:
+                   print(f"Evento com ID {ref} não encontrado.")
 
             return jsonify({"success": True, "events": events})
         except Exception as e:

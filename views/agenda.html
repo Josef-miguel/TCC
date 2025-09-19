@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // busca os eventos do backend
   const res = await fetch("/agenda_api_all");
   const data = await res.json();
-
+  console.log("Eventos da API:", data);
   const events = data.success
     ? data.events.map(ev => ({
         id: ev.id,
