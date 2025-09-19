@@ -19,6 +19,9 @@ import axios from 'axios';
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
 import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
+
+
+
 import ReportarProblema from "../ReportarProblema";
 import { collection, addDoc, serverTimestamp, increment } from "firebase/firestore";
 import { auth } from "../../../services/firebase";
@@ -139,6 +142,7 @@ const PostScreen = ({
     navigation.navigate('VisualizarPerfil', { uid: targetUserId, user: creatorObj });
   };
 
+
 // Abre chat privado com o organizador usando a coleção 'chats'
 const handleOpenPrivateChat = async () => {
   try {
@@ -182,6 +186,8 @@ const handleOpenPrivateChat = async () => {
   }
 };
 
+
+  
 const handleParticipar = async () => {
   if (!auth.currentUser || !selectedPost?.id) {
     console.log("Usuário não autenticado ou evento sem ID");
@@ -330,7 +336,7 @@ const handleParticipar = async () => {
     try {
       setModalVisible(false);
       // Reset transient states to ensure clean reopen
-      setSelectedPost(null);
+      // setSelectedPost(null);
       setCurrentImageIndex(0);
       setStarRating(0);
       setNewText("");
