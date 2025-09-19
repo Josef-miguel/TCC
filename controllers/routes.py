@@ -333,3 +333,4 @@ def init_app(app, db):
             return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
 
     
+    
