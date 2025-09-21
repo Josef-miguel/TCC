@@ -18,12 +18,9 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import axios from 'axios';
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
-import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
-
-
+import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from "firebase/firestore";
 
 import ReportarProblema from "../ReportarProblema";
-import { collection, addDoc, serverTimestamp, increment } from "firebase/firestore";
 import { auth } from "../../../services/firebase";
 
 
@@ -61,10 +58,52 @@ const PostScreen = ({
   const [cardName, setCardName] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
+  const [participants, setParticipants] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState(0);
 
   const handleStarPress = (rating) => {
     setStarRating(rating);
   };
+
+  // Função para buscar participantes e calcular vagas disponíveis
+  const fetchParticipants = async () => {
+    if (!selectedPost?.id) return;
+    
+    try {
+      // Buscar todos os usuários que têm este evento em joinedEvents
+      const usersRef = collection(db, 'user');
+      const q = query(usersRef, where('joinedEvents', 'array-contains', selectedPost.id));
+      const querySnapshot = await getDocs(q);
+      
+      const participantsList = [];
+      querySnapshot.forEach((doc) => {
+        const userData = doc.data();
+        participantsList.push({
+          id: doc.id,
+          nome: userData.nome || userData.userInfo?.nome || 'Usuário',
+          email: userData.email || 'email@exemplo.com'
+        });
+      });
+      
+      setParticipants(participantsList);
+      
+      // Calcular vagas disponíveis
+      const totalSlots = selectedPost?.numSlots || 0;
+      const occupiedSlots = participantsList.length;
+      const available = Math.max(0, totalSlots - occupiedSlots);
+      setAvailableSlots(available);
+      
+    } catch (error) {
+      console.error('Erro ao buscar participantes:', error);
+    }
+  };
+
+  // Buscar participantes quando o modal abrir
+  useEffect(() => {
+    if (modalVisible && selectedPost) {
+      fetchParticipants();
+    }
+  }, [modalVisible, selectedPost]);
 
   const handleReportarProblema = () => {
     setSidebarVisible(false);
@@ -202,6 +241,10 @@ const handleParticipar = async () => {
     });
 
     console.log("Participação salva no Firebase!");
+    
+    // Recarregar participantes para atualizar vagas disponíveis
+    await fetchParticipants();
+    
     setParticipationModalVisible(false);
     setPaymentModalVisible(true);
   } catch (error) {
@@ -579,8 +622,15 @@ const handleParticipar = async () => {
             <View style={[styles.infoBox, { borderColor: theme?.border }]}>
               <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Descrição: </Text>
               <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.desc}</Text>
-              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Quantas vagas estão disponíveis: </Text>
-              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.numSlots}</Text>
+              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Vagas disponíveis: </Text>
+              <Text style={[styles.commentText, { color: availableSlots > 0 ? theme?.primary : 'red' }]}>
+                {availableSlots} de {selectedPost?.numSlots || 0} vagas
+              </Text>
+              {availableSlots === 0 && (
+                <Text style={[styles.commentText, { color: 'red', fontWeight: 'bold' }]}>
+                  ⚠️ Viagem esgotada!
+                </Text>
+              )}
               <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Essa viagem é uma: </Text>
               <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
                 {(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}
@@ -659,11 +709,18 @@ const handleParticipar = async () => {
               <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Participar da viagem</Text>
             </TouchableOpacity> */}
             <TouchableOpacity
-      style={[styles.partButton, { backgroundColor: theme?.primary }]}
-  onPress={() => setParticipationModalVisible(true)}
+      style={[
+        styles.partButton, 
+        { 
+          backgroundColor: availableSlots > 0 ? theme?.primary : '#666',
+          opacity: availableSlots > 0 ? 1 : 0.6
+        }
+      ]}
+      onPress={() => availableSlots > 0 ? setParticipationModalVisible(true) : null}
+      disabled={availableSlots === 0}
 >
   <Text style={[styles.buttonText, { color: theme?.textInverted }]}>
-    Confirmar participação
+    {availableSlots > 0 ? 'Confirmar participação' : 'Viagem esgotada'}
   </Text>
 </TouchableOpacity>
 
@@ -717,10 +774,19 @@ const handleParticipar = async () => {
             ))}
 
             <TouchableOpacity
-              style={[styles.partButton, { backgroundColor: theme?.primary }]}
-              onPress={handleParticipar}
+              style={[
+                styles.partButton, 
+                { 
+                  backgroundColor: availableSlots > 0 ? theme?.primary : '#666',
+                  opacity: availableSlots > 0 ? 1 : 0.6
+                }
+              ]}
+              onPress={availableSlots > 0 ? handleParticipar : null}
+              disabled={availableSlots === 0}
             >
-              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Confirmar</Text>
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>
+                {availableSlots > 0 ? 'Confirmar' : 'Sem vagas disponíveis'}
+              </Text>
             </TouchableOpacity>
           </View>
                  </View>
