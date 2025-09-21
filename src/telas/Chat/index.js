@@ -14,8 +14,27 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const { userData } = useAuth();
   const [userCache, setUserCache] = useState({}); // { uid: { userInfo, isOrganizer, uid } }
+  const [otherUserName, setOtherUserName] = useState('Usuário');
   const scrollViewRef = useRef();
   const fadeAnim = useRef(new Animated.Value(0)).current; // For fade-in animation
+
+  // Função para buscar o nome do usuário correspondente
+  const fetchOtherUserName = async (otherUid) => {
+    if (!otherUid) return;
+    
+    try {
+      const userRef = doc(db, 'user', otherUid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const name = userData.nome || userData.userInfo?.nome || 'Usuário';
+        setOtherUserName(name);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar nome do usuário:', error);
+    }
+  };
 
   useEffect(() => {
     const makeChatId = (a, b) => {
@@ -28,6 +47,11 @@ export default function Chat() {
     const chatId = chatIdParam || makeChatId(myUid, otherUid);
 
     if (!chatId) return;
+
+    // Buscar nome do usuário correspondente
+    if (otherUid) {
+      fetchOtherUserName(otherUid);
+    }
 
     let unsubscribe = () => {};
 
@@ -182,7 +206,7 @@ export default function Chat() {
       <TouchableOpacity style={[styles.returnBtn, { backgroundColor: theme?.cardBackground }]} onPress={() => navigation.navigate('Home')}>
         <Text style={[styles.returnBtnText, { color: theme?.textPrimary }]}>Voltar</Text>
       </TouchableOpacity>
-      <Text style={[styles.header, { color: theme?.primary }]}>Chat</Text>
+      <Text style={[styles.header, { color: theme?.primary }]}>Conversa com {otherUserName}</Text>
 
       <ScrollView
         style={styles.messagesContainer}

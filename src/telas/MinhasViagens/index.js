@@ -6,6 +6,7 @@ import { useAuth } from '../../../services/AuthContext';
 import { db } from '../../../services/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { ThemeContext } from '../../context/ThemeContext';
+import GerenciarViagem from '../../modal/GerenciarViagem';
 
 // Tela de Minhas Viagens (posts salvos e favoritados)
 export default function MinhasViagens({ navigation, route }) {
@@ -19,6 +20,10 @@ export default function MinhasViagens({ navigation, route }) {
   const [myPosts, setMyPosts] = useState([]);
   const [activeTab, setActiveTab] = useState('saved'); // 'saved' | 'favorites' | 'mine'
   const [loading, setLoading] = useState(true);
+  
+  // Estados para o modal de gerenciamento
+  const [managementModalVisible, setManagementModalVisible] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
 
   // Função para buscar posts salvos do usuário
   const fetchSavedPosts = async () => {
@@ -180,9 +185,19 @@ export default function MinhasViagens({ navigation, route }) {
     }
   };
 
+  // Função para abrir modal de gerenciamento
+  const openManagementModal = (post) => {
+    setSelectedPost(post);
+    setManagementModalVisible(true);
+  };
+
   // Função para renderizar cada item no FlatList
   const renderItem = ({ item }) => (
-    <View style={[styles.card, { backgroundColor: theme?.backgroundSecondary, borderColor: theme?.border }]}>
+    <TouchableOpacity 
+      style={[styles.card, { backgroundColor: theme?.backgroundSecondary, borderColor: theme?.border }]}
+      onPress={() => activeTab === 'mine' ? openManagementModal(item) : null}
+      disabled={activeTab !== 'mine'}
+    >
       {/* Imagem de capa da viagem */}
       <Image 
         source={{ uri: item.images?.[0] || 'https://via.placeholder.com/60' }} 
@@ -197,8 +212,14 @@ export default function MinhasViagens({ navigation, route }) {
         <Text style={[styles.cardRoute, { color: theme?.textTertiary }]}>
           {item.route?.display_start} → {item.route?.display_end}
         </Text>
+        {/* Mostrar vagas disponíveis na aba "Criadas por mim" */}
+        {activeTab === 'mine' && (
+          <Text style={[styles.cardSlots, { color: theme?.primary }]}>
+            {item.numSlots || 0} vagas disponíveis
+          </Text>
+        )}
       </View>
-      {/* Ícone para remover (apenas nas abas salvos/favoritos) */}
+      {/* Ícone para remover (apenas nas abas salvos/favoritos) ou gerenciar (aba mine) */}
       {(activeTab === 'saved' || activeTab === 'favorites') && (
         <TouchableOpacity 
           onPress={() => activeTab === 'saved' ? removeFromSaved(item.id) : removeFromFavorites(item.id)} 
@@ -211,7 +232,16 @@ export default function MinhasViagens({ navigation, route }) {
           />
         </TouchableOpacity>
       )}
-    </View>
+      {activeTab === 'mine' && (
+        <View style={styles.cardIcon}>
+          <Ionicons 
+            name="settings-outline" 
+            size={24} 
+            color={theme?.textTertiary} 
+          />
+        </View>
+      )}
+    </TouchableOpacity>
   );
 
   const currentData = activeTab === 'saved' ? savedPosts : activeTab === 'favorites' ? favoritePosts : myPosts;
@@ -283,6 +313,13 @@ export default function MinhasViagens({ navigation, route }) {
           contentContainerStyle={styles.listContent}
         />
       )}
+
+      {/* Modal de Gerenciamento de Viagem */}
+      <GerenciarViagem
+        modalVisible={managementModalVisible}
+        setModalVisible={setManagementModalVisible}
+        selectedPost={selectedPost}
+      />
     </View>
   );
 }
@@ -362,6 +399,11 @@ const styles = StyleSheet.create({
   cardRoute: { 
     fontSize: 12,
     fontStyle: 'italic'
+  },
+  cardSlots: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4
   },
   cardIcon: { 
     padding: 8,
