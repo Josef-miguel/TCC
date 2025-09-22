@@ -12,6 +12,7 @@ import { appContext } from '../../../App';
 import { ThemeContext } from '../../context/ThemeContext';
 
 
+
 const CustomizeProfile = ({
   modalVisible,
   setModalVisible,
@@ -19,7 +20,8 @@ const CustomizeProfile = ({
   onSave  // callback opcional para enviar os dados pra fora
 }) => {
   const { organizerMode, toggleOrganizer } = useContext(appContext);
-  const {userData} = useAuth();
+  const { userData, setUserData } = useAuth();
+
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
   const [name, setName] = useState(userData?.userInfo?.nome || "");
@@ -27,6 +29,7 @@ const CustomizeProfile = ({
   const [description, setDescription] = useState(userData?.userInfo?.desc || "");
   const [isOrganizerMode, setIsOrganizerMode] = useState(userData?.userInfo?.isOrganizer || false);
   const [imageUri, setImageUri] = useState(null);
+
   
 // console.log(userData?.userInfo);
 
@@ -90,9 +93,17 @@ const pickImage = async () => {
       }
       const userRef = doc(db, 'user', uid);
       await updateDoc(userRef, updObj);
+      setUserData((prev) => ({
+      ...prev,
+      userInfo: {
+        ...prev?.userInfo,
+        ...updObj,
+      },
+      isOrganizer: updObj.isOrganizer,
+    }));
       console.log('Dados atualizados com sucesso!');
       console.log("isOrganizer: " + userData?.isOrganizer);
-      organizerMode();
+      toggleOrganizer();
     } catch (error) {
       console.error('Erro ao atualizar dados:', error);
     }
