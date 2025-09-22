@@ -18,11 +18,13 @@ import { auth, db } from "../../../services/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { ThemeContext } from "../../context/ThemeContext";
+import { useTranslation } from 'react-i18next';
 
 export default function Cadastro({ navigation }) {
   // Contexto de tema
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
+  const { t } = useTranslation();
 
   // Controle de animações: deslocamento vertical e opacidade
   const [offset] = useState(new Animated.ValueXY({ x: 0, y: 90 }));
@@ -86,7 +88,7 @@ export default function Cadastro({ navigation }) {
 
       setSuccess(true);
       showMessage({
-        message: "Cadastro Bem-Sucedido",
+        message: t('register.registrationSuccess'),
         description: "Bem-vindo!",
         type: "success",
         duration: 1800,
@@ -95,8 +97,8 @@ export default function Cadastro({ navigation }) {
     } catch (e) {
       console.error("Erro ao adicionar usuário: ", e);
       showMessage({
-        message: "Erro ao cadastrar",
-        description: e.message || "CAMPO INVÁLIDO!",
+        message: t('register.registrationError'),
+        description: e.message || t('register.invalidField'),
         type: "warning",
         duration: 3000,
       });
@@ -106,8 +108,8 @@ export default function Cadastro({ navigation }) {
   async function saveData() {
     if (!user || !password || !email || !cpf || !dataNasc) {
       showMessage({
-        message: "Erro ao Salvar",
-        description: "Preencha os Campos Obrigatórios!",
+        message: t('register.saveError'),
+        description: t('register.fillRequiredFields'),
         type: "warning",
       });
       return;
@@ -175,10 +177,10 @@ export default function Cadastro({ navigation }) {
             />
             
             <Text style={[styles.title, { color: theme?.textPrimary }]}>
-              Criar Conta
+              {t('register.title')}
             </Text>
             <Text style={[styles.subtitle, { color: theme?.textSecondary }]}>
-              Preencha os dados para começar
+              {t('register.subtitle')}
             </Text>
             
             {/* Botão para alternar tema */}
@@ -205,7 +207,7 @@ export default function Cadastro({ navigation }) {
               <Feather name="user" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
                 style={[styles.input, { color: theme?.textPrimary }]}
-                placeholder="Usuário"
+                placeholder={t('register.userPlaceholder')}
                 placeholderTextColor={theme?.textTertiary}
                 value={user}
                 onChangeText={(text) => setUser(text)}
@@ -217,7 +219,7 @@ export default function Cadastro({ navigation }) {
               <Feather name="mail" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
                 style={[styles.input, { color: theme?.textPrimary }]}
-                placeholder="E-mail"
+                placeholder={t('register.emailPlaceholder')}
                 placeholderTextColor={theme?.textTertiary}
                 value={email}
                 onChangeText={(text) => setEmail(text)}
@@ -229,7 +231,7 @@ export default function Cadastro({ navigation }) {
               <Feather name="lock" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
                 style={[styles.input, { color: theme?.textPrimary }]}
-                placeholder="Senha"
+                placeholder={t('register.passwordPlaceholder')}
                 placeholderTextColor={theme?.textTertiary}
                 value={password}
                 secureTextEntry={true}
@@ -242,7 +244,7 @@ export default function Cadastro({ navigation }) {
               <Feather name="clipboard" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
                 style={[styles.input, { color: theme?.textPrimary }]}
-                placeholder="CPF"
+                placeholder={t('register.cpfPlaceholder')}
                 placeholderTextColor={theme?.textTertiary}
                 value={cpf}
                 keyboardType="numeric"
@@ -275,13 +277,13 @@ export default function Cadastro({ navigation }) {
               style={[styles.button, { backgroundColor: theme?.primary }]} 
               onPress={saveData}
             >
-              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Registrar</Text>
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('register.registerButton')}</Text>
             </TouchableOpacity>
 
             {/* Link para ir ao login */}
             <TouchableOpacity onPress={() => navigation.navigate("Login")}>
               <Text style={[styles.linkText, { color: theme?.textPrimary }]}>
-                Já possui conta? Faça login
+                {t('register.loginLink')}
               </Text>
             </TouchableOpacity>
 

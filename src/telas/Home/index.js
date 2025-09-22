@@ -2,20 +2,19 @@ import React, { useRef, useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Image, ScrollView, SafeAreaView, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
-// import { getAuth, signInAnonymously } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 
 import TelaPost from '../../modal/TelaPost';
 import { db, auth } from '../../../services/firebase';
 import { ThemeContext } from '../../context/ThemeContext';
-// import { platform } from 'os';
-// import { Platform } from 'react-native';
+import { useNotifications } from '../../context/NotificationContext';
 
 
 export default function Home({ navigation, route }) {
   const { t } = useTranslation();
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
+  const { totalUnread } = useNotifications();
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-250)).current;
   const [modalVisible, setModalVisible] = useState(false);
@@ -81,14 +80,14 @@ export default function Home({ navigation, route }) {
     });
     return () => unsubscribe();
   }, []);
-  
-  
+
+
   // Log para verificar atualizações no estado
   useEffect(() => {
-      // Logs removidos para limpeza do código
-    }, [posts, filteredRecommended, filteredPopular]);
+    // Logs removidos para limpeza do código
+  }, [posts]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (route.params?.eventId) {
       const id = route.params.eventId;
       const ref = doc(db, "events", id);
@@ -104,7 +103,7 @@ export default function Home({ navigation, route }) {
   // Alterna o estado de favorito de um post no Firebase
   const toggleFav = async (id) => {
     if (!auth.currentUser) {
-      console.log("Usuário não autenticado");
+      console.log(t('favorites.userNotAuthenticated'));
       return;
     }
 
@@ -117,19 +116,19 @@ export default function Home({ navigation, route }) {
         await updateDoc(userRef, {
           favoritePosts: arrayRemove(id)
         });
-        console.log("Post removido dos favoritos!");
+        console.log(t('favorites.postRemovedFromFavorites'));
       } else {
         // Adiciona aos favoritos
         await updateDoc(userRef, {
           favoritePosts: arrayUnion(id)
         });
-        console.log("Post adicionado aos favoritos!");
+        console.log(t('favorites.postAddedToFavorites'));
       }
       
       // Atualiza o estado local
       setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     } catch (error) {
-      console.error("Erro ao favoritar/desfavoritar post:", error);
+      console.error(t('favorites.errorFavoriting'), error);
     }
   };
   
@@ -190,7 +189,16 @@ export default function Home({ navigation, route }) {
           placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
           />
         <TouchableOpacity onPress={() => navigation.navigate('Notificacoes')}>
-          <Ionicons name="notifications-outline" size={32} color={theme?.primary || "#f37100"} />
+          <View style={{ position: 'relative' }}>
+            <Ionicons name="notifications-outline" size={32} color={theme?.primary || "#f37100"} />
+            {typeof totalUnread === 'number' && totalUnread > 0 && (
+              <View style={[styles.notificationBadge, { backgroundColor: theme?.primary || "#f37100" }]}>
+                <Text style={styles.notificationBadgeText}>
+                  {totalUnread > 99 ? '99+' : totalUnread.toString()}
+                </Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -363,5 +371,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginVertical: 20,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  notificationBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
