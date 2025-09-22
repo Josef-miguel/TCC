@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import React, { useState, createContext, useContext } from "react";
+=======
+import React, { useState, createContext, useContext, useEffect } from "react";
+import { LanguageProvider } from './src/i18n';
+>>>>>>> d98ebda788d6ddc033c0ce186651049878375230
 import {
   StyleSheet,
   Text,
@@ -48,12 +53,47 @@ function Tabs() {
   const { theme } = useContext(ThemeContext);
   const { userData, setUserData } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
+<<<<<<< HEAD
 
   // Função para verificar se é organizador
   const isOrganizer = userData?.isOrganizer || false;
 
   const organizerMode = () => {
     // Função vazia por enquanto
+=======
+  const [isOrganizer, setIsOrganizer] = useState(false);
+
+  // sempre sincroniza quando o userData mudar
+  useEffect(() => {
+  if (userData?.isOrganizer !== undefined) {
+    setIsOrganizer(userData.isOrganizer);
+  }
+ }, [userData?.isOrganizer]);
+
+  // Atualiza valor no Firestore
+  const changeOrganizerStatus = async (newStatus) => {
+    try {
+      const userRef = doc(db, 'user', userData.uid);
+      await updateDoc(userRef, { isOrganizer: newStatus });
+
+      // Atualiza localmente também
+      setUserData((prev) => ({
+        ...prev,
+        isOrganizer: newStatus,
+      }));
+      setIsOrganizer(newStatus);
+    } catch (e) {
+      console.error('Erro ao atualizar isOrganizer:', e);
+    }
+  };
+
+  // Alterna entre organizador e não-organizador
+  const toggleOrganizer = () => {
+    if (userData?.isOrganizer !== undefined) {
+      const newStatus = !userData.isOrganizer;
+      changeOrganizerStatus(newStatus);
+    }
+>>>>>>> d98ebda788d6ddc033c0ce186651049878375230
   };
 
   // Mostra botão só se for organizador
@@ -61,7 +101,13 @@ function Tabs() {
     if (isOrganizer) {
       return (
         <TouchableOpacity
-          style={[styles.createPostButton, { backgroundColor: theme?.cardBackground, borderColor: theme?.primary }]}
+          style={[
+            styles.createPostButton,
+            {
+              backgroundColor: theme?.cardBackground,
+              borderColor: theme?.primary,
+            },
+          ]}
           onPress={() => setModalVisible(true)}
         >
           <Ionicons name="add-circle" size={50} color={theme?.primary} />
@@ -72,51 +118,49 @@ function Tabs() {
   };
 
   return (
-    
-      <appContext.Provider value={{ organizerMode, isOrganizer, toggleOrganizer: () => {} }}>
-        <Tab.Navigator
-          screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-              if (route.name === "Home") iconName = "home";
-              else if (route.name === "Perfil") iconName = "people-circle-outline";
-              else if (route.name === "Criar Post") iconName = "add-circle";
-              return <Ionicons name={iconName} size={size} color={color} />;
-            },
-            tabBarStyle: {
-              backgroundColor: theme?.backgroundSecondary || "#2b2c33",
-              borderTopWidth: 1,
-              borderColor: theme?.primary || "#f37100",
-            },
-            tabBarActiveTintColor: theme?.primary || "#f37100",
-            tabBarInactiveTintColor: theme?.textTertiary || "#999999",
-          })}
-        >
-          <Tab.Screen
-            name="Home"
-            component={Home}
-            options={{ headerShown: false }}
-          />
-          <Tab.Screen
-            name="Criar Post"
-            component={() => null}
-            options={{
-              tabBarButton: () => activeOrganizerPost(),
-            }}
-          />
-          <Tab.Screen
-            name="Perfil"
-            component={Perfil}
-            options={{ headerShown: false }}
-          />
-        </Tab.Navigator>
-        <CriarPost
-          modalVisible={modalVisible}
-          setModalVisible={setModalVisible}
+    <appContext.Provider value={{ isOrganizer, toggleOrganizer }}>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
+            if (route.name === "Home") iconName = "home";
+            else if (route.name === "Perfil") iconName = "people-circle-outline";
+            else if (route.name === "Criar Post") iconName = "add-circle";
+            return <Ionicons name={iconName} size={size} color={color} />;
+          },
+          tabBarStyle: {
+            backgroundColor: theme?.backgroundSecondary || "#2b2c33",
+            borderTopWidth: 1,
+            borderColor: theme?.primary || "#f37100",
+          },
+          tabBarActiveTintColor: theme?.primary || "#f37100",
+          tabBarInactiveTintColor: theme?.textTertiary || "#999999",
+        })}
+      >
+        <Tab.Screen
+          name="Home"
+          component={Home}
+          options={{ headerShown: false }}
         />
-      </appContext.Provider>
+        <Tab.Screen
+          name="Criar Post"
+          component={() => null}
+          options={{
+            tabBarButton: () => activeOrganizerPost(),
+          }}
+        />
+        <Tab.Screen
+          name="Perfil"
+          component={Perfil}
+          options={{ headerShown: false }}
+        />
+      </Tab.Navigator>
+
+      <CriarPost modalVisible={modalVisible} setModalVisible={setModalVisible} />
+    </appContext.Provider>
   );
 }
+
 
 
 export default function App() {
