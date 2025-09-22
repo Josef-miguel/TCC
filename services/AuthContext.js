@@ -14,15 +14,14 @@ export function AuthProvider({ children }) {
     let unsubscribeIsOrganizer = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-              if (user) {
-          try {
-            const userRef = doc(db, 'user', user.uid);
+      if (user) {
+        try {
+          const userRef = doc(db, 'user', user.uid);
           const docSnapshot = await getDoc(userRef);
 
           if (docSnapshot.exists()) {
             const data = docSnapshot.data();
 
-            // Define dados iniciais padronizados
             setUserData({
               uid: user.uid,
               email: user.email,
@@ -30,7 +29,7 @@ export function AuthProvider({ children }) {
               isOrganizer: !!data?.isOrganizer,
             });
 
-            // Escuta atualizações do doc do usuário em tempo real
+            // Escuta atualizações em tempo real
             unsubscribeIsOrganizer = onSnapshot(userRef, (snap) => {
               const newData = snap.data() || {};
               setUserData(prev => ({
@@ -39,7 +38,6 @@ export function AuthProvider({ children }) {
                 isOrganizer: !!newData.isOrganizer,
               }));
             });
-
           } else {
             console.warn('Documento do usuário não encontrado.');
             setUserData({
