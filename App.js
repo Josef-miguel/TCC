@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import React, { useState, createContext, useContext } from "react";
-=======
 import React, { useState, createContext, useContext, useEffect } from "react";
-import { LanguageProvider } from './src/i18n';
->>>>>>> d98ebda788d6ddc033c0ce186651049878375230
 import {
   StyleSheet,
   Text,
@@ -53,22 +48,14 @@ function Tabs() {
   const { theme } = useContext(ThemeContext);
   const { userData, setUserData } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
-<<<<<<< HEAD
-
-  // Função para verificar se é organizador
-  const isOrganizer = userData?.isOrganizer || false;
-
-  const organizerMode = () => {
-    // Função vazia por enquanto
-=======
   const [isOrganizer, setIsOrganizer] = useState(false);
 
   // sempre sincroniza quando o userData mudar
   useEffect(() => {
-  if (userData?.isOrganizer !== undefined) {
-    setIsOrganizer(userData.isOrganizer);
-  }
- }, [userData?.isOrganizer]);
+    if (userData?.isOrganizer !== undefined) {
+      setIsOrganizer(userData.isOrganizer);
+    }
+  }, [userData?.isOrganizer]);
 
   // Atualiza valor no Firestore
   const changeOrganizerStatus = async (newStatus) => {
@@ -93,7 +80,6 @@ function Tabs() {
       const newStatus = !userData.isOrganizer;
       changeOrganizerStatus(newStatus);
     }
->>>>>>> d98ebda788d6ddc033c0ce186651049878375230
   };
 
   // Mostra botão só se for organizador
