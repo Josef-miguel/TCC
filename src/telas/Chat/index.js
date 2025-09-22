@@ -46,7 +46,19 @@ export default function Chat() {
     const myUid = auth.currentUser?.uid;
     const chatId = chatIdParam || makeChatId(myUid, otherUid);
 
-    if (!chatId) return;
+    console.log('Chat.useEffect - Debug Info:', {
+      chatIdParam,
+      otherUid,
+      myUid,
+      authCurrentUser: auth.currentUser,
+      chatId,
+      userData
+    });
+
+    if (!chatId) {
+      console.error('Chat.useEffect: chatId is null/undefined. route.params:', route.params);
+      return;
+    }
 
     // Buscar nome do usuário correspondente
     if (otherUid) {
@@ -59,6 +71,7 @@ export default function Chat() {
       try {
         // Requer usuário autenticado
         if (!myUid) {
+          console.error('Chat.useEffect: No myUid found. auth.currentUser:', auth.currentUser);
           try { Alert.alert('Atenção', 'Faça login para usar o chat.'); } catch (_) {}
           return;
         }
@@ -66,19 +79,29 @@ export default function Chat() {
         // Garante existência do documento de chat com updated_at
         const chatRef = doc(db, 'chats', chatId);
         // Evita leitura antes da criação para não exigir permissão de GET
-        await setDoc(chatRef, {
+        const chatData = {
           user_uid: myUid || null,
           org_uid: otherUid || null,
           participants: [myUid, otherUid].filter(Boolean),
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
-        }, { merge: true });
+        };
+
+        console.log('Chat.useEffect: Attempting to create chat document:', chatId);
+        console.log('Chat data to be written:', chatData);
+
+        await setDoc(chatRef, chatData, { merge: true });
+        console.log('Chat.useEffect: Chat document created/updated successfully');
 
         const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp'));
+        console.log('Chat.useEffect: Attempting to read messages from:', `chats/${chatId}/messages`);
+
         unsubscribe = onSnapshot(
           q,
           (snapshot) => {
+            console.log('Chat.useEffect: onSnapshot callback triggered. Snapshot size:', snapshot.size);
             const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            console.log('Chat.useEffect: Messages received:', msgs);
             setMessages(msgs);
 
             const missingIds = Array.from(new Set(
@@ -86,16 +109,24 @@ export default function Chat() {
             ));
 
             if (missingIds.length > 0) {
+              console.log('Chat.useEffect: Fetching user data for uids:', missingIds);
               Promise.all(missingIds.map(async (uid) => {
                 try {
                   const ref = doc(db, 'user', uid);
+                  console.log('Chat.useEffect: Fetching user data for uid:', uid);
                   const snap = await getDoc(ref);
-                  if (snap.exists()) return { uid, ...snap.data() };
+                  if (snap.exists()) {
+                    console.log('Chat.useEffect: User data found for uid:', uid, snap.data());
+                    return { uid, ...snap.data() };
+                  }
+                  console.log('Chat.useEffect: User data not found for uid:', uid);
                   return { uid, userInfo: {} };
                 } catch (e) {
+                  console.error('Error fetching user data for uid:', uid, e);
                   return { uid, userInfo: {} };
                 }
               })).then(results => {
+                console.log('Chat.useEffect: User cache updated with results:', results);
                 setUserCache(prev => {
                   const next = { ...prev };
                   results.forEach(r => { next[r.uid] = { userInfo: r.userInfo || r, uid: r.uid }; });
@@ -105,7 +136,7 @@ export default function Chat() {
             }
           },
           (err) => {
-            console.error('Chat.onSnapshot messages error:', err?.code, err?.message);
+            console.error('Chat.onSnapshot messages error:', err?.code, err?.message, err);
             try { Alert.alert('Erro ao ler mensagens', `${err?.code || ''} ${err?.message || ''}`.trim()); } catch (_) {}
           }
         );
@@ -134,6 +165,7 @@ export default function Chat() {
 
     // Requer usuário autenticado (não usar anônimo)
     if (!auth.currentUser) {
+      console.error('sendMessage: auth.currentUser is null');
       Alert.alert('Atenção', 'Faça login para enviar mensagens.');
       return;
     }
@@ -142,7 +174,21 @@ export default function Chat() {
     const username = userData?.userInfo?.nome || '';
     const { chatId: chatIdParam, otherUid } = route.params || {};
     const chatId = chatIdParam || makeChatId(uid, otherUid);
-    if (!chatId) return;
+
+    console.log('sendMessage - Debug Info:', {
+      input,
+      uid,
+      authCurrentUser: auth.currentUser,
+      userData,
+      chatIdParam,
+      otherUid,
+      chatId
+    });
+
+    if (!chatId) {
+      console.error('sendMessage: chatId is null/undefined');
+      return;
+    }
 
     // Garante que o documento do chat exista e contenha ambos participantes (sem GET prévio)
     try {
@@ -155,6 +201,7 @@ export default function Chat() {
         updated_at: serverTimestamp(),
         last_message: input,
       }, { merge: true });
+      console.log('sendMessage: Chat document ensured successfully');
     } catch (e) {
       console.error('Chat.sendMessage ensure chat error:', e?.code, e?.message);
       Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
@@ -169,6 +216,7 @@ export default function Chat() {
         userId: uid,
         username: username || 'Usuário',
       });
+      console.log('sendMessage: Message added successfully');
     } catch (e) {
       console.error('Chat.sendMessage addDoc error:', e?.code, e?.message);
       Alert.alert('Erro ao enviar mensagem', `${e?.code || ''} ${e?.message || ''}`.trim());
@@ -178,6 +226,7 @@ export default function Chat() {
     // Atualiza metadados da conversa
     try {
       await updateDoc(doc(db, 'chats', chatId), { updated_at: serverTimestamp(), last_message: input });
+      console.log('sendMessage: Chat document updated successfully');
     } catch (e) {
       console.warn('Chat.sendMessage updateDoc error, trying setDoc:', e?.code, e?.message);
       // Se o doc ainda não existir por algum motivo, cria-o
@@ -189,6 +238,7 @@ export default function Chat() {
           updated_at: serverTimestamp(),
           last_message: input,
         }, { merge: true });
+        console.log('sendMessage: Chat document created via fallback');
       } catch (ee) {
         console.error('Chat.sendMessage setDoc fallback error:', ee?.code, ee?.message);
         Alert.alert('Erro ao atualizar conversa', `${ee?.code || ''} ${ee?.message || ''}`.trim());
