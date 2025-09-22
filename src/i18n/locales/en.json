@@ -16,16 +16,13 @@
     "changePassword": "Change password",
     "deleteAccount": "Delete account"
     },
-    "settings": {
-    "title": "Settings",
-    "notifications": "Notifications",
-    "lightTheme": "Light theme",
-    "language": "Language",
-    "languages": {
-    "ptBR": "Portuguese (Brazil)",
-    "en": "English",
-    "zhCN": "Mandarin (Simplified)"
-    }
+    "reviews": {
+    "title": "Reviews",
+    "noReviews": "No reviews for this event yet.",
+    "user": "User",
+    "rating": "Rating",
+    "comment": "Comment",
+    "date": "Date"
     },
     "auth": {
     "loginTitle": "Sign in",
@@ -42,7 +39,10 @@
     "saveError": "Save Error",
     "fillFields": "Please enter email and password.",
     "noUserData": "User does not have saved data in Firestore.",
-    "registerLink": "Don't have an account? Register"
+    "registerLink": "Don't have an account? Register",
+    "signIn": "Sign in",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password"
     },
     "home": {
     "title": "Welcome",
@@ -65,9 +65,46 @@
     "noPosts": "No posts found",
     "userNotFound": "User not found",
     "unknownUser": "Unknown user",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "myAccount": "My Account",
+    "settings": "Settings",
+    "reviews": "Reviews",
+    "myTrips": "My Trips",
+    "logout": "Logout",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "logoutButton": "Logout",
+    "cancel": "Cancel"
     },
-    "dialogs": {
-    "confirmDelete": "Are you sure you want to delete your account?"
+    "post": {
+    "reportProblem": "Report Problem",
+    "removeFromSaved": "Remove from Saved",
+    "savePost": "Save Post",
+    "viewProfile": "View Profile",
+    "tripRoute": "Trip Route",
+    "start": "Start",
+    "destination": "Destination",
+    "excursionInfo": "Excursion Information",
+    "description": "Description",
+    "availableSlots": "Available slots",
+    "tripExhausted": "Trip exhausted",
+    "tripType": "This trip is a",
+    "viewReviews": "View reviews",
+    "rating": "Rating",
+    "comments": "Comments",
+    "noComments": "No comments yet.",
+    "anonymous": "Anonymous User",
+    "typeComment": "Type a comment...",
+    "confirmParticipation": "Confirm participation",
+    "chatWithOrganizer": "Chat with organizer",
+    "whoTravels": "Who will travel...",
+    "whoGoes": "Who will go?",
+    "confirm": "Confirm",
+    "noSlots": "No slots available",
+    "simulatedPayment": "Simulated Payment",
+    "method": "Method",
+    "cardNumber": "Card number",
+    "cardName": "Name on card",
+    "pay": "Pay",
+    "noImages": "No images available"
     }
     }

@@ -22,6 +22,7 @@ import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc, collection
 
 import ReportarProblema from "../ReportarProblema";
 import { auth } from "../../../services/firebase";
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -37,6 +38,7 @@ const PostScreen = ({
   const navigation = useNavigation();
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
+  const { t } = useTranslation();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
@@ -461,7 +463,7 @@ const handleParticipar = async () => {
                   <View style={[styles.imageContainer, { justifyContent: 'center', alignItems: 'center' }]}>
                     <Ionicons name="image-outline" size={64} color="#ccc" />
                     <Text style={{ color: "#ccc", marginTop: 10, fontSize: 16 }}>
-                      Nenhuma imagem disponível
+                      {t('post.noImages')}
                     </Text>
                   </View>
                 )}
@@ -548,7 +550,7 @@ const handleParticipar = async () => {
                   >
                     <Ionicons name="flag-outline" size={20} color={theme?.textPrimary} />
                     <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                      Reportar Problema
+                      {t('post.reportProblem')}
                     </Text>
                   </TouchableOpacity>
                   
@@ -562,7 +564,7 @@ const handleParticipar = async () => {
                       color={theme?.textPrimary} 
                     />
                     <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                      {isSaved ? "Remover dos Salvos" : "Salvar Post"}
+                      {isSaved ? t('post.removeFromSaved') : t('post.savePost')}
                     </Text>
                   </TouchableOpacity>
                   
@@ -572,7 +574,7 @@ const handleParticipar = async () => {
                   >
                     <Ionicons name="person-outline" size={20} color={theme?.textPrimary} />
                     <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                      Visualizar Perfil
+                      {t('post.viewProfile')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -580,12 +582,12 @@ const handleParticipar = async () => {
             </View>
 
             {/* Rota */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Trajeto da viagem</Text>
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.tripRoute')}</Text>
             <View style={[styles.routeBox, { borderColor: theme?.border, backgroundColor: theme?.backgroundSecondary }]}>
               <Ionicons name="location-sharp" size={24} color={theme?.textPrimary} />
               <View style={{ marginLeft: 10 }}>
-                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>Início: {selectedPost.route?.display_start}</Text>
-                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>Destino: {selectedPost.route?.display_end}</Text>
+                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>{t('post.start')}: {selectedPost.route?.display_start}</Text>
+                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>{t('post.destination')}: {selectedPost.route?.display_end}</Text>
               </View>
             </View>
 
@@ -618,30 +620,30 @@ const handleParticipar = async () => {
             </View>
 
             {/* Informações */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Informações da excursão</Text>
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.excursionInfo')}</Text>
             <View style={[styles.infoBox, { borderColor: theme?.border }]}>
-              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Descrição: </Text>
+              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>{t('post.description')}: </Text>
               <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.desc}</Text>
-              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Vagas disponíveis: </Text>
+              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>{t('post.availableSlots')}: </Text>
               <Text style={[styles.commentText, { color: availableSlots > 0 ? theme?.primary : 'red' }]}>
                 {availableSlots} de {selectedPost?.numSlots || 0} vagas
               </Text>
               {availableSlots === 0 && (
                 <Text style={[styles.commentText, { color: 'red', fontWeight: 'bold' }]}>
-                  ⚠️ Viagem esgotada!
+                  ⚠️ {t('post.tripExhausted')}!
                 </Text>
               )}
-              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>Essa viagem é uma: </Text>
+              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>{t('post.tripType')}: </Text>
               <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
                 {(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}
               </Text>
             </View>
 
             <TouchableOpacity onPress={() => navigation.navigate('Avaliacoes', { eventId: selectedPost.id })}>
-              <Text>Ver avaliações</Text>
+              <Text>{t('post.viewReviews')}</Text>
             </TouchableOpacity>
             {/* Avaliação */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Avaliação</Text>
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.rating')}</Text>
             <View style={styles.starContainer}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <TouchableOpacity
@@ -662,15 +664,15 @@ const handleParticipar = async () => {
             </View>
 
             {/* Comentários */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Comentários</Text>
+            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.comments')}</Text>
             <View style={[styles.commentsBox, { borderColor: theme?.border }]}>
               {comments.length === 0 ? (
-                <Text style={{ color: theme?.textSecondary }}>Ainda não há comentários.</Text>
+                <Text style={{ color: theme?.textSecondary }}>{t('post.noComments')}</Text>
               ) : (
                 comments.map((c, idx) => (
                   <View key={idx} style={{ marginBottom: 8 }}>
                     <Text style={{ color: theme?.textPrimary, fontWeight: "bold" }}>
-                      {c.username || "Usuário Anônimo"}
+                      {c.username || t('post.anonymous')}
                     </Text>
                     <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
                       "{c.comment_text}"
@@ -686,7 +688,7 @@ const handleParticipar = async () => {
                     styles.commentInput,
                     { borderColor: theme?.primary, color: theme?.textPrimary },
                   ]}
-                  placeholder="Digite um comentário..."
+                  placeholder={t('post.typeComment')}
                   placeholderTextColor={theme?.textTertiary || "#aaa"}
                   value={newText}
                   onChangeText={setNewText}
@@ -720,7 +722,7 @@ const handleParticipar = async () => {
       disabled={availableSlots === 0}
 >
   <Text style={[styles.buttonText, { color: theme?.textInverted }]}>
-    {availableSlots > 0 ? 'Confirmar participação' : 'Viagem esgotada'}
+    {availableSlots > 0 ? t('post.confirmParticipation') : t('post.tripExhausted')}
   </Text>
 </TouchableOpacity>
 
@@ -728,7 +730,7 @@ const handleParticipar = async () => {
               style={[styles.chatButton, styles.modalButton]}
               onPress={handleOpenPrivateChat}
             >
-              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Conversar com o organizador</Text>
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('post.chatWithOrganizer')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -740,7 +742,7 @@ const handleParticipar = async () => {
       <Modal visible={participationModalVisible} transparent animationType="slide">
         <View style={[styles.partContainer, { backgroundColor: theme?.overlay }]}>
           <View style={[styles.partContent, { backgroundColor: theme?.backgroundSecondary }]}>
-            <Text style={[styles.partTitle, { color: theme?.textPrimary }]}>Quem vai viajar...</Text>
+            <Text style={[styles.partTitle, { color: theme?.textPrimary }]}>{t('post.whoTravels')}</Text>
             {['Sou eu', 'Outra pessoa'].map(opt => (
               <TouchableOpacity
                 key={opt}
@@ -754,7 +756,7 @@ const handleParticipar = async () => {
               </TouchableOpacity>
             ))}
 
-            <Text style={[styles.partTitle, { marginTop: 20, color: theme?.textPrimary }]}>Quem vai ir?</Text>
+            <Text style={[styles.partTitle, { marginTop: 20, color: theme?.textPrimary }]}>{t('post.whoGoes')}</Text>
             {[
               'Criança de colo (com acompanhante)',
               'Criança 6 de 14 anos (acompanhante)',
@@ -785,7 +787,7 @@ const handleParticipar = async () => {
               disabled={availableSlots === 0}
             >
               <Text style={[styles.buttonText, { color: theme?.textInverted }]}>
-                {availableSlots > 0 ? 'Confirmar' : 'Sem vagas disponíveis'}
+                {availableSlots > 0 ? t('post.confirm') : t('post.noSlots')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -820,10 +822,10 @@ const handleParticipar = async () => {
           <View style={[styles.paymentOverlay, { backgroundColor: theme?.overlay }]}>
             <View style={[styles.paymentContainer, { backgroundColor: theme?.backgroundSecondary }]}>
               <Text style={[styles.partTitle, { color: theme?.textPrimary, fontSize: 20 }]}>
-                Pagamento Simulado
+                {t('post.simulatedPayment')}
               </Text>
 
-              <Text style={[styles.label, { color: theme?.textSecondary, marginTop: 10 }]}>Método:</Text>
+              <Text style={[styles.label, { color: theme?.textSecondary, marginTop: 10 }]}>{t('post.method')}:</Text>
               {["Cartão de Crédito", "Pix", "Boleto"].map((method) => (
                 <TouchableOpacity
                   key={method}
@@ -841,7 +843,7 @@ const handleParticipar = async () => {
                 <>
                   <TextInput
                     style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
-                    placeholder="Número do cartão"
+                    placeholder={t('post.cardNumber')}
                     placeholderTextColor={theme?.textTertiary}
                     keyboardType="numeric"
                     value={cardNumber}
@@ -849,7 +851,7 @@ const handleParticipar = async () => {
                   />
                   <TextInput
                     style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
-                    placeholder="Nome no cartão"
+                    placeholder={t('post.cardName')}
                     placeholderTextColor={theme?.textTertiary}
                     value={cardName}
                     onChangeText={setCardName}
@@ -881,14 +883,14 @@ const handleParticipar = async () => {
                   setPaymentModalVisible(false);
                 }}
               >
-                <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Pagar</Text>
+                <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('post.pay')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={{ marginTop: 10, alignSelf: "center" }}
                 onPress={() => setPaymentModalVisible(false)}
               >
-                <Text style={{ color: theme?.primary }}>Cancelar</Text>
+                <Text style={{ color: theme?.primary }}>{t('post.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>

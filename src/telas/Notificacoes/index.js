@@ -5,10 +5,12 @@ import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../../../services/firebase';
 import { collection, getDocs, onSnapshot, orderBy, query, where, doc, getDoc } from 'firebase/firestore';
 import { ThemeContext } from '../../context/ThemeContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 export default function Notificacoes() {
   const navigation = useNavigation();
   const { theme } = useContext(ThemeContext);
+  const { markAsRead } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]); // [{ id, eventId, eventTitle, username, text, createdAt }]
   const [threads, setThreads] = useState([]); // conversas privadas a partir de 'chats'
@@ -19,6 +21,9 @@ export default function Notificacoes() {
   const uid = auth.currentUser?.uid || null;
 
   useEffect(() => {
+    // Marcar notificações como lidas quando a tela for acessada
+    markAsRead();
+
     if (!uid) {
       setLoading(false);
       return;

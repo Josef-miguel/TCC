@@ -7,6 +7,7 @@ import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { ThemeContext } from '../../context/ThemeContext';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 export default function Avaliacoes() {
   const route = useRoute();
@@ -14,6 +15,7 @@ export default function Avaliacoes() {
   const { eventId } = route.params || {}; // precisa ser passado ao navegar
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [avaliacoes, setAvaliacoes] = useState([]);
@@ -59,14 +61,14 @@ export default function Avaliacoes() {
           
           <Ionicons name="arrow-back" size={32} color={theme?.primary || "#f37100"} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme?.primary }]}>Avaliações</Text>
+        <Text style={[styles.headerTitle, { color: theme?.primary }]}>{t("reviews.title")}</Text>
       </View>
 
       {avaliacoes.length === 0 ? (
         <View style={styles.center}>
           <Icon name="emoticon-sad-outline" size={60} color={theme?.textSecondary} />
           <Text style={{ color: theme?.textSecondary, marginTop: 10 }}>
-            Nenhuma avaliação para este evento ainda.
+            {t('reviews.noReviews')}
           </Text>
         </View>
       ) : (
@@ -76,8 +78,8 @@ export default function Avaliacoes() {
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <View style={[styles.card, { backgroundColor: theme?.backgroundSecondary, borderColor: theme?.border }]}>
-              <Text style={[styles.userName, { color: theme?.textPrimary }]}>{item.username || "Usuário"}</Text>
-              <Text style={[styles.nota, { color: theme?.primary }]}>Nota: {item.nota}/5</Text>
+              <Text style={[styles.userName, { color: theme?.textPrimary }]}>{item.username || t('reviews.user')}</Text>
+              <Text style={[styles.nota, { color: theme?.primary }]}>{t('reviews.rating')}: {item.nota}/5</Text>
               {item.comment_text ? (
                 <Text style={[styles.comentario, { color: theme?.textSecondary }]}>
                   {item.comment_text}
