@@ -5,11 +5,13 @@ import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDoc
 import { useAuth } from '../../../services/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Chat() {
   const navigation = useNavigation();
   const route = useRoute();
   const { theme } = useContext(ThemeContext);
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const { userData } = useAuth();
@@ -254,9 +256,9 @@ export default function Chat() {
       style={[styles.container, { backgroundColor: theme?.background }]}
     >
       <TouchableOpacity style={[styles.returnBtn, { backgroundColor: theme?.cardBackground }]} onPress={() => navigation.navigate('Home')}>
-        <Text style={[styles.returnBtnText, { color: theme?.textPrimary }]}>Voltar</Text>
+        <Text style={[styles.returnBtnText, { color: theme?.textPrimary }]}>{t('chat.back')}</Text>
       </TouchableOpacity>
-      <Text style={[styles.header, { color: theme?.primary }]}>Conversa com {otherUserName}</Text>
+      <Text style={[styles.header, { color: theme?.primary }]}>{t('chat.title')} {otherUserName}</Text>
 
       <ScrollView
         style={styles.messagesContainer}
@@ -265,7 +267,7 @@ export default function Chat() {
       >
         {messages.map((msg) => {
           const isOwn = msg.userId === auth.currentUser?.uid;
-          const senderName = msg.username || (userCache[msg.userId]?.userInfo?.nome) || (isOwn ? 'Você' : 'Anônimo');
+          const senderName = msg.username || (userCache[msg.userId]?.userInfo?.nome) || (isOwn ? t('chat.you') : t('chat.anonymous'));
           return (
             <Animated.View
               key={msg.id}
@@ -287,7 +289,7 @@ export default function Chat() {
 
       <View style={[styles.inputContainer, { backgroundColor: theme?.backgroundSecondary, borderTopColor: theme?.primary }]}>
         <TextInput
-          placeholder="Digite sua mensagem..."
+          placeholder={t('chat.typeMessage')}
           placeholderTextColor={theme?.textTertiary}
           value={input}
           onChangeText={setInput}

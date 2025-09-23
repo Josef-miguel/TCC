@@ -16,16 +16,13 @@
     "changePassword": "更改密码",
     "deleteAccount": "删除账户"
     },
-    "settings": {
-    "title": "设置",
-    "notifications": "通知",
-    "lightTheme": "亮色主题",
-    "language": "语言",
-    "languages": {
-    "ptBR": "葡萄牙语（巴西）",
-    "en": "英语",
-    "zhCN": "官话（简体中文）"
-    }
+    "reviews": {
+    "title": "评价",
+    "noReviews": "此活动暂无评价。",
+    "user": "用户",
+    "rating": "评分",
+    "comment": "评论",
+    "date": "日期"
     },
     "auth": {
     "loginTitle": "登录",
@@ -42,7 +39,10 @@
     "saveError": "保存错误",
     "fillFields": "请输入邮箱和密码。",
     "noUserData": "用户在Firestore中没有保存的数据。",
-    "registerLink": "还没有账户？注册"
+    "registerLink": "还没有账户？注册",
+    "signIn": "登录",
+    "emailPlaceholder": "电子邮箱",
+    "passwordPlaceholder": "密码"
     },
     "home": {
     "title": "欢迎",
@@ -58,7 +58,53 @@
     "noTitle": "无标题",
     "noDescription": "无可用描述"
     },
-    "dialogs": {
-    "confirmDelete": "确定要删除您的账户吗？"
+    "profile": {
+    "profile": "个人资料",
+    "organizer": "组织者",
+    "posts": "帖子",
+    "noPosts": "未找到帖子",
+    "userNotFound": "未找到用户",
+    "unknownUser": "未知用户",
+    "loading": "加载中...",
+    "myAccount": "我的账户",
+    "settings": "设置",
+    "reviews": "评价",
+    "myTrips": "我的旅行",
+    "logout": "退出",
+    "logoutConfirm": "您确定要退出吗？",
+    "logoutButton": "退出",
+    "cancel": "取消"
+    },
+    "post": {
+    "reportProblem": "报告问题",
+    "removeFromSaved": "从收藏中移除",
+    "savePost": "保存帖子",
+    "viewProfile": "查看个人资料",
+    "tripRoute": "旅行路线",
+    "start": "开始",
+    "destination": "目的地",
+    "excursionInfo": "游览信息",
+    "description": "描述",
+    "availableSlots": "可用名额",
+    "tripExhausted": "旅行已满",
+    "tripType": "此旅行是",
+    "viewReviews": "查看评价",
+    "rating": "评分",
+    "comments": "评论",
+    "noComments": "还没有评论。",
+    "anonymous": "匿名用户",
+    "typeComment": "输入评论...",
+    "confirmParticipation": "确认参与",
+    "chatWithOrganizer": "与组织者聊天",
+    "whoTravels": "谁将旅行...",
+    "whoGoes": "谁将去？",
+    "confirm": "确认",
+    "noSlots": "没有可用名额",
+    "simulatedPayment": "模拟支付",
+    "method": "方法",
+    "cardNumber": "卡号",
+    "cardName": "卡上姓名",
+    "pay": "支付",
+    "noImages": "没有可用图像"
     }
     }
