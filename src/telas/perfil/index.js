@@ -72,16 +72,8 @@ export default function Perfil() {
         </View>
 
         {/* Menu */}
-<<<<<<< HEAD
         <MenuItem icon="account-outline" label={t('profile.myAccount')} onPress={() => setEditModalVisible(true)} />
         <MenuItem icon="cog" label={t('profile.settings')} onPress={() => setConfigModalVisible(true)} />
-        <MenuItem icon="account-search-outline" label={t('profile.reviews')} onPress={() => navigation.navigate('Avaliacoes')} />
-        <MenuItem icon="heart-outline" label={t('profile.myTrips')} onPress={() => navigation.navigate('MinhasViagens')} />
-        <MenuItem icon="logout" label={t('profile.logout')} onPress={() => setLogoutVisible(true)} />
-=======
-       
-        <MenuItem icon="account-outline" label="Minha conta" onPress={() => setEditModalVisible(true)} />
-        <MenuItem icon="cog" label="Configurações" onPress={() => setConfigModalVisible(true)} />
 
         {userData?.isOrganizer && (
           <MenuItem 
@@ -91,9 +83,9 @@ export default function Perfil() {
           />
         )}
 
-        <MenuItem icon="heart-outline" label="Minhas Viagens" onPress={() => navigation.navigate('MinhasViagens')} />
-        <MenuItem icon="logout" label="Sair" onPress={() => setLogoutVisible(true)} />
->>>>>>> d98ebda788d6ddc033c0ce186651049878375230
+        <MenuItem icon="heart-outline" label={t('profile.myTrips')} onPress={() => navigation.navigate('MinhasViagens')} />
+        <MenuItem icon="logout" label={t('profile.logout')} onPress={() => setLogoutVisible(true)} />
+
       </ScrollView>
 
       {/* Modal de editar perfil */}

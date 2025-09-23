@@ -155,7 +155,7 @@ export default function App() {
   return (
     <I18nextProvider i18n={i18n}>
 
-      <ThemeProvider>
+      {/* <ThemeProvider>
         <AuthProvider>
           <SafeAreaProvider style={{ flex: 1 }}>
             <PaperProvider>
@@ -164,7 +164,7 @@ export default function App() {
             </PaperProvider>
           </SafeAreaProvider>
         </AuthProvider>
-      </ThemeProvider>
+      </ThemeProvider> */}
 
     <ThemeProvider>
       <NotificationProvider>
