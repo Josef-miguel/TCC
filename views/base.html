@@ -55,7 +55,7 @@
           </svg>
         </button>
         <a href="{{ url_for('perfil') }}" class="nav-link profile-link" aria-label="Perfil">
-          <img class="profile-avatar" src="{{ (user.photo_url if (user is defined and user and user.photo_url) else url_for('static', filename='img/JSGlogo.png')) }}" alt="Foto do perfil">
+          <img class="profile-avatar" src="{{ (user.profileImage if (user is defined and user and user.profileImage) else url_for('static', filename='img/JSGlogo.png')) }}" alt="Foto do perfil">
         </a>
       </nav>
     </div>
