@@ -29,14 +29,14 @@
     const result = await res.json();
     if (result.success) {
       input.value = "";
-      loadMessages(); // recarrega após envio
+      loadMessages(); 
     } else {
       alert(result.message || "Erro ao enviar");
     }
   });
 
   async function loadMessages() {
-    const res = await fetch(`/get_messages?event_id=${eventId}`);
+    const res = await fetch(`/get_group_messages?event_id=${eventId}`);
     const data = await res.json();
     chatBox.innerHTML = "";
 
@@ -49,7 +49,7 @@
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  setInterval(loadMessages, 3000); // atualiza a cada 3s
+  setInterval(loadMessages, 3000); 
   loadMessages();
 </script>
 {% endblock %}
