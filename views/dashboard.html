@@ -54,6 +54,7 @@
 
         <form action="{{url_for('joinEvent')}}" method="post" class="event-actions mt-2">
           <button class="btn">Participar da viagem</button>
+          <input type="hidden" name="event_id" value="{{ event.id }}">
         </form>
 
 
