@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { auth, db } from '../../services/firebase';
 import { collection, query, where, onSnapshot, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 
@@ -21,55 +21,83 @@ export const NotificationProvider = ({ children }) => {
 
   const uid = auth.currentUser?.uid;
 
-  // Monitorar novas mensagens em tempo real
+  // Baselines para considerar itens como "novos" após o app abrir ou marcar como lido
+  const lastReadMessagesAtRef = useRef(new Date());
+  const lastReadReviewsAtRef = useRef(new Date());
+  // Unsubscribers dinâmicos
+  const chatMsgUnsubsRef = useRef(new Map()); // chatId -> unsub
+  const reviewUnsubsRef = useRef(new Map());   // eventId -> unsub
+
+  // Monitorar novas mensagens em tempo real (por mensagem)
   useEffect(() => {
+    // Limpeza quando usuário não está autenticado
     if (!uid) {
       setUnreadMessages(0);
+      try { chatMsgUnsubsRef.current.forEach(u => u && u()); } catch (_) {}
+      chatMsgUnsubsRef.current.clear();
       return;
     }
 
+    // Baseline: a partir de agora contam apenas mensagens posteriores
+    lastReadMessagesAtRef.current = new Date();
+
     const chatsRef = collection(db, 'chats');
-    const q = query(chatsRef, where('participants', 'array-contains', uid));
+    const qChats = query(chatsRef, where('participants', 'array-contains', uid));
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      let newMessages = 0;
-      let latestMessageTime = null;
+    const unsubChats = onSnapshot(qChats, (snapshot) => {
+      const activeChatIds = new Set();
 
-      for (const doc of snapshot.docs) {
-        const chatData = doc.data();
-        const updatedAt = chatData.updated_at?.toDate ? chatData.updated_at.toDate() : null;
+      snapshot.docs.forEach((chatDoc) => {
+        const chatId = chatDoc.id;
+        activeChatIds.add(chatId);
 
-        // Se a última atualização foi depois da última vez que verificamos
-        if (updatedAt && (!lastMessageTime || updatedAt > lastMessageTime)) {
-          // Verificar se é uma mensagem nova (não enviada pelo usuário atual)
-          const participants = Array.isArray(chatData.participants) ? chatData.participants : [];
-          const otherParticipant = participants.find(p => p && p !== uid);
-
-          if (otherParticipant && chatData.last_message && chatData.user_uid !== uid) {
-            newMessages++;
-          }
+        if (!chatMsgUnsubsRef.current.has(chatId)) {
+          const msgsRef = collection(db, 'chats', chatId, 'messages');
+          const qMsgs = query(msgsRef, orderBy('timestamp'));
+          const unsubMsgs = onSnapshot(qMsgs, (msgSnap) => {
+            let inc = 0;
+            msgSnap.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const m = change.doc.data() || {};
+                const ts = m.timestamp?.toDate ? m.timestamp.toDate() : (m.timestamp ? new Date(m.timestamp) : null);
+                if (ts && ts > lastReadMessagesAtRef.current && m.userId && m.userId !== uid) {
+                  inc++;
+                }
+              }
+            });
+            if (inc > 0) setUnreadMessages(prev => prev + inc);
+          });
+          chatMsgUnsubsRef.current.set(chatId, unsubMsgs);
         }
+      });
 
-        if (updatedAt && (!latestMessageTime || updatedAt > latestMessageTime)) {
-          latestMessageTime = updatedAt;
+      // Remover listeners de chats que saíram do escopo
+      Array.from(chatMsgUnsubsRef.current.keys()).forEach((chatId) => {
+        if (!activeChatIds.has(chatId)) {
+          try { chatMsgUnsubsRef.current.get(chatId)?.(); } catch (_) {}
+          chatMsgUnsubsRef.current.delete(chatId);
         }
-      }
-
-      setUnreadMessages(newMessages);
-      if (latestMessageTime && (!lastMessageTime || latestMessageTime > lastMessageTime)) {
-        setLastMessageTime(latestMessageTime);
-      }
+      });
     });
 
-    return () => unsubscribe();
-  }, [uid, lastMessageTime]);
+    return () => {
+      try { unsubChats(); } catch (_) {}
+      try { chatMsgUnsubsRef.current.forEach(u => u && u()); } catch (_) {}
+      chatMsgUnsubsRef.current.clear();
+    };
+  }, [uid]);
 
-  // Monitorar novas avaliações/comentários em tempo real
+  // Monitorar novas avaliações/comentários em tempo real (por avaliação)
   useEffect(() => {
     if (!uid) {
       setUnreadReviews(0);
+      try { reviewUnsubsRef.current.forEach(u => u && u()); } catch (_) {}
+      reviewUnsubsRef.current.clear();
       return;
     }
+
+    // Baseline para avaliações
+    lastReadReviewsAtRef.current = new Date();
 
     const fetchOwnedEventsAndSubscribe = async () => {
       try {
@@ -79,81 +107,78 @@ export const NotificationProvider = ({ children }) => {
           query(eventsRef, where('uid', '==', uid)),
           query(eventsRef, where('ownerId', '==', uid)),
           query(eventsRef, where('userId', '==', uid)),
+          // Campos legados/alternativos
+          query(eventsRef, where('creatorId', '==', uid)),
+          query(eventsRef, where('userUID', '==', uid)),
         ];
 
-        // Adicionar query para creator.uid se possível
         try {
           queries.push(query(eventsRef, where('creator.uid', '==', uid)));
-        } catch (e) {
-          // Ignorar erro se índice não existir
-        }
+        } catch (_) {}
 
-        // Executar queries para encontrar eventos do usuário
         const results = await Promise.all(
           queries.map(async (q) => {
             try {
               const snapshot = await getDocs(q);
-              return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (e) {
+              return snapshot.docs.map(doc => ({ id: doc.id }));
+            } catch (_) {
               return [];
             }
           })
         );
 
-        const allEvents = results.flat();
-        const eventIds = allEvents.map(event => event.id);
+        const eventIds = results.flat().map(e => e.id);
 
         if (eventIds.length === 0) {
           setUnreadReviews(0);
           return;
         }
 
-        let newReviews = 0;
-        let latestReviewTime = null;
+        // Criar/garantir listeners por evento
+        const active = new Set();
+        eventIds.forEach((eventId) => {
+          active.add(eventId);
+          if (reviewUnsubsRef.current.has(eventId)) return;
 
-        // Monitorar avaliações para cada evento
-        const unsubscribers = eventIds.map((eventId) => {
           const reviewsRef = collection(db, 'events', eventId, 'avaliacoes');
-          const q = query(reviewsRef, orderBy('createdAt', 'desc'));
-
-          return onSnapshot(q, (snapshot) => {
-            snapshot.docs.forEach((doc) => {
-              const reviewData = doc.data();
-              const createdAt = reviewData.createdAt?.toDate ? reviewData.createdAt.toDate() : null;
-
-              if (createdAt && (!lastReviewTime || createdAt > lastReviewTime)) {
-                newReviews++;
-              }
-
-              if (createdAt && (!latestReviewTime || createdAt > latestReviewTime)) {
-                latestReviewTime = createdAt;
+          const qRev = query(reviewsRef, orderBy('createdAt'));
+          const unsub = onSnapshot(qRev, (snap) => {
+            let inc = 0;
+            snap.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const d = change.doc.data() || {};
+                const createdAt = d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : null);
+                if (createdAt && createdAt > lastReadReviewsAtRef.current) {
+                  inc++;
+                }
               }
             });
-
-            setUnreadReviews(newReviews);
-            if (latestReviewTime && (!lastReviewTime || latestReviewTime > lastReviewTime)) {
-              setLastReviewTime(latestReviewTime);
-            }
+            if (inc > 0) setUnreadReviews(prev => prev + inc);
           });
+          reviewUnsubsRef.current.set(eventId, unsub);
         });
 
-        return () => {
-          unsubscribers.forEach(unsub => unsub());
-        };
+        // Remover listeners de eventos que saíram
+        Array.from(reviewUnsubsRef.current.keys()).forEach((eventId) => {
+          if (!active.has(eventId)) {
+            try { reviewUnsubsRef.current.get(eventId)?.(); } catch (_) {}
+            reviewUnsubsRef.current.delete(eventId);
+          }
+        });
+
       } catch (error) {
         console.error('Erro ao monitorar avaliações:', error);
         setUnreadReviews(0);
       }
     };
 
-    const unsubscribe = fetchOwnedEventsAndSubscribe();
+    fetchOwnedEventsAndSubscribe();
 
     return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
+      try { reviewUnsubsRef.current.forEach(u => u && u()); } catch (_) {}
+      reviewUnsubsRef.current.clear();
     };
-  }, [uid, lastReviewTime]);
+  }, [uid]);
 
   // Calcular total de notificações não lidas
   useEffect(() => {
@@ -162,12 +187,15 @@ export const NotificationProvider = ({ children }) => {
 
   // Função para marcar notificações como lidas
   const markAsRead = () => {
-    if (!uid) return;
-
+    // Zera contadores e avança baseline para "agora"
     setUnreadMessages(0);
     setUnreadReviews(0);
-    setLastMessageTime(new Date());
-    setLastReviewTime(new Date());
+    const now = new Date();
+    lastReadMessagesAtRef.current = now;
+    lastReadReviewsAtRef.current = now;
+    // Mantém estados antigos por compatibilidade, mas sem dependência
+    setLastMessageTime(now);
+    setLastReviewTime(now);
   };
 
   const value = {
