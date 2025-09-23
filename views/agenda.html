@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
   <!-- Navegação rápida -->
-  <div class="agenda-nav" style="margin-bottom: 20px;">
+  <div class="agenda-nav mb-3" style="margin-bottom: 20px;">
     <a class="btn btn-outline" href="{{ url_for('perfil') }}">Perfil</a>
     <a class="btn btn-outline" href="{{ url_for('dashboard') }}">Todos os Eventos</a>
   </div>
@@ -11,10 +11,10 @@
   <h1>Minha Agenda</h1>
 
   <!-- Calendário -->
-  <div id="calendar" style="max-width: 900px; margin: 0 auto; background: var(--card-background); padding: 20px; border-radius: 12px; box-shadow: 0 6px 15px var(--card-shadow);"></div>
+  <div id="calendar" class="calendar-card" style="max-width: 900px; margin: 0 auto;"></div>
 
   <!-- Container para eventos do dia selecionado -->
-  <div id="agendaPosts" style="margin-top: 20px;"></div>
+  <div id="agendaPosts" class="events-section mt-3"></div>
 </div>
 {% endblock %}
 

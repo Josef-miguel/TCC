@@ -1,74 +1,71 @@
 {% extends "base.html" %}
 
 {% block content %}
-<a href="{{url_for('perfil')}}">perfil</a>
-<a href="{{url_for('agenda')}}">agenda</a>
-<a href="{{url_for('my_chats')}}">meus chats</a>
+<div class="container layout with-sidebar">
+  <aside class="sidebar" id="appSidebar" aria-label="Menu lateral">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Menu</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-link" href="{{ url_for('agenda') }}">📅 <span>Agenda</span></a>
+      <a class="sidebar-link" href="{{ url_for('my_chats') }}">💬 <span>Meus Chats</span></a>
+    </nav>
+  </aside>
 
-<h1>Todos os Eventos</h1>
-<ul style="list-style:none; padding:0;">
-  {% for event in events %}
-    <li style="border: black 1px solid; padding: 12px; margin-bottom:16px;">
-      <h2>{{ event.title }}</h2>
+  <section class="content-with-sidebar">
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        {% for image in event.images %}
-          <img src="{{ image }}" style="height: 120px; object-fit:cover; border-radius:8px;">
+  <h1 class="mb-3">Todos os Eventos</h1>
+  <ul class="events-list">
+    {% for event in events %}
+      <li class="event-item card">
+        <div class="event-header">
+          <h2 class="event-title">{{ event.title }}</h2>
+          <form action="{{url_for('chat_individual')}}"></form>
+        </div>
+
+        <div class="event-images">
+          {% for image in event.images %}
+            <img src="{{ image }}" alt="Imagem do evento" style="height: 120px; object-fit:cover; border-radius:8px; width:100%; max-width: 200px;">
+          {% endfor %}
+        </div>
+
+        <p class="clamp-3">{{ event.desc }}</p>
+        <div class="event-meta">
+          <span>Saída: {{ event.exit_date }}</span>
+          <span>Retorno: {{ event.return_date }}</span>
+          <span>Preço: R$ {{ event.price }}</span>
+          <span>Vagas: {{ event.numSlots }}</span>
+        </div>
+
+        <div class="map map-embed"
+             id="map-{{ loop.index }}"
+             data-route='{{ event.route | default({}) | tojson | safe }}'>
+        </div>
+
+        {% for events in user.joinedEvents %}
+          {% if events == event.id %}
+          <p class="mt-2" style="color:green; font-weight:bold;">Você já está participando desta viagem!</p>
+          <form action="{{url_for('chat_group')}}" method="post" class="mt-1">
+            <input type="hidden" name="org_uid" value="{{ event.id }}">
+            <button class="btn btn-secondary">Falar com o grupo</button>
+          </form>
+          {% endif %}
         {% endfor %}
-      </div>
 
-      <p>{{ event.desc }}</p>
-      <p>Saída: {{ event.exit_date }}</p>
-      <p>Retorno: {{ event.return_date }}</p>
-      <p>Preço: R$ {{ event.price }}</p>
-      <p>Vagas: {{ event.numSlots }}</p>
-
-      
-      <div class="map"
-           id="map-{{ loop.index }}"
-           data-route='{{ event.route | default({}) | tojson | safe }}'
-           style="height:300px; width:100%; border-radius:12px; margin-top:8px; border: 1px solid red;">
-      </div>
-
-      <form action="{{url_for('chat_individual')}}"></form>
-
-      {% for events in user.joinedEvents %}
-        {% if events == event.id %}
-        <p style="color:green; font-weight:bold;">Você já está participando desta viagem!</p>
-
-        <form action="{{url_for('chat_group')}}" method="post"><pre>{{event.uid}}</pre>
-          <input type="hidden" name="org_uid" value="{{ event.id }}">
-          <button>Falar com o grupo</button>
+        <form action="{{url_for('joinEvent')}}" method="post" class="event-actions mt-2">
+          <button class="btn">Participar da viagem</button>
         </form>
-                <pre>{{event.id}}</pre>
-        {% endif %}
-        
-      {% endfor %}
-
-      <form action="{{url_for('joinEvent')}}" method="post">
-
-        <button>Participar da viagem</button>
-      </form>
-
-      <pre>{{ event.route | tojson }}</pre>
-
-    </li>
-
-  {% endfor %}
-</ul>
-
-<a href="{{ url_for('new_event') }}">Criar post</a>
-
-<div>
-  user session info:
-  <pre>{{ user | tojson }}</pre> 
 
 
+      </li>
+    {% endfor %}
+  </ul>
 
-  user joined events:
-  <pre>{{ user.joinedEvents }}</pre>
-</div> 
+  <a class="btn btn-outline mt-3" href="{{ url_for('new_event') }}">Criar post</a>
 
+ 
+  </section>
+ </div>
 {% endblock %}
 
 {% block scripts %}

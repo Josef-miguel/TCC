@@ -24,8 +24,40 @@
   {% endif %}
 {% endwith %}
   <header>
-    <div class="container">
-      <p>Esse é o base.html</p>
+    <div class="container header-content">
+      <div class="brand">
+        <div class="logo-placeholder"><img src="{{ url_for('static', filename='img/JSGlogo.png') }}" class="logo-img" alt="Logo"></div>
+        <span class="brand-name">JustSetGo</span>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggleLeft" aria-label="Abrir menu lateral" aria-controls="appSidebar" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="search-container">
+        <form class="search-bar" action="#" method="get" role="search" aria-label="Pesquisar">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input type="search" name="q" placeholder="Pesquisar eventos, destinos, datas..." aria-label="Campo de busca">
+        </form>
+      </div>
+      <nav class="nav-container">
+        {% block nav %}{% endblock %}
+        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+          <svg class="theme-icon sun" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <svg class="theme-icon moon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </button>
+        <a href="{{ url_for('perfil') }}" class="nav-link profile-link" aria-label="Perfil">
+          <img class="profile-avatar" src="{{ (user.photo_url if (user is defined and user and user.photo_url) else url_for('static', filename='img/JSGlogo.png')) }}" alt="Foto do perfil">
+        </a>
+      </nav>
     </div>
   </header>
 
@@ -41,5 +73,56 @@
 
   <!-- espaço para scripts que cada template pode injetar -->
   {% block scripts %}{% endblock %}
+  
+  <!-- Script do toggle de tema -->
+  <script>
+    // Sistema de toggle de tema
+    (function() {
+      const themeToggle = document.getElementById('themeToggle');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const sidebarToggleLeft = document.getElementById('sidebarToggleLeft');
+      const htmlElement = document.documentElement;
+      
+      // Função para aplicar o tema
+      function applyTheme(theme) {
+        htmlElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+      }
+      
+      // Função para alternar tema
+      function toggleTheme() {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+      }
+      
+      // Carregar tema salvo ou usar preferência do sistema
+      function loadTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = savedTheme || systemPreference;
+        applyTheme(theme);
+      }
+      
+      // Event listeners
+      themeToggle.addEventListener('click', toggleTheme);
+      function toggleSidebar(btn) {
+        const isOpen = document.body.classList.toggle('sidebar-open');
+        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+      if (sidebarToggle) sidebarToggle.addEventListener('click', () => toggleSidebar(sidebarToggle));
+      if (sidebarToggleLeft) sidebarToggleLeft.addEventListener('click', () => toggleSidebar(sidebarToggleLeft));
+      
+      // Escutar mudanças na preferência do sistema
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+          applyTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+      
+      // Inicializar tema
+      loadTheme();
+    })();
+  </script>
 </body>
 </html>
