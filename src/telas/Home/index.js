@@ -148,24 +148,68 @@ export default function Home({ navigation, route }) {
   
   const renderCard = (item) => {
     return (
-      <TouchableOpacity key={item.id} onPress={() => openModal(item)} style={[styles.card, { 
-        backgroundColor: theme?.cardBackground,
-        borderColor: theme?.primary
-      }]}>
+      <TouchableOpacity 
+        key={item.id} 
+        onPress={() => openModal(item)} 
+        style={[
+          styles.card, 
+          { 
+            backgroundColor: theme?.cardBackground,
+            borderColor: theme?.primary,
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 12,
+            borderRadius: 12,
+            marginBottom: 12,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3
+          }
+        ]}
+      >
+        {/* Imagem */}
         <Image
-          source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/60' }}
-          style={styles.cardImage}
-          />
-        <View style={styles.cardContent}>
-          <Text style={[styles.cardTitle, { color: theme?.textPrimary }]}>{item.title || t('home.noTitle')}</Text>
-          <Text style={[styles.cardSubtitle, { color: theme?.textTertiary }]}>
+          source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/100' }}
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: 10,
+            marginRight: 12
+          }}
+        />
+
+        {/* Conteúdo */}
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.cardTitle, { color: theme?.textPrimary, fontSize: 16, fontWeight: "bold" }]}>
+            {item.title || t('home.noTitle')}
+          </Text>
+
+          <Text style={[styles.cardSubtitle, { color: theme?.textTertiary, marginVertical: 2 }]}>
             {typeof item.desc === 'string'
-              ? (item.desc.length > 35 ? item.desc.slice(0, 35) + '...' : item.desc)
+              ? (item.desc.length > 40 ? item.desc.slice(0, 40) + '...' : item.desc)
               : t('home.noDescription')}
           </Text>
+
+          {/* Informações extras */}
+          {item.date && (
+            <Text style={{ color: theme?.textSecondary, fontSize: 12 }}>📅 {item.date}</Text>
+          )}
+          {item.location && (
+            <Text style={{ color: theme?.textSecondary, fontSize: 12 }}>📍 {item.location}</Text>
+          )}
+          {item.price && (
+            <Text style={{ color: theme?.primary, fontSize: 14, fontWeight: "600" }}> R$ {item.price} por pessoa</Text>
+          )}
         </View>
-        <TouchableOpacity onPress={() => toggleFav(item.id)} style={styles.cardIcon}>
-          <Ionicons name={item.fav ? 'heart' : 'heart-outline'} size={24} color={theme?.primary || "#f37100"} />
+
+        {/* Ícone Favorito */}
+        <TouchableOpacity onPress={() => toggleFav(item.id)} style={{ marginLeft: 8 }}>
+          <Ionicons 
+            name={item.fav ? 'heart' : 'heart-outline'} 
+            size={26} 
+            color={theme?.primary || "#f37100"} 
+          />
         </TouchableOpacity>
       </TouchableOpacity>
     );
