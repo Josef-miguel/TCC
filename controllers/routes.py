@@ -407,3 +407,39 @@ def init_app(app, db):
         except Exception as e:
             logger.exception(f"Erro ao buscar mensagens do grupo: {e}")
             return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
+
+    @app.route("/chat_individual", methods=["POST"])
+    def chat_individual():
+        if not g.user:
+            return redirect(url_for("login"))
+        
+        
+        return render_template("chat_individual.html", user=g.user)
+    
+    @app.route("/my_chats")
+    def my_chats():
+        if not g.user:
+            return redirect(url_for("login"))
+        
+        # try:
+        #     chats_group = []
+        #     chats_ref = db.collection("chat-group")\
+        #                   .where("user_uid", "==", g.user["uid"])\
+        #                   .order_by("updated_at", direction=firestore.Query.DESCENDING)\
+        #                   .stream()            
+        #     for doc in chats_ref:
+        #         chat_data = doc.to_dict()
+        #         chat_data["id"] = doc.id
+        #         chats_group.append(chat_data)
+                
+        #     chats_individual = []
+        #     chats_ref = db.collection("chat-individual")\
+        #                   .where("user_uid", "==", g.user["uid"])\
+        #                   .order_by("updated_at", direction=firestore.Query.DESCENDING)\
+        #                   .stream()
+            
+        return render_template("my_chats.html", user=g.user)
+        # except Exception as e:
+        #     logger.exception(f"Erro ao carregar meus chats: {e}")
+        #     flash("Erro ao carregar seus chats. Tente novamente.", "error")
+        #     return render_template("my_chats.html", user=g.user, chats=[])
