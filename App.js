@@ -156,105 +156,57 @@ function Tabs() {
 
 export default function App() {
   const Stack = createStackNavigator();
+
   return (
     <I18nextProvider i18n={i18n}>
-    <ThemeProvider>
-      <AuthProvider>
-        <SafeAreaProvider style={{ flex: 1 }}>
-          <PaperProvider>
-            <NavigationContainer>
-            <Stack.Navigator
-              initialRouteName="Cadastro"
-              screenOptions={{ headerShown: false }}
-            >
-              <Stack.Screen
-                name="Login"
-                component={Login}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="Home"
-                component={Tabs}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="Cadastro"
-                component={Cadastro}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-
-              <Stack.Screen
-                name="Agenda"
-                component={Agenda}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="Formapagamento"
-                component={Formapagamento}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="VerificacaoIdentidade"
-                component={VerificacaoIdentidade}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="MinhasViagens"
-                component={MinhasViagens}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="Perfil"
-                component={Perfil}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="Post"
-                component={Post}
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="Favoritos"
-                component={Favoritos}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Algoritmo"
-                component={Algoritmo}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Chat"
-                component={Chat}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Notificacoes"
-                component={Notificacoes}
-                options={{ headerShown: false }}
-              />
-
-              <Stack.Screen 
-                name="Avaliacoes" 
-                component={Avaliacoes} 
-                options={{ headerShown: false }}
-              /> 
-              <Stack.Screen
-                name="VisualizarPerfil"
-                component={VisualizarPerfil}
-                options={{ headerShown: false }}
-
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
-            <FlashMessage position="top" style={{paddingVertical: 10}}/>
-          </PaperProvider>
-        </SafeAreaProvider>
-      </AuthProvider>
-    </ThemeProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <SafeAreaProvider style={{ flex: 1 }}>
+            <PaperProvider>
+              <NavigationWithAuth Stack={Stack} />
+              <FlashMessage position="top" style={{ paddingVertical: 10 }} />
+            </PaperProvider>
+          </SafeAreaProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </I18nextProvider>
   );
 }
+
+// Componente separado para usar o hook useAuth()
+function NavigationWithAuth({ Stack }) {
+  const { userData } = useAuth(); // ✅ agora userData existe
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Cadastro"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Home" component={Tabs} />
+        <Stack.Screen name="Cadastro" component={Cadastro} />
+        <Stack.Screen name="Agenda" component={Agenda} />
+        <Stack.Screen name="Formapagamento" component={Formapagamento} />
+        <Stack.Screen name="VerificacaoIdentidade" component={VerificacaoIdentidade} />
+        <Stack.Screen name="MinhasViagens" component={MinhasViagens} />
+        <Stack.Screen name="Perfil" component={Perfil} />
+        <Stack.Screen name="Post" component={Post} />
+        <Stack.Screen name="Favoritos" component={Favoritos} />
+        <Stack.Screen name="Algoritmo" component={Algoritmo} />
+        <Stack.Screen name="Chat" component={Chat} />
+        <Stack.Screen name="Notificacoes" component={Notificacoes} />
+
+        {/* Só aparece para organizador */}
+        {userData?.isOrganizer && (
+          <Stack.Screen name="Avaliacoes" component={Avaliacoes} />
+        )}
+
+        <Stack.Screen name="VisualizarPerfil" component={VisualizarPerfil} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 
 const styles = StyleSheet.create({
   container: {

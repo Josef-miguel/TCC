@@ -74,9 +74,12 @@ export default function Perfil() {
         <MenuItem icon="account-outline" label="Minha conta" onPress={() => setEditModalVisible(true)} />
         <MenuItem icon="cog" label="Configurações" onPress={() => setConfigModalVisible(true)} />
 
-        {/* Só aparece se for organizador */}
-        {organizerMode && (
-          <MenuItem icon="account-search-outline" label="Avaliações" onPress={() => navigation.navigate('Avaliacoes')} />
+        {userData?.isOrganizer && (
+          <MenuItem 
+            icon="account-search-outline" 
+            label="Avaliações" 
+            onPress={() => navigation.navigate('Avaliacoes')} 
+          />
         )}
 
         <MenuItem icon="heart-outline" label="Minhas Viagens" onPress={() => navigation.navigate('MinhasViagens')} />
