@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<pre>{{org_uid}}}</pre>
+<pre>{{chat_uid}}}</pre>
 
 <div id="chat-container">
   <div id="messages" style="height:400px; overflow-y:scroll; border:1px solid #ccc; padding:10px;"></div>
@@ -11,51 +11,63 @@
 </div>
 
 <script>
-const orgUid = "{{ org_uid }}";
+const chatUid = "{{ chat_uid }}";
 const userUid = "{{ g.user['uid'] }}";
 const messagesDiv = document.getElementById('messages');
-let lastTimestamp = null; // Para paginação, se quiser scroll infinito
+
+window.addEventListener("DOMContentLoaded", () => {
+  fetchMessages(); // já chama 1 vez
+  setInterval(fetchMessages, 3000);
+});
 
 async function fetchMessages() {
-    if (!orgUid) return;
+    if (!chatUid) return;
 
-    let url = `/get_messages?org_uid=${orgUid}&limit=50`;
-    if(lastTimestamp) url += `&last_timestamp=${lastTimestamp}`;
+    let url = `/get_messages?chat_uid=${chatUid}&limit=50`;
 
     const res = await fetch(url);
     const data = await res.json();
-    if(data.success){
+    if (data.success) {
         messagesDiv.innerHTML = '';
         data.messages.forEach(m => {
             const msgEl = document.createElement('div');
-            const ts = m.timestamp._seconds ? new Date(m.timestamp._seconds*1000) : new Date();
-            const sender = m.uid_sender === userUid ? "Você" : "Organizador";
-            msgEl.textContent = `${sender}: ${m.text} (${ts.toLocaleTimeString()})`;
+
+            let ts;
+            if (m.timestamp && m.timestamp._seconds) {
+                ts = new Date(m.timestamp._seconds * 1000);
+            } else if (m.timestamp) {
+                ts = new Date(m.timestamp); // fallback se for string ISO
+            } else {
+                ts = new Date();
+            }
+
+            const sender = m.uid_sender === userUid ? "Você" : (m.name || "Outro");
+            msgEl.textContent = `${sender}: ${m.text} (${ts.toLocaleString()})`;
             messagesDiv.appendChild(msgEl);
-            lastTimestamp = ts.toISOString(); // salva para paginação futura
         });
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    } else {
+        console.error("Erro ao buscar mensagens:", data.error || data.message);
     }
 }
 
-// Enviar mensagem
+// Enviar mensagem: envia chat_uid em vez de org_uid
 document.getElementById('send-btn').addEventListener('click', async () => {
     const text = document.getElementById('message-input').value;
-    if(!text) return;
+    if (!text) return;
 
-    await fetch('/send_message', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({text, org_uid: orgUid})
+    const res = await fetch('/send_message', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text, chat_uid: chatUid})
     });
 
+    const j = await res.json();
+    if (!j.success) console.error("Erro ao enviar:", j.message);
     document.getElementById('message-input').value = '';
     fetchMessages();
 });
 
-// Atualiza mensagens a cada 3s
-fetchMessages();
-setInterval(fetchMessages, 3000);
 </script>
 
 {% endblock %}

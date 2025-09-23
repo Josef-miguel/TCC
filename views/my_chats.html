@@ -2,6 +2,40 @@
 
 {% block content %}
 
+<h1>Meus Chats</h1>
+    
+    <h2>Chats em Grupo</h2>
+    {% if chats_group %}
+        <ul>
+            {% for chat in chats_group %}
+                <li>
+                    <strong>Grupo:</strong> {{ chat.id }}<br>
+                    <form action="{{ url_for('chat_group') }}" method="POST">
+                        <input type="hidden" name="chat_uid" value="{{ chat.id }}">
+                        <button type="submit">Entrar no grupo</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum chat em grupo encontrado.</p>
+    {% endif %}
 
+    <h2>Chats Individuais</h2>
+    {% if chats_individual %}
+        <ul>
+            {% for chat in chats_individual %}
+                <li>
+                    <strong>Chat:</strong> {{ chat.id }}<br>
+                    <form action="{{ url_for('chat_individual') }}" method="POST">
+                        <input type="hidden" name="chat_uid" value="{{ chat.id }}">
+                        <button type="submit">Entrar no chat</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum chat individual encontrado.</p>
+    {% endif %}
 
 {% endblock %}

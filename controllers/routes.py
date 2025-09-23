@@ -253,95 +253,98 @@ def init_app(app, db):
             logger.exception(f"Erro ao carregar agenda (all): {e}")
             return jsonify({"success": False, "events": [], "error": str(e)}), 500
     
-    @app.route("/chat", methods=["POST"])
-    def chat():
+    # rota para buscar mensagens nos chats individuais
+    @app.route("/get_messages")
+    def get_messages():
         if not g.user:
-            return redirect(url_for("login"))
-        org_uid = request.form.get("org_uid")
-        return render_template("chat.html", org_uid=org_uid, user=g.user)
+            return jsonify({"success": False, "messages": [], "error": "Não logado"}), 401
+
+        # aceita chat_uid ou org_uid por compatibilidade
+        chat_uid = request.args.get("chat_uid") or request.args.get("org_uid")
+        if not chat_uid:
+            return jsonify({"success": False, "messages": [], "error": "chat_uid não enviado"}), 400
+
+        try:
+            limit = int(request.args.get("limit", 50))
+            msgs_ref = (
+                db.collection("chats")
+                  .document(chat_uid)
+                  .collection("messages")
+                  .order_by("timestamp")
+                  .limit(limit)
+            )
+
+            messages = []
+            for doc in msgs_ref.stream():
+                d = doc.to_dict()
+
+                ts = d.get("timestamp")
+                # Normaliza o timestamp para um dicionário serializável compatível com o front
+                if isinstance(ts, datetime):
+                    d["timestamp"] = {
+                        "_seconds": int(ts.timestamp()),
+                        "_nanoseconds": ts.microsecond * 1000
+                    }
+                else:
+                    # Se for firestore.Timestamp (possível), tenta pegar atributos
+                    try:
+                        d["timestamp"] = {
+                            "_seconds": int(ts.seconds),
+                            "_nanoseconds": int(getattr(ts, "nanos", 0))
+                        }
+                    except Exception:
+                        d["timestamp"] = None
+
+                d["id"] = doc.id
+                messages.append(d)
+
+            return jsonify({"success": True, "messages": messages})
+        except Exception as e:
+            logger.exception(f"Erro em get_messages: {e}")
+            return jsonify({"success": False, "messages": [], "error": str(e)}), 500
     
-    
+    # rota para enviar mensagens nos chats individuais
     @app.route("/send_message", methods=["POST"])
     def send_message():
         if not g.user:
             return jsonify({"success": False, "message": "Não logado"}), 401
     
-        data = request.get_json()
-        text = data.get("text")
-        org_uid = data.get("org_uid")
-        user_uid = g.user['uid']
+        data = request.get_json() if request.is_json else request.form
+        text = (data.get("text") or "").strip()
+        chat_uid = data.get("chat_uid") or data.get("org_uid")
     
-        if not text or not org_uid:
-            return jsonify({"success": False, "message": "Mensagem ou organizador vazios"}), 400
-    
-        # ID do chat previsível
-        chat_id = f"{min(user_uid, org_uid)}_{max(user_uid, org_uid)}"
-    
-        # Cria/atualiza documento do chat com uids do usuário e do organizador
-        chat_ref = db.collection("chat-group").document(chat_id)
-        chat_ref.set({
-            "user_uid": user_uid,
-            "org_uid": org_uid,
-            "updated_at": firestore.SERVER_TIMESTAMP
-        }, merge=True)  # merge=True mantém campos existentes
-    
-        # Documento da mensagem na subcoleção
-        message_doc = {
-            "text": text,
-            "timestamp": firestore.SERVER_TIMESTAMP,
-            "uid_sender": user_uid,
-            "read": False
-        }
+        if not text or not chat_uid:
+            return jsonify({"success": False, "message": "Texto ou chat_uid faltando"}), 400
     
         try:
-            db.collection("chat-group").document(f"group_{event_id}").set({...})
-            return jsonify({"success": True})
+            msg = {
+                "text": text,
+                "uid_sender": g.user["uid"],
+                "user_uid": g.user["uid"],
+                "read": False,
+                "timestamp": firestore.SERVER_TIMESTAMP,  # usa SERVER_TIMESTAMP para consistência
+            }
+    
+            # garante que o documento 'chat' exista e atualiza updated_at
+            chat_ref = db.collection("chats").document(chat_uid)
+            chat_ref.set({"updated_at": firestore.SERVER_TIMESTAMP}, merge=True)
+    
+            # adiciona a mensagem
+            chat_ref.collection("messages").add(msg)
+    
+            return jsonify({"success": True, "message": "Mensagem enviada"})
         except Exception as e:
-            logger.exception(f"Erro ao enviar mensagem: {e}")
-            return jsonify({"success": False, "message": "Erro ao enviar mensagem"}), 500
+            logger.exception(f"Erro em send_message: {e}")
+            return jsonify({"success": False, "message": str(e)}), 500
 
     
-    
-    @app.route("/get_messages")
-    def get_messages():
-        if not g.user:
-            return jsonify({"success": False, "message": "Não logado"}), 401
-
-        org_uid = request.args.get("event_id")
-        limit = int(request.args.get("limit", 50))
-        last_timestamp = request.args.get("last_timestamp")  # opcional, para paginação
-        user_uid = g.user['uid']
-
-        if not org_uid:
-            return jsonify({"success": False, "message": "Organizador não especificado"}), 400
-
-        chat_id = f"{min(user_uid, org_uid)}_{max(user_uid, org_uid)}"
-
-        try:
-            messages_ref = db.collection("chats").document(chat_id).collection("messages")\
-                .order_by("timestamp", direction=firestore.Query.ASCENDING)\
-                .limit(limit)
-
-            if last_timestamp:
-                # Converte para Timestamp do Firestore
-                from google.protobuf.timestamp_pb2 import Timestamp
-                ts = Timestamp()
-                ts.FromJsonString(last_timestamp)
-                messages_ref = messages_ref.start_after({"timestamp": ts})
-
-            messages = [doc.to_dict() for doc in messages_ref.stream()]
-
-            return jsonify({"success": True, "messages": messages})
-        except Exception as e:
-            logger.exception(f"Erro ao buscar mensagens: {e}")
-            return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
 
     @app.route("/chat_group", methods=["POST"])
     def chat_group():
         if not g.user:
             return redirect(url_for("login"))
         
-        event_id = request.form.get("org_uid")
+        event_id = request.form.get("chat_uid")
         print(event_id)
         if not event_id:
             flash("ID do evento não informado.", "error")
@@ -408,38 +411,52 @@ def init_app(app, db):
             logger.exception(f"Erro ao buscar mensagens do grupo: {e}")
             return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
 
+    
     @app.route("/chat_individual", methods=["POST"])
     def chat_individual():
         if not g.user:
             return redirect(url_for("login"))
-        
-        
-        return render_template("chat_individual.html", user=g.user)
+    
+        chat_uid = request.form.get("chat_uid")
+        if not chat_uid:
+            flash("Chat não informado.", "error")
+            return redirect(url_for("my_chats"))
+    
+        return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid)
+
     
     @app.route("/my_chats")
     def my_chats():
         if not g.user:
             return redirect(url_for("login"))
         
-        # try:
-        #     chats_group = []
-        #     chats_ref = db.collection("chat-group")\
-        #                   .where("user_uid", "==", g.user["uid"])\
-        #                   .order_by("updated_at", direction=firestore.Query.DESCENDING)\
-        #                   .stream()            
-        #     for doc in chats_ref:
-        #         chat_data = doc.to_dict()
-        #         chat_data["id"] = doc.id
-        #         chats_group.append(chat_data)
-                
-        #     chats_individual = []
-        #     chats_ref = db.collection("chat-individual")\
-        #                   .where("user_uid", "==", g.user["uid"])\
-        #                   .order_by("updated_at", direction=firestore.Query.DESCENDING)\
-        #                   .stream()
+        try:
+            chats_group = []
+            chats_individual = []
+            chats_ref_ind = db.collection("chats")\
+                          .where("participants", "array_contains", g.user["uid"])\
+                          .order_by("updated_at", direction=firestore.Query.DESCENDING)\
+                          .stream()
+            chats_ref_grp = db.collection("chat-group")\
+                           .where("members", "array_contains", g.user["uid"])\
+                           .order_by("updated_at", direction=firestore.Query.DESCENDING)\
+                           .stream()        
+                           
             
-        return render_template("my_chats.html", user=g.user)
-        # except Exception as e:
-        #     logger.exception(f"Erro ao carregar meus chats: {e}")
-        #     flash("Erro ao carregar seus chats. Tente novamente.", "error")
-        #     return render_template("my_chats.html", user=g.user, chats=[])
+
+            for doc in chats_ref_ind:
+                chat_data = doc.to_dict()
+                chat_data["id"] = doc.id
+                chats_individual.append(chat_data)
+                
+            for doc in chats_ref_grp:
+                chat_data = doc.to_dict()
+                chat_data["id"] = doc.id
+                chats_group.append(chat_data)
+
+        except Exception as e:
+            logger.exception(f"Erro ao carregar meus chats: {e}")
+            flash("Erro ao carregar seus chats. Tente novamente.", "error")
+            return render_template("my_chats.html", user=g.user, chats_group=[], chats_individual=[])
+        
+        return render_template("my_chats.html", user=g.user, chats_group=chats_group, chats_individual=chats_individual)
