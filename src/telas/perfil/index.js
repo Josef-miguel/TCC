@@ -7,8 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  SafeAreaView,
-  Button
+  SafeAreaView
 } from 'react-native';
 import { Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -30,8 +29,7 @@ export default function Perfil() {
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [configModalVisible, setConfigModalVisible] = useState(false);
-
-  const { organizerMode, toggleOrganizer } = useContext(appContext);
+  const { isOrganizer } = useContext(appContext);
 
   const MenuItem = ({ icon, label, onPress }) => (
     <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme?.border }]} onPress={onPress}>
@@ -74,15 +72,9 @@ export default function Perfil() {
         {/* Menu */}
         <MenuItem icon="account-outline" label={t('profile.myAccount')} onPress={() => setEditModalVisible(true)} />
         <MenuItem icon="cog" label={t('profile.settings')} onPress={() => setConfigModalVisible(true)} />
-
-        {userData?.isOrganizer && (
-          <MenuItem 
-            icon="account-search-outline" 
-            label="Avaliações" 
-            onPress={() => navigation.navigate('Avaliacoes')} 
-          />
+        {isOrganizer && (
+          <MenuItem icon="account-search-outline" label={t('profile.reviews')} onPress={() => navigation.navigate('Avaliacoes')} />
         )}
-
         <MenuItem icon="heart-outline" label={t('profile.myTrips')} onPress={() => navigation.navigate('MinhasViagens')} />
         <MenuItem icon="logout" label={t('profile.logout')} onPress={() => setLogoutVisible(true)} />
 
