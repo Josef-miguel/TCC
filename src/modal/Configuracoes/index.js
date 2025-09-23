@@ -145,9 +145,9 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
   // Função para obter o nome do idioma
   const getLanguageName = (code) => {
     switch (code) {
-      case 'pt': return 'Português';
-      case 'en': return 'English';
-      case 'zh': return '中文';
+      case 'pt': return t('settings.languages.ptBR');
+      case 'en': return t('settings.languages.en');
+      case 'zh': return t('settings.languages.zhCN');
       default: return code;
     }
   };
@@ -224,9 +224,9 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
                   onValueChange={changeLanguage}
                   style={styles.picker}
                 >
-                  <Picker.Item label="Português" value="pt" />
-                  <Picker.Item label="English" value="en" />
-                  <Picker.Item label="中文" value="zh" />
+                  <Picker.Item label={t('settings.languages.ptBR')} value="pt" />
+                  <Picker.Item label={t('settings.languages.en')} value="en" />
+                  <Picker.Item label={t('settings.languages.zhCN')} value="zh" />
                 </Picker>
               </View>
             )}

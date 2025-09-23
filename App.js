@@ -1,5 +1,4 @@
 import React, { useState, createContext, useContext, useEffect } from "react";
-import { LanguageProvider } from './src/i18n';
 import {
   StyleSheet,
   Text,
@@ -13,7 +12,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { updateDoc, doc } from "firebase/firestore";
 import FlashMessage from "react-native-flash-message";
 import { AuthProvider, useAuth } from "./services/AuthContext";
 import { db } from "./services/firebase";
@@ -26,24 +24,21 @@ import Chat from "./src/telas/Chat";
 import MinhasViagens from "./src/telas/MinhasViagens";
 import Perfil from "./src/telas/Perfil";
 import Avaliacoes from "./src/telas/Avaliacoes";
-
-
 import Post from "./src/telas/Post";
 import Favoritos from "./src/telas/Favoritos";
 import Algoritmo from "./src/telas/Algoritmo";
 import VisualizarPerfil from "./src/telas/VisualizarPerfil";
-
 import CriarPost from "./src/modal/CriarPost";
 import VerificacaoIdentidade from "./src/telas/VerificacaoIdentidade";
 import Notificacoes from "./src/telas/Notificacoes";
-
-export const appContext = createContext();
-
 import { Ionicons } from "@expo/vector-icons";
 import { Provider as PaperProvider } from 'react-native-paper';
+import { NotificationProvider } from './src/context/NotificationContext';
 import { ThemeProvider, ThemeContext } from './src/context/ThemeContext';
 import { I18nextProvider } from 'react-i18next';
-import i18n from './src/i18n/index';
+import i18n from './src/i18n';
+
+export const appContext = createContext();
 
 
 const Tab = createBottomTabNavigator();
@@ -57,10 +52,10 @@ function Tabs() {
 
   // sempre sincroniza quando o userData mudar
   useEffect(() => {
-  if (userData?.isOrganizer !== undefined) {
-    setIsOrganizer(userData.isOrganizer);
-  }
- }, [userData?.isOrganizer]);
+    if (userData?.isOrganizer !== undefined) {
+      setIsOrganizer(userData.isOrganizer);
+    }
+  }, [userData?.isOrganizer]);
 
   // Atualiza valor no Firestore
   const changeOrganizerStatus = async (newStatus) => {
@@ -89,7 +84,7 @@ function Tabs() {
 
   // Mostra botão só se for organizador
   const activeOrganizerPost = () => {
-    if (userData?.isOrganizer) {
+    if (isOrganizer) {
       return (
         <TouchableOpacity
           style={[
@@ -159,6 +154,7 @@ export default function App() {
 
   return (
     <I18nextProvider i18n={i18n}>
+
       <ThemeProvider>
         <AuthProvider>
           <SafeAreaProvider style={{ flex: 1 }}>
@@ -169,6 +165,104 @@ export default function App() {
           </SafeAreaProvider>
         </AuthProvider>
       </ThemeProvider>
+
+    <ThemeProvider>
+      <NotificationProvider>
+        <AuthProvider>
+          <SafeAreaProvider style={{ flex: 1 }}>
+            <PaperProvider>
+              <NavigationContainer>
+              <Stack.Navigator
+                initialRouteName="Cadastro"
+                screenOptions={{ headerShown: false }}
+              >
+                <Stack.Screen
+                  name="Login"
+                  component={Login}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="Home"
+                  component={Tabs}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="Cadastro"
+                  component={Cadastro}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+
+                <Stack.Screen
+                  name="Agenda"
+                  component={Agenda}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="Formapagamento"
+                  component={Formapagamento}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="VerificacaoIdentidade"
+                  component={VerificacaoIdentidade}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="MinhasViagens"
+                  component={MinhasViagens}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="Perfil"
+                  component={Perfil}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="Post"
+                  component={Post}
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="Favoritos"
+                  component={Favoritos}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Algoritmo"
+                  component={Algoritmo}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Chat"
+                  component={Chat}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Notificacoes"
+                  component={Notificacoes}
+                  options={{ headerShown: false }}
+                />
+
+                <Stack.Screen 
+                  name="Avaliacoes" 
+                  component={Avaliacoes} 
+                  options={{ headerShown: false }}
+                /> 
+                <Stack.Screen
+                  name="VisualizarPerfil"
+                  component={VisualizarPerfil}
+                  options={{ headerShown: false }}
+
+                />
+              </Stack.Navigator>
+            </NavigationContainer>
+            <FlashMessage position="top" style={{paddingVertical: 10}}/>
+          </PaperProvider>
+        </SafeAreaProvider>
+      </AuthProvider>
+    </NotificationProvider>
+    </ThemeProvider>
+
     </I18nextProvider>
   );
 }

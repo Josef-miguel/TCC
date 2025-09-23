@@ -16,16 +16,13 @@
     "changePassword": "Alterar senha",
     "deleteAccount": "Excluir conta"
     },
-    "settings": {
-    "title": "Configurações",
-    "notifications": "Notificações",
-    "lightTheme": "Tema claro",
-    "language": "Idioma",
-    "languages": {
-    "ptBR": "Português (Brasileiro)",
-    "en": "English",
-    "zhCN": "官话 (简体中文)"
-    }
+    "reviews": {
+    "title": "Avaliações",
+    "noReviews": "Nenhuma avaliação para este evento ainda.",
+    "user": "Usuário",
+    "rating": "Nota",
+    "comment": "Comentário",
+    "date": "Data"
     },
     "auth": {
     "loginTitle": "Entrar",
@@ -42,7 +39,10 @@
     "saveError": "Erro ao Salvar",
     "fillFields": "Informe e-mail e senha.",
     "noUserData": "Usuário não possui dados salvos no Firestore.",
-    "registerLink": "Ainda não possui conta? Registre-se"
+    "registerLink": "Ainda não possui conta? Registre-se",
+    "signIn": "Entrar",
+    "emailPlaceholder": "E-mail",
+    "passwordPlaceholder": "Senha"
     },
     "home": {
     "title": "Bem-vindo",
@@ -65,9 +65,61 @@
     "noPosts": "Nenhum post encontrado",
     "userNotFound": "Usuário não encontrado",
     "unknownUser": "Usuário desconhecido",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "myAccount": "Minha conta",
+    "settings": "Configurações",
+    "reviews": "Avaliações",
+    "myTrips": "Minhas Viagens",
+    "logout": "Sair",
+    "logoutConfirm": "Você realmente deseja sair?",
+    "logoutButton": "Sair",
+    "cancel": "Cancelar"
     },
-    "dialogs": {
-    "confirmDelete": "Tem certeza que deseja excluir sua conta?"
+    "post": {
+    "reportProblem": "Reportar Problema",
+    "removeFromSaved": "Remover dos Salvos",
+    "savePost": "Salvar Post",
+    "viewProfile": "Visualizar Perfil",
+    "tripRoute": "Trajeto da viagem",
+    "start": "Início",
+    "destination": "Destino",
+    "excursionInfo": "Informações da excursão",
+    "description": "Descrição",
+    "availableSlots": "Vagas disponíveis",
+    "tripExhausted": "Viagem esgotada",
+    "tripType": "Essa viagem é uma",
+    "viewReviews": "Ver avaliações",
+    "rating": "Avaliação",
+    "comments": "Comentários",
+    "noComments": "Ainda não há comentários.",
+    "anonymous": "Usuário Anônimo",
+    "typeComment": "Digite um comentário...",
+    "confirmParticipation": "Confirmar participação",
+    "chatWithOrganizer": "Conversar com o organizador",
+    "whoTravels": "Quem vai viajar...",
+    "whoGoes": "Quem vai ir?",
+    "confirm": "Confirmar",
+    "noSlots": "Sem vagas disponíveis",
+    "simulatedPayment": "Pagamento Simulado",
+    "method": "Método",
+    "cardNumber": "Número do cartão",
+    "cardName": "Nome no cartão",
+    "pay": "Pagar",
+    "noImages": "Nenhuma imagem disponível"
+    },
+    "register": {
+    "title": "Criar Conta",
+    "subtitle": "Preencha os dados para começar",
+    "userPlaceholder": "Usuário",
+    "emailPlaceholder": "E-mail",
+    "passwordPlaceholder": "Senha",
+    "cpfPlaceholder": "CPF",
+    "birthDate": "Data de nascimento",
+    "registerButton": "Registrar",
+    "loginLink": "Já possui conta? Faça login",
+    "registrationSuccess": "Cadastro Bem-Sucedido",
+    "registrationError": "Erro ao cadastrar",
+    "saveError": "Erro ao Salvar",
+    "invalidField": "CAMPO INVÁLIDO!"
     }
-    }
+}

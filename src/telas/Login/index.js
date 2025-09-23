@@ -164,7 +164,7 @@ async function handleLogin(obj) {
               <Feather name="mail" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
                 style={[styles.input, { color: theme?.textPrimary }]}
-                placeholder="Email"
+                placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor={theme?.textTertiary || "#666"}
                 autoCapitalize="none"
                 value={email}
@@ -177,7 +177,7 @@ async function handleLogin(obj) {
               <Feather name="lock" size={20} style={[styles.icon, { color: theme?.primary }]} />
               <TextInput
                 style={[styles.input, { color: theme?.textPrimary }]}
-                placeholder="Senha"
+                placeholder={t('auth.passwordPlaceholder')}
                 placeholderTextColor={theme?.textTertiary || "#666"}
                 secureTextEntry
                 value={password}
@@ -187,12 +187,12 @@ async function handleLogin(obj) {
 
             {/* Botão Entrar */}
             <TouchableOpacity style={[styles.button, { backgroundColor: theme?.primary }]} onPress={saveData}>
-              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Entrar</Text>
+              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('auth.signIn')}</Text>
             </TouchableOpacity>
 
             {/* Link para tela de cadastro */}
             <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
-              <Text style={[styles.linkText, { color: theme?.textPrimary }]}>Ainda não possui conta? Registre-se</Text>
+              <Text style={[styles.linkText, { color: theme?.textPrimary }]}>{t('auth.registerLink')}</Text>
             </TouchableOpacity>
 
           </Animated.View>
