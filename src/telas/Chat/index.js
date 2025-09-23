@@ -256,9 +256,9 @@ export default function Chat() {
       style={[styles.container, { backgroundColor: theme?.background }]}
     >
       <TouchableOpacity style={[styles.returnBtn, { backgroundColor: theme?.cardBackground }]} onPress={() => navigation.navigate('Home')}>
-        <Text style={[styles.returnBtnText, { color: theme?.textPrimary }]}>{t('chat.back')}</Text>
+        <Text style={[styles.returnBtnText, { color: theme?.textPrimary }]}>Voltar</Text>
       </TouchableOpacity>
-      <Text style={[styles.header, { color: theme?.primary }]}>{t('chat.title')} {otherUserName}</Text>
+      <Text style={[styles.header, { color: theme?.primary }]}>{otherUserName}</Text>
 
       <ScrollView
         style={styles.messagesContainer}
@@ -289,7 +289,7 @@ export default function Chat() {
 
       <View style={[styles.inputContainer, { backgroundColor: theme?.backgroundSecondary, borderTopColor: theme?.primary }]}>
         <TextInput
-          placeholder={t('chat.typeMessage')}
+          placeholder={t('Mande sua mensagem..')}
           placeholderTextColor={theme?.textTertiary}
           value={input}
           onChangeText={setInput}

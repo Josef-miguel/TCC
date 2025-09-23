@@ -640,7 +640,7 @@ const handleParticipar = async () => {
             </View>
 
             <TouchableOpacity onPress={() => navigation.navigate('Avaliacoes', { eventId: selectedPost.id })}>
-              <Text>{t('post.viewReviews')}</Text>
+              <Text style={{color: 'white'}}>{t('post.viewReviews')}</Text>
             </TouchableOpacity>
             {/* Avaliação */}
             <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.rating')}</Text>
