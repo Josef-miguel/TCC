@@ -10,7 +10,7 @@ import { useNotifications } from '../../context/NotificationContext';
 export default function Notificacoes() {
   const navigation = useNavigation();
   const { theme } = useContext(ThemeContext);
-  const { markAsRead } = useNotifications();
+  const { markAsRead, unreadMessages, unreadReviews } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]); // [{ id, eventId, eventTitle, username, text, createdAt }]
   const [threads, setThreads] = useState([]); // conversas privadas a partir de 'chats'
@@ -21,9 +21,7 @@ export default function Notificacoes() {
   const uid = auth.currentUser?.uid || null;
 
   useEffect(() => {
-    // Marcar notificações como lidas quando a tela for acessada
-    markAsRead();
-
+    // Não marcar como lidas ao abrir; exibiremos os contadores
     if (!uid) {
       setLoading(false);
       return;
@@ -116,6 +114,13 @@ export default function Notificacoes() {
       unsubCommentsRefs.current = [];
     };
   }, [uid]);
+
+  // Marca como lidas ao sair da tela
+  useEffect(() => {
+    return () => {
+      try { markAsRead(); } catch (_) {}
+    };
+  }, []);
 
   // Conversas privadas a partir da coleção 'chats' usando participants (array-contains)
   useEffect(() => {
@@ -221,7 +226,9 @@ export default function Notificacoes() {
       ) : (
         <>
           {/* Comentários em posts do usuário */}
-          <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>Comentários nos seus posts</Text>
+          <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{}
+            {`Comentários nos seus posts ${unreadReviews > 0 ? `(${unreadReviews} nova${unreadReviews > 1 ? 's' : ''})` : ''}`}
+          </Text>
           {comments.length === 0 ? (
             <Text style={[styles.empty, { color: theme?.textSecondary }]}>Sem comentários recentes.</Text>
           ) : (
@@ -234,7 +241,9 @@ export default function Notificacoes() {
           )}
 
           {/* Chats privados - usando threads do chat global como fallback */}
-          <Text style={[styles.sectionTitle, { color: theme?.textPrimary, marginTop: 16 }]}>Chats privados</Text>
+          <Text style={[styles.sectionTitle, { color: theme?.textPrimary, marginTop: 16 }]}>{}
+            {`Chats privados ${unreadMessages > 0 ? `(${unreadMessages} nova${unreadMessages > 1 ? 's' : ''})` : ''}`}
+          </Text>
           {threads.length === 0 ? (
             <Text style={[styles.empty, { color: theme?.textSecondary }]}>Sem conversas recentes.</Text>
           ) : (

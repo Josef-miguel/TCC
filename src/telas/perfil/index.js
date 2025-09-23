@@ -30,8 +30,7 @@ export default function Perfil() {
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [configModalVisible, setConfigModalVisible] = useState(false);
-
-  const { organizerMode, toggleOrganizer } = useContext(appContext);
+  const { isOrganizer, toggleOrganizer } = useContext(appContext);
 
   const MenuItem = ({ icon, label, onPress }) => (
     <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme?.border }]} onPress={onPress}>
@@ -72,25 +71,15 @@ export default function Perfil() {
         </View>
 
         {/* Menu */}
-<<<<<<< HEAD
+
         <MenuItem icon="account-outline" label={t('profile.myAccount')} onPress={() => setEditModalVisible(true)} />
         <MenuItem icon="cog" label={t('profile.settings')} onPress={() => setConfigModalVisible(true)} />
-        <MenuItem icon="account-search-outline" label={t('profile.reviews')} onPress={() => navigation.navigate('Avaliacoes')} />
+        {isOrganizer && (
+          <MenuItem icon="account-search-outline" label={t('profile.reviews')} onPress={() => navigation.navigate('Avaliacoes')} />
+        )}
         <MenuItem icon="heart-outline" label={t('profile.myTrips')} onPress={() => navigation.navigate('MinhasViagens')} />
         <MenuItem icon="logout" label={t('profile.logout')} onPress={() => setLogoutVisible(true)} />
-=======
-       
-        <MenuItem icon="account-outline" label="Minha conta" onPress={() => setEditModalVisible(true)} />
-        <MenuItem icon="cog" label="Configurações" onPress={() => setConfigModalVisible(true)} />
 
-        {/* Só aparece se for organizador */}
-        {organizerMode && (
-          <MenuItem icon="account-search-outline" label="Avaliações" onPress={() => navigation.navigate('Avaliacoes')} />
-        )}
-
-        <MenuItem icon="heart-outline" label="Minhas Viagens" onPress={() => navigation.navigate('MinhasViagens')} />
-        <MenuItem icon="logout" label="Sair" onPress={() => setLogoutVisible(true)} />
->>>>>>> d98ebda788d6ddc033c0ce186651049878375230
       </ScrollView>
 
       {/* Modal de editar perfil */}

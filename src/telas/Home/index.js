@@ -192,7 +192,7 @@ export default function Home({ navigation, route }) {
           <View style={{ position: 'relative' }}>
             <Ionicons name="notifications-outline" size={32} color={theme?.primary || "#f37100"} />
             {typeof totalUnread === 'number' && totalUnread > 0 && (
-              <View style={[styles.notificationBadge, { backgroundColor: theme?.primary || "#f37100" }]}>
+              <View style={[styles.notificationBadge, { backgroundColor: '#ff3b30' }]}>
                 <Text style={styles.notificationBadgeText}>
                   {totalUnread > 99 ? '99+' : totalUnread.toString()}
                 </Text>
