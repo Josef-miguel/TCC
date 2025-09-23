@@ -156,7 +156,7 @@ export default function Configuracoes({ modalVisible, setModalVisible }) {
     <Modal visible={modalVisible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Text style={styles.title}>{t("settings.title")}</Text>
+          <Text style={styles.title}>{t("Configurações")}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Notificações */}
