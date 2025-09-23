@@ -193,7 +193,7 @@ export default function Home({ navigation, route }) {
 
           {/* Informações extras */}
           {item.date && (
-            <Text style={{ color: theme?.textSecondary, fontSize: 12 }}>📅 {item.date}</Text>
+            <Text style={{ color: theme?.textSecondary, fontSize: 12 }}>📅 {item.exit_date}</Text>
           )}
           {item.location && (
             <Text style={{ color: theme?.textSecondary, fontSize: 12 }}>📍 {item.location}</Text>
