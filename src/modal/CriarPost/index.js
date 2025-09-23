@@ -8,7 +8,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { showMessage } from 'react-native-flash-message';
 
 import { Feather } from '@expo/vector-icons';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import InteractiveLeafletMap from '../../components/InteractiveLeafletMap';
+import SimpleRouteMap from '../../components/SimpleRouteMap';
+import RouteInfo from '../../components/RouteInfo';
 import axios from 'axios';
 
 
@@ -47,6 +49,7 @@ const [mapMarker, setMapMarker] = useState(null);
   const [mapEnd, setMapEnd] = useState(null);
   const [MapDisplayName, setMapDisplayName] = useState([]);
   const [routeCoords, setRouteCoords] = useState([]);
+  const [useSimpleRoute, setUseSimpleRoute] = useState(true); // Usar rota simples por padrão
 
 
   function limparCampos(){
@@ -542,41 +545,26 @@ const reverseGeocode = async (latitude, longitude) => {
               multiline                         // Permite múltiplas linhas
             />
 
-            {/* Placeholder para mapa/trajeto da viagem */}
-            {/* SUBSTITUA AQUI */}
-            <View style={{ height: 200, marginBottom: 15, borderRadius: 8, overflow: 'hidden' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                <TextInput
-                  style={[styles.input, { 
-                    flex: 1,
-                    borderColor: theme?.primary,
-                    color: theme?.textPrimary,
-                    backgroundColor: theme?.background
-                  }]}
-                  placeholder="Buscar lugar..."
-                  placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
-                  value={searchText}
-                  onChangeText={setSearchText}
-                />
-                <TouchableOpacity onPress={handleSearch} style={{ marginLeft: 10 }}>
-                  <Feather name="search" size={24} color={theme?.primary || "#f37100"} />
-                </TouchableOpacity>
-              </View>
-              <MapView
-                style={{ flex: 1 }}
-                region={mapRegion}
-                onPress={handleMapPress}
-              >
-              
-                {mapStart && <Marker coordinate={mapStart} title="Início" pinColor="green" />}
-                {mapEnd && <Marker coordinate={mapEnd} title="Destino" pinColor="red" />}
-                {routeCoords.length > 0 && (
-                  <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="blue" />
-                )}
-              </MapView>
-            </View>
-              
-            {/* SUBISTITUA ACIMA */}
+            {/* Mapa com rota simples */}
+            <SimpleRouteMap
+              startCoordinate={mapStart}
+              endCoordinate={mapEnd}
+              height={200}
+              style={{ marginBottom: 15 }}
+              onRouteCalculated={(route) => {
+                setRouteCoords(route);
+                console.log('Rota simples calculada:', route);
+              }}
+            />
+            
+            {/* Informações da rota */}
+            <RouteInfo
+              routeCoordinates={routeCoords}
+              startCoordinate={mapStart}
+              endCoordinate={mapEnd}
+              theme={theme}
+            />
+            
             {/* Texto de termos de uso com link */}
             <Text style={[styles.termsText, { color: theme?.textTertiary }]}>
               Ao criar uma publicação no aplicativo, você concorda com os{' '}

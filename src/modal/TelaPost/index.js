@@ -14,7 +14,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import LeafletMap from "../../components/LeafletMap";
+import SimpleRouteMap from "../../components/SimpleRouteMap";
 import axios from 'axios';
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
@@ -592,29 +593,18 @@ const handleParticipar = async () => {
             </View>
 
             <View style={[styles.routeBox, { borderColor: theme?.border, backgroundColor: theme?.backgroundSecondary }]}>
-              {selectedPost.route?.start && selectedPost.route?.end && (
+              {selectedPost.route?.start && (
                 <View style={[styles.mapContainer, { borderColor: theme?.border }]}>
-                  <MapView
-                    style={styles.map}
-                    initialRegion={{
-                      latitude: selectedPost.route.start.latitude,
-                      longitude: selectedPost.route.start.longitude,
-                      latitudeDelta: 0.2,
-                      longitudeDelta: 0.2,
+                  <SimpleRouteMap
+                    startCoordinate={selectedPost.route.start}
+                    endCoordinate={selectedPost.route.end}
+                    height={200}
+                    style={{ borderColor: theme?.border }}
+                    onRouteCalculated={(route) => {
+                      // Atualizar as coordenadas da rota se necessário
+                      console.log('Rota simples calculada:', route);
                     }}
-                  >
-                    <Marker coordinate={selectedPost.route.start} title="Início" pinColor="green" />
-                    <Marker coordinate={selectedPost.route.end} title="Destino" pinColor="red" />
-                    
-                    {/* Polyline com verificação de null */}
-                    {selectedPost.route?.coordinates && selectedPost.route.coordinates.length > 0 && (
-                      <Polyline
-                        coordinates={selectedPost.route.coordinates}
-                        strokeColor={theme?.primary || "#f37100"}
-                        strokeWidth={4}
-                      />
-                    )}
-                  </MapView>
+                  />
                 </View>
               )}
             </View>
