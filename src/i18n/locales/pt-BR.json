@@ -6,7 +6,11 @@
     "save": "Salvar",
     "delete": "Excluir",
     "back": "Voltar",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "title": "Explorar",
+    "timeline": "Timeline",
+    "popular": "Populares",
+    "noEvents": "Nenhum evento encontrado"
     },
     "nav": {
     "home": "Início",
