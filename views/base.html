@@ -23,6 +23,7 @@
     </div>
   {% endif %}
 {% endwith %}
+
   <header>
     <div class="container header-content">
       <div class="brand">
@@ -55,7 +56,7 @@
           </svg>
         </button>
         <a href="{{ url_for('perfil') }}" class="nav-link profile-link" aria-label="Perfil">
-          <img class="profile-avatar" src="{{ (user.profileImage if (user is defined and user and user.profileImage) else url_for('static', filename='img/JSGlogo.png')) }}" alt="Foto do perfil">
+          <img class="profile-avatar" src="{{ (user.photo_url if (user is defined and user and user.photo_url) else url_for('static', filename='img/JSGlogo.png')) }}" alt="Foto do perfil">
         </a>
       </nav>
     </div>
@@ -106,12 +107,40 @@
       
       // Event listeners
       themeToggle.addEventListener('click', toggleTheme);
+      
       function toggleSidebar(btn) {
         const isOpen = document.body.classList.toggle('sidebar-open');
         if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       }
+      
+      function closeSidebar() {
+        document.body.classList.remove('sidebar-open');
+        const sidebarToggleLeft = document.getElementById('sidebarToggleLeft');
+        if (sidebarToggleLeft) sidebarToggleLeft.setAttribute('aria-expanded', 'false');
+      }
+      
+      // Event listeners para abrir sidebar
       if (sidebarToggle) sidebarToggle.addEventListener('click', () => toggleSidebar(sidebarToggle));
       if (sidebarToggleLeft) sidebarToggleLeft.addEventListener('click', () => toggleSidebar(sidebarToggleLeft));
+      
+      // Event listeners para fechar sidebar
+      const sidebarClose = document.getElementById('sidebarClose');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+      
+      if (sidebarClose) {
+        sidebarClose.addEventListener('click', closeSidebar);
+      }
+      
+      if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+      }
+      
+      // Fechar sidebar ao pressionar ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
+          closeSidebar();
+        }
+      });
       
       // Escutar mudanças na preferência do sistema
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
