@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Viagens que eu favoritei</h2>
+{% if fav_vacations %}
+<div style="border: 1px solid #fff;">
+    <ul>
+    {% for vacation in fav_vacations %}
+        <li class="vacation-item">
+            <h3>{{ vacation.title }}</h3>
+            <p>{{ vacation.desc }}</p>
+            {% for image in vacation.images %}
+                <img src="{{ image }}">
+            {% endfor %}    
+            <p>Data de Início: {{ vacation.exit_date }}</p>
+            <p>Data de Término: {{ vacation.return_date }}</p>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% else %}
+    <p>Você não favoritou nenhuma viagem.</p>
+{% endif %} 
+
+
+
+{% endblock %}

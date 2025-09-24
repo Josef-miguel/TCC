@@ -460,3 +460,60 @@ def init_app(app, db):
             return render_template("my_chats.html", user=g.user, chats_group=[], chats_individual=[])
         
         return render_template("my_chats.html", user=g.user, chats_group=chats_group, chats_individual=chats_individual)
+    
+    
+    @app.route("/my_vacations")
+    def my_vacations():
+        if not g.user:
+            return redirect(url_for("login"))
+        
+        try:
+            joined_events = g.user.get("joinedEvents", [])
+            joined_vacations = []
+            my_vacations = []
+            vacations_ref = db.collection("events")\
+                              .where("uid", "==", g.user["uid"])\
+                              .order_by("created_at", direction=firestore.Query.DESCENDING)\
+                              .stream()
+            
+            if joined_events:
+                 # Firestore permite até 10 elementos no 'in'
+                  chunks = [joined_events[i:i+10] for i in range(0, len(joined_events), 10)]
+                  for chunk in chunks:
+                      joined_query = db.collection("events").where("__name__", "in", chunk).stream()
+                      for doc in joined_query:
+                          data = doc.to_dict()
+                          data["id"] = doc.id
+                          joined_vacations.append(data)
+            
+            for doc in vacations_ref:
+                vac_data = doc.to_dict()
+                vac_data["id"] = doc.id
+                my_vacations.append(vac_data)
+
+            
+        except Exception as e:
+            logger.exception(f"Erro ao carregar minhas viagens: {e}")
+            flash("Erro ao carregar suas viagens. Tente novamente.", "error")
+            return render_template("minhas_viagens.html", user=g.user, my_vacations=[], joined_vacations=[])
+        
+        return render_template("minhas_viagens.html", user=g.user, my_vacations=my_vacations, joined_vacations=joined_vacations)
+    
+    
+    @app.route("/favorite")
+    def favorites():
+        if not g.user:
+            return redirect(url_for("login"))
+        fav_vacations = []
+        favorited_vacations = g.user.get("favoritePosts", [])
+        if favorited_vacations:
+          # Firestore permite até 10 elementos no 'in'
+           chunks = [favorited_vacations[i:i+10] for i in range(0, len(favorited_vacations), 10)]
+           for chunk in chunks:
+               fav_query = db.collection("events").where("__name__", "in", chunk).stream()
+               for doc in fav_query:
+                   data = doc.to_dict()
+                   data["id"] = doc.id
+                   fav_vacations.append(data)
+                   
+        return render_template("favoritos.html", user=g.user, fav_vacations=fav_vacations)

@@ -4,7 +4,50 @@
 
 <h1>Minhas Viagens</h1>
 
+<h2>Viagens que eu criei</h2>
+{% if my_vacations %}
+<div style="border: 1px solid #fff;">
+    <ul>
+    {% for vacation in my_vacations %}
+        <li class="vacation-item">
+            <h3>{{ vacation.title }}</h3>
+            <p>{{ vacation.desc }}</p>
+            {% for image in vacation.images %}
+                <img src="{{ image }}">
+            {% endfor %}
+            <p>Data de Início: {{ vacation.exit_date }}</p>
+            <p>Data de Término: {{ vacation.return_date }}</p>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% else %}
+    <p>Você não criou nenhuma viagem.</p>
+{% endif %}
 
+<br>
 
+<h1>Viagens que eu participo</h1>
 
-{% endblock %}  
+{% if joined_vacations %}
+<div style="border: 1px solid #fff;">
+    <ul>
+    {% for vacation in joined_vacations %}
+        <li class="vacation-item">
+            <h3>{{ vacation.title }}</h3>
+            <p>{{ vacation.desc }}</p>
+            {% for image in vacation.images %}
+                <img src="{{ image }}">
+            {% endfor %}    
+            <p>Data de Início: {{ vacation.exit_date }}</p>
+            <p>Data de Término: {{ vacation.return_date }}</p>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% else %}
+    <p>Você não entrou em nenhuma viagem.</p>
+{% endif %} 
+
+{% endblock %}
+
