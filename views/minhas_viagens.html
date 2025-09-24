@@ -25,11 +25,14 @@
     <p>Você não criou nenhuma viagem.</p>
 {% endif %}
 
-<h2>Viagens que eu favoritei</h2>
-{% if fav_vacations %}
+<br>
+
+<h1>Viagens que eu participo</h1>
+
+{% if joined_vacations %}
 <div style="border: 1px solid #fff;">
     <ul>
-    {% for vacation in fav_vacations %}
+    {% for vacation in joined_vacations %}
         <li class="vacation-item">
             <h3>{{ vacation.title }}</h3>
             <p>{{ vacation.desc }}</p>
@@ -43,8 +46,8 @@
     </ul>
 </div>
 {% else %}
-    <p>Você não favoritou nenhuma viagem.</p>
+    <p>Você não entrou em nenhuma viagem.</p>
 {% endif %} 
 
-
 {% endblock %}
+
