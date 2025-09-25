@@ -1,41 +1,178 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="chats-container">
+    <!-- Header dos Chats -->
+    <div class="chats-header">
+        <h1>💬 Meus Chats</h1>
+        <p class="chats-subtitle">Converse com seus amigos e grupos de viagem</p>
+    </div>
 
-<h1>Meus Chats</h1>
-    
-    <h2>Chats em Grupo</h2>
-    {% if chats_group %}
-        <ul>
-            {% for chat in chats_group %}
-                <li>
-                    <strong>Grupo:</strong> {{ chat.id }}<br>
-                    <form action="{{ url_for('chat_group') }}" method="POST">
-                        <input type="hidden" name="chat_uid" value="{{ chat.id }}">
-                        <button type="submit">Entrar no grupo</button>
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Nenhum chat em grupo encontrado.</p>
-    {% endif %}
+    <!-- Sistema de Abas -->
+    <div class="chats-tabs">
+        <button class="tab-button active" data-tab="groups">
+            <ion-icon name="people-outline"></ion-icon>
+            <span>Grupos</span>
+        </button>
+        <button class="tab-button" data-tab="individuals">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>Individuais</span>
+        </button>
+    </div>
 
-    <h2>Chats Individuais</h2>
-    {% if chats_individual %}
-        <ul>
-            {% for chat in chats_individual %}
-                <li>
-                    <strong>Chat:</strong> {{ chat.id }}<br>
-                    <form action="{{ url_for('chat_individual') }}" method="POST">
-                        <input type="hidden" name="chat_uid" value="{{ chat.id }}">
-                        <button type="submit">Entrar no chat</button>
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Nenhum chat individual encontrado.</p>
-    {% endif %}
+    <!-- Conteúdo das Abas -->
+    <div class="chats-content">
+        <!-- Aba de Grupos -->
+        <div class="tab-content active" id="groups-tab">
+            <div class="chats-list">
+                {% if chats_group %}
+                    {% for chat in chats_group %}
+                        <div class="chat-item group-chat" onclick="openChat('group', '{{ chat.id }}')">
+                            <div class="chat-avatar group-avatar">
+                                <ion-icon name="people"></ion-icon>
+                            </div>
+                            <div class="chat-info">
+                                <div class="chat-header">
+                                    <h3 class="chat-name">{{ chat.group_name or 'Grupo de Viagem' }}</h3>
+                                    <span class="chat-time">{{ chat.last_message_time or 'Agora' }}</span>
+                                </div>
+                                <div class="chat-preview">
+                                    <p class="last-message">{{ chat.last_message or 'Nenhuma mensagem ainda' }}</p>
+                                    {% if chat.unread_count and chat.unread_count > 0 %}
+                                        <span class="unread-badge">{{ chat.unread_count }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="chat-actions">
+                                <button class="chat-action-btn" onclick="event.stopPropagation(); openChat('group', '{{ chat.id }}')">
+                                    <ion-icon name="chatbubble-outline"></ion-icon>
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </div>
+                        <h3>Nenhum grupo ainda</h3>
+                        <p>Você ainda não participa de nenhum grupo de viagem.</p>
+                        <button class="btn btn-primary">
+                            <ion-icon name="add-outline"></ion-icon>
+                            Criar Grupo
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
 
+        <!-- Aba de Individuais -->
+        <div class="tab-content" id="individuals-tab">
+            <div class="chats-list">
+                {% if chats_individual %}
+                    {% for chat in chats_individual %}
+                        <div class="chat-item individual-chat" onclick="openChat('individual', '{{ chat.id }}')">
+                            <div class="chat-avatar individual-avatar">
+                                {% if chat.other_user_avatar %}
+                                    <img src="{{ chat.other_user_avatar }}" alt="{{ chat.other_user_name }}">
+                                {% else %}
+                                    <ion-icon name="person"></ion-icon>
+                                {% endif %}
+                            </div>
+                            <div class="chat-info">
+                                <div class="chat-header">
+                                    <h3 class="chat-name">{{ chat.other_user_name or 'Usuário' }}</h3>
+                                    <span class="chat-time">{{ chat.last_message_time or 'Agora' }}</span>
+                                </div>
+                                <div class="chat-preview">
+                                    <p class="last-message">{{ chat.last_message or 'Nenhuma mensagem ainda' }}</p>
+                                    {% if chat.unread_count and chat.unread_count > 0 %}
+                                        <span class="unread-badge">{{ chat.unread_count }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="chat-actions">
+                                <button class="chat-action-btn" onclick="event.stopPropagation(); openChat('individual', '{{ chat.id }}')">
+                                    <ion-icon name="chatbubble-outline"></ion-icon>
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <ion-icon name="person-outline"></ion-icon>
+                        </div>
+                        <h3>Nenhuma conversa individual</h3>
+                        <p>Você ainda não tem conversas individuais.</p>
+                        <button class="btn btn-primary">
+                            <ion-icon name="add-outline"></ion-icon>
+                            Nova Conversa
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulários ocultos para navegação -->
+<form id="group-chat-form" action="{{ url_for('chat_group') }}" method="POST" style="display: none;">
+    <input type="hidden" name="chat_uid" id="group-chat-uid">
+</form>
+
+<form id="individual-chat-form" action="{{ url_for('chat_individual') }}" method="POST" style="display: none;">
+    <input type="hidden" name="chat_uid" id="individual-chat-uid">
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Sistema de abas
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remove active de todos os botões e conteúdos
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Adiciona active ao botão clicado e conteúdo correspondente
+            this.classList.add('active');
+            document.getElementById(targetTab + '-tab').classList.add('active');
+        });
+    });
+});
+
+// Função para abrir chat
+function openChat(type, chatId) {
+    if (type === 'group') {
+        document.getElementById('group-chat-uid').value = chatId;
+        document.getElementById('group-chat-form').submit();
+    } else if (type === 'individual') {
+        document.getElementById('individual-chat-uid').value = chatId;
+        document.getElementById('individual-chat-form').submit();
+    }
+}
+
+// Animações de entrada
+document.addEventListener('DOMContentLoaded', function() {
+    const chatItems = document.querySelectorAll('.chat-item');
+    chatItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            item.style.transition = 'all 0.3s ease';
+            item.style.opacity = '1';
+            item.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
 {% endblock %}

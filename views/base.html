@@ -31,21 +31,26 @@
   <header>
     <div class="container header-content">
       <div class="brand">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menu lateral" aria-controls="appSidebar" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
         <div class="logo-placeholder"><img src="{{ url_for('static', filename='img/JSGlogo.png') }}" class="logo-img" alt="Logo"></div>
         <span class="brand-name">JustSetGo</span>
       </div>
-      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menu lateral" aria-controls="appSidebar" aria-expanded="false">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
       <div class="search-container">
-        <form class="search-bar" action="#" method="get" role="search" aria-label="Pesquisar">
+        <form class="search-bar" id="headerSearchForm" role="search" aria-label="Pesquisar">
           <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
             <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <input type="search" name="q" placeholder="Pesquisar eventos, destinos, datas..." aria-label="Campo de busca">
+          <input type="search" id="headerSearchInput" name="q" placeholder="Pesquisar eventos, destinos, datas..." aria-label="Campo de busca" value="{{ request.args.get('q', '') }}">
+          <button type="submit" class="search-submit-btn" aria-label="Pesquisar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </form>
       </div>
       <nav class="nav-container">
@@ -78,7 +83,6 @@
   <!-- Sidebar -->
   <aside class="sidebar" id="appSidebar" aria-hidden="true">
     <div class="sidebar-header">
-      <span class="sidebar-title">Menu</span>
       <button class="sidebar-close" id="sidebarClose" aria-label="Fechar menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -147,18 +151,27 @@
       
       // Função para alternar sidebar
       function toggleSidebar(btn) {
-        const isOpen = document.body.classList.toggle('sidebar-open');
         const sidebar = document.getElementById('appSidebar');
         const overlay = document.getElementById('sidebarOverlay');
         
-        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        if (sidebar) sidebar.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-        
-        // Prevenir scroll do body quando sidebar aberta
-        if (isOpen) {
-          document.body.style.overflow = 'hidden';
+        // Verificar se estamos no desktop (largura >= 992px)
+        if (window.innerWidth >= 992) {
+          // No desktop, alternar entre minimizada e expandida
+          const isMinimized = sidebar.classList.toggle('minimized');
+          localStorage.setItem('sidebarMinimized', isMinimized);
         } else {
-          document.body.style.overflow = '';
+          // No mobile/tablet, usar comportamento de overlay
+          const isOpen = document.body.classList.toggle('sidebar-open');
+          
+          if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          if (sidebar) sidebar.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+          
+          // Prevenir scroll do body quando sidebar aberta
+          if (isOpen) {
+            document.body.style.overflow = 'hidden';
+          } else {
+            document.body.style.overflow = '';
+          }
         }
       }
       
@@ -213,6 +226,78 @@
       
       // Inicializar tema
       loadTheme();
+      
+      // Inicializar estado da sidebar
+      function initializeSidebar() {
+        const sidebar = document.getElementById('appSidebar');
+        const sidebarMinimized = localStorage.getItem('sidebarMinimized');
+        
+        if (window.innerWidth >= 992) {
+          // Desktop: aplicar estado salvo ou usar minimizada como padrão
+          if (sidebarMinimized === null) {
+            // Primeira vez: definir como minimizada por padrão
+            sidebar.classList.add('minimized');
+            localStorage.setItem('sidebarMinimized', 'true');
+          } else if (sidebarMinimized === 'true') {
+            sidebar.classList.add('minimized');
+          }
+        } else {
+          // Mobile/tablet: garantir que sidebar esteja fechada
+          sidebar.classList.remove('minimized');
+          document.body.classList.remove('sidebar-open');
+        }
+      }
+      
+      // Executar inicialização
+      initializeSidebar();
+      
+      // Escutar mudanças no tamanho da tela
+      window.addEventListener('resize', () => {
+        const sidebar = document.getElementById('appSidebar');
+        
+        if (window.innerWidth >= 992) {
+          // Mudou para desktop: aplicar estado salvo
+          const sidebarMinimized = localStorage.getItem('sidebarMinimized') === 'true';
+          if (sidebarMinimized) {
+            sidebar.classList.add('minimized');
+          } else {
+            sidebar.classList.remove('minimized');
+          }
+          document.body.classList.remove('sidebar-open');
+        } else {
+          // Mudou para mobile/tablet: remover estado minimizado
+          sidebar.classList.remove('minimized');
+          document.body.classList.remove('sidebar-open');
+        }
+      });
+    })();
+
+    // Funcionalidade da barra de pesquisa do header
+    (function() {
+      const headerSearchForm = document.getElementById('headerSearchForm');
+      const headerSearchInput = document.getElementById('headerSearchInput');
+      
+      if (headerSearchForm && headerSearchInput) {
+        headerSearchForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const query = headerSearchInput.value.trim();
+          
+          if (query) {
+            // Redirecionar para a página de pesquisa com a query
+            window.location.href = `{{ url_for('search') }}?q=${encodeURIComponent(query)}`;
+          } else {
+            // Se não há query, apenas ir para a página de pesquisa
+            window.location.href = '{{ url_for("search") }}';
+          }
+        });
+        
+        // Permitir busca ao pressionar Enter
+        headerSearchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            headerSearchForm.dispatchEvent(new Event('submit'));
+          }
+        });
+      }
     })();
   </script>
 </body>

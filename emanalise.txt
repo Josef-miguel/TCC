@@ -339,7 +339,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = data.redirect || '/dashboard';
+                    window.location.href = data.redirect || '/home';
                 } else {
                     showError(data.message || 'Erro ao fazer login');
                     loginButton.disabled = false;
@@ -383,7 +383,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = data.redirect || '/dashboard';
+                    window.location.href = data.redirect || '/home';
                 } else {
                     showError(data.message || 'Erro ao fazer login com rede social');
                 }

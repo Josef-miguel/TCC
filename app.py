@@ -7,7 +7,6 @@ from firebase_admin import credentials, firestore
 app = Flask(__name__, template_folder='views')
 app.secret_key = "chave secrots"
 
-# um erro aqui. é preciso pegar o storagebucket e inicializar o app
 cred = credentials.Certificate("./config/firebaseConfig.json")
 firebase_admin.initialize_app(cred, {
     'storageBucket': 'jsg-tcc.appspot.com'

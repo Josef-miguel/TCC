@@ -100,7 +100,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     const data = await resp.json();
     if (resp.ok && data.success) {
       alertDiv.innerHTML = `<div style="color:green">Cadastro efetuado! Redirecionando...</div>`;
-      setTimeout(() => window.location.href = data.redirect || "/dashboard", 1200);
+      setTimeout(() => window.location.href = data.redirect || "/home", 1200);
     } else {
       alertDiv.innerHTML = `<div style="color:red">${data.message || 'Erro no cadastro'}</div>`;
       btn.disabled = false;

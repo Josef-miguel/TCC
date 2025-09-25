@@ -1,13 +1,66 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<pre>{{chat_uid}}}</pre>
+<div class="chat-interface">
+    <!-- Header do Chat -->
+    <div class="chat-header-bar">
+        <button class="back-btn" onclick="history.back()">
+            <ion-icon name="arrow-back-outline"></ion-icon>
+        </button>
+        <div class="chat-user-info">
+            <div class="chat-user-avatar">
+                <ion-icon name="person"></ion-icon>
+            </div>
+            <div class="chat-user-details">
+                <h3 class="chat-user-name">Conversa Individual</h3>
+                <span class="chat-user-status">Online</span>
+            </div>
+        </div>
+        <div class="chat-actions">
+            <button class="chat-action-btn">
+                <ion-icon name="call-outline"></ion-icon>
+            </button>
+            <button class="chat-action-btn">
+                <ion-icon name="videocam-outline"></ion-icon>
+            </button>
+            <button class="chat-action-btn">
+                <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+            </button>
+        </div>
+    </div>
 
-<div id="chat-container">
-  <div id="messages" style="height:400px; overflow-y:scroll; border:1px solid #ccc; padding:10px;"></div>
+    <!-- Área de Mensagens -->
+    <div class="chat-messages-container">
+        <div id="messages" class="chat-messages"></div>
+        
+        <!-- Indicador de digitação -->
+        <div class="typing-indicator" id="typing-indicator" style="display: none;">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="typing-text">digitando...</span>
+        </div>
+    </div>
 
-  <input type="text" id="message-input" placeholder="Digite sua mensagem">
-  <button id="send-btn">Enviar</button>
+    <!-- Input de Mensagem -->
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+            <button class="attachment-btn">
+                <ion-icon name="attach-outline"></ion-icon>
+            </button>
+            <div class="message-input-wrapper">
+                <input type="text" id="message-input" placeholder="Digite sua mensagem..." autocomplete="off">
+                <button class="emoji-btn">
+                    <ion-icon name="happy-outline"></ion-icon>
+                </button>
+            </div>
+            <button id="send-btn" class="send-btn">
+                <ion-icon name="send"></ion-icon>
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -30,25 +83,60 @@ async function fetchMessages() {
     if (data.success) {
         messagesDiv.innerHTML = '';
         data.messages.forEach(m => {
-            const msgEl = document.createElement('div');
-
-            let ts;
-            if (m.timestamp && m.timestamp._seconds) {
-                ts = new Date(m.timestamp._seconds * 1000);
-            } else if (m.timestamp) {
-                ts = new Date(m.timestamp); // fallback se for string ISO
-            } else {
-                ts = new Date();
-            }
-
-            const sender = m.uid_sender === userUid ? "Você" : (m.name || "Outro");
-            msgEl.textContent = `${sender}: ${m.text} (${ts.toLocaleString()})`;
+            const msgEl = createMessageElement(m);
             messagesDiv.appendChild(msgEl);
         });
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     } else {
         console.error("Erro ao buscar mensagens:", data.error || data.message);
     }
+}
+
+function createMessageElement(message) {
+    const msgEl = document.createElement('div');
+    const isOwnMessage = message.uid_sender === userUid;
+    
+    let ts;
+    if (message.timestamp && message.timestamp._seconds) {
+        ts = new Date(message.timestamp._seconds * 1000);
+    } else if (message.timestamp) {
+        ts = new Date(message.timestamp);
+    } else {
+        ts = new Date();
+    }
+
+    const senderName = message.name || "Usuário";
+    const timeString = ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    msgEl.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
+    
+    if (isOwnMessage) {
+        msgEl.innerHTML = `
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p class="message-text">${message.text}</p>
+                    <span class="message-time">${timeString}</span>
+                </div>
+            </div>
+        `;
+    } else {
+        msgEl.innerHTML = `
+            <div class="message-content">
+                <div class="message-avatar">
+                    <ion-icon name="person"></ion-icon>
+                </div>
+                <div class="message-bubble">
+                    <div class="message-header">
+                        <span class="sender-name">${senderName}</span>
+                    </div>
+                    <p class="message-text">${message.text}</p>
+                    <span class="message-time">${timeString}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    return msgEl;
 }
 
 // Enviar mensagem: envia chat_uid em vez de org_uid

@@ -21,7 +21,7 @@ def init_app(app, db):
             g.user = None
 
     @app.route("/")
-    def home():
+    def landing_page():
         try:
             events = []
             events_ref = db.collection('events').order_by('exit_date').stream()
@@ -29,11 +29,11 @@ def init_app(app, db):
                 data = doc.to_dict()
                 data['id'] = doc.id
                 events.append(data)
-            return render_template('home.html', events=events)
+            return render_template('landing_page.html', events=events)
         except Exception as e:
             logger.exception(f"Home error: {e}")
             flash('Erro ao carregar eventos. Tente novamente.', 'error')
-            return render_template('home.html', events=[])
+            return render_template('landing_page.html', events=[])
 
     
     @app.route("/login", methods=["GET","POST"])
@@ -49,7 +49,7 @@ def init_app(app, db):
                 decoded = auth.verify_id_token(id_token)
                 uid = decoded["uid"]
                 session['user_uid'] = uid
-                return jsonify({"success": True, "redirect": url_for("dashboard")})
+                return jsonify({"success": True, "redirect": url_for("home")})
             except Exception:
                 return jsonify({"success": False, "message": "Token inválido"}), 401
 
@@ -87,15 +87,15 @@ def init_app(app, db):
             # loga automaticamente
             session['user_uid'] = uid
 
-            return jsonify({"success": True, "redirect": url_for("dashboard")})
+            return jsonify({"success": True, "redirect": url_for("home")})
 
         except Exception as e:
             logger.exception(f"Erro no registro: {e}")
             return jsonify({"success": False, "message": "Token inválido ou erro ao salvar"}), 401
 
     
-    @app.route("/dashboard")
-    def dashboard():
+    @app.route("/home")
+    def home():
             try:
                 events_list = []
                 # pega todos os eventos da collection 'events', ordenando pela data de saída
@@ -123,7 +123,7 @@ def init_app(app, db):
                   events_list.append(data)
 
                 # envia para o template
-                return render_template("dashboard.html", events=events_list, user=g.user)
+                return render_template("home.html", events=events_list, user=g.user)
             except Exception as e:
                 return f"Erro ao carregar eventos: {e}"
     
@@ -231,13 +231,13 @@ def init_app(app, db):
         event_id = request.form.get("event_id")
         if not event_id:
             flash("ID do evento não fornecido.", "error")
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('home'))
         try:
             event_ref = db.collection('events').document(event_id)
             event = event_ref.get()
             if not event.exists:
                 flash("Evento não encontrado.", "error")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('home'))
             
             user_ref = db.collection('user').document(g.user['uid'])
             user = user_ref.get()
@@ -249,17 +249,17 @@ def init_app(app, db):
             joined_events = user_data.get('joinedEvents', [])
             if event_id in joined_events:
                 flash("Você já está participando deste evento.", "info")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('home'))
             
             joined_events.append(event_id)
             user_ref.update({'joinedEvents': joined_events})
             
             flash("Você agora está participando do evento!", "success")
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('home'))
         except Exception as e:
             logger.exception(f"Erro ao participar do evento: {e}")
             flash("Erro ao participar do evento. Tente novamente.", "error")
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('home'))
     
     @app.route("/agenda")
     def agenda():
@@ -396,7 +396,7 @@ def init_app(app, db):
         
         if not event_id:
             flash("ID do evento não informado.", "error")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("home"))
         
         return render_template("chat_group.html", user=g.user, event_id=event_id)
     
@@ -730,3 +730,149 @@ def init_app(app, db):
         except Exception as e:
             logger.exception(f"Erro ao processar verificação: {e}")
             return jsonify({"success": False, "message": "Erro interno do servidor"}), 500
+
+    @app.route("/search")
+    def search():
+        """Rota para a página de pesquisa"""
+        return render_template("search.html", user=g.user)
+
+    @app.route("/search_api", methods=["GET"])
+    def search_api():
+        """API para realizar busca de eventos com filtros"""
+        try:
+            # Obter parâmetros de busca
+            query = request.args.get('q', '').strip()
+            category = request.args.get('category', '').strip()
+            price_range = request.args.get('price', '').strip()
+            rating = request.args.get('rating', '').strip()
+            date_filter = request.args.get('date', '').strip()
+            
+            # Construir query base
+            events_query = db.collection('events')
+            
+            # Aplicar filtros
+            filters_applied = []
+            
+            # Filtro por categoria (quando implementado)
+            if category:
+                # Por enquanto, vamos simular com base no tipo do evento
+                type_mapping = {
+                    'aventura': 1,
+                    'cultural': 2,
+                    'relaxamento': 3,
+                    'gastronomia': 4,
+                    'esportes': 5,
+                    'natureza': 6,
+                    'cidade': 7,
+                    'praia': 8
+                }
+                if category in type_mapping:
+                    events_query = events_query.where('type', '==', type_mapping[category])
+                    filters_applied.append(f"categoria: {category}")
+            
+            # Filtro por faixa de preço
+            if price_range:
+                if price_range == '0-100':
+                    events_query = events_query.where('price', '<=', 100)
+                elif price_range == '100-300':
+                    events_query = events_query.where('price', '>=', 100).where('price', '<=', 300)
+                elif price_range == '300-500':
+                    events_query = events_query.where('price', '>=', 300).where('price', '<=', 500)
+                elif price_range == '500-1000':
+                    events_query = events_query.where('price', '>=', 500).where('price', '<=', 1000)
+                elif price_range == '1000+':
+                    events_query = events_query.where('price', '>=', 1000)
+                filters_applied.append(f"preço: {price_range}")
+            
+            # Filtro por data
+            if date_filter:
+                try:
+                    filter_date = datetime.fromisoformat(date_filter)
+                    events_query = events_query.where('exit_date', '>=', filter_date)
+                    filters_applied.append(f"data: {date_filter}")
+                except ValueError:
+                    pass  # Ignorar data inválida
+            
+            # Executar query
+            events_docs = events_query.stream()
+            events = []
+            
+            for doc in events_docs:
+                event_data = doc.to_dict()
+                event_data['id'] = doc.id
+                
+                # Filtrar por texto de busca se especificado
+                if query:
+                    searchable_text = f"{event_data.get('title', '')} {event_data.get('desc', '')}".lower()
+                    if query.lower() not in searchable_text:
+                        continue
+                
+                # Processar datas para serialização JSON
+                exit_date = event_data.get('exit_date')
+                return_date = event_data.get('return_date')
+                
+                if isinstance(exit_date, datetime):
+                    event_data['exit_date'] = {
+                        'seconds': int(exit_date.timestamp()),
+                        'nanoseconds': exit_date.microsecond * 1000
+                    }
+                elif hasattr(exit_date, 'seconds'):
+                    event_data['exit_date'] = {
+                        'seconds': exit_date.seconds,
+                        'nanoseconds': getattr(exit_date, 'nanoseconds', 0)
+                    }
+                
+                if isinstance(return_date, datetime):
+                    event_data['return_date'] = {
+                        'seconds': int(return_date.timestamp()),
+                        'nanoseconds': return_date.microsecond * 1000
+                    }
+                elif hasattr(return_date, 'seconds'):
+                    event_data['return_date'] = {
+                        'seconds': return_date.seconds,
+                        'nanoseconds': getattr(return_date, 'nanoseconds', 0)
+                    }
+                
+                # Processar rota para JSON serializável
+                route = event_data.get('route')
+                if route and isinstance(route, dict):
+                    start = route.get('start')
+                    end = route.get('end')
+                    if start and end:
+                        route['start'] = {
+                            'latitude': start.get('latitude'),
+                            'longitude': start.get('longitude')
+                        }
+                        route['end'] = {
+                            'latitude': end.get('latitude'),
+                            'longitude': end.get('longitude')
+                        }
+                    event_data['route'] = route
+                
+                events.append(event_data)
+            
+            # Ordenar resultados por relevância (título primeiro, depois data)
+            if query:
+                events.sort(key=lambda x: (
+                    query.lower() in x.get('title', '').lower(),
+                    x.get('exit_date', {}).get('seconds', 0)
+                ), reverse=True)
+            else:
+                events.sort(key=lambda x: x.get('exit_date', {}).get('seconds', 0), reverse=True)
+            
+            return jsonify({
+                "success": True,
+                "results": events,
+                "total": len(events),
+                "filters_applied": filters_applied,
+                "query": query
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro na busca: {e}")
+            return jsonify({
+                "success": False,
+                "message": "Erro ao realizar busca",
+                "results": [],
+                "total": 0
+            }), 500

@@ -1,166 +1,217 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>JustSetGo - Sua próxima aventura começa aqui</title>
+{% extends "base.html" %}
 
-  <!-- CSS global -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-</head>
-<body>
-  <header>
-    <div class="container header-content">
-      <div class="brand">
-        <div class="logo-placeholder"><img src="{{ url_for('static', filename='img/JSGlogo.png') }}" class="logo-img" alt="Logo"></div>
-        <span class="brand-name">JustSetGo</span>
-      </div>
-      <div class="nav-container">
-        <div class="search-bar">
-          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 21L16.65 16.65M19 11.5C19 15.6421 15.6421 19 11.5 19C7.35786 19 4 15.6421 4 11.5C4 7.35786 7.35786 4 11.5 4C15.6421 4 19 7.35786 19 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <input type="text" placeholder="Pesquisar viagens..." aria-label="Pesquisar viagens">
-        </div>
-        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-          <svg class="theme-icon sun" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          <svg class="theme-icon moon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </button>
-        <a href="{{url_for('login')}}" class="btn">Login</a>
+{% block content %}
+<div class="container layout with-sidebar">
+  <section class="content-with-sidebar">
+    <!-- Header com ícones de navegação -->
+    <div class="home-header">
+      <div class="nav-icons">
+        <button class="nav-icon"><ion-icon name="search"></ion-icon></button>
+        <button class="nav-icon"><ion-icon name="location"></ion-icon></button>
+        <button class="nav-icon"><ion-icon name="bookmark"></ion-icon></button>
       </div>
     </div>
-  </header>
 
-  <main>
-    <!-- Hero section com carrossel -->
-    <section class="hero">
-      <div class="carousel">
-        <div class="carousel-slide active" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?paris');">
-          <div class="slide-content">
-            <h2>Descubra Paris</h2>
-            <a href="#" class="btn">Comece Agora</a>
-          </div>
-        </div>
-        <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?tokyo');">
-          <div class="slide-content">
-            <h2>Explore Tóquio</h2>
-            <a href="#" class="btn">Comece Agora</a>
-          </div>
-        </div>
-        <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?bali');">
-          <div class="slide-content">
-            <h2>Relaxe em Bali</h2>
-            <a href="#" class="btn">Comece Agora</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Seção de desenvolvedores -->
-    <section class="developers container">
-      <h2 class="section-title">Nossa Equipe</h2>
-      <div class="developer-cards">
-        <div class="developer-card">
-          <div class="developer-avatar">D1</div>
-          <h3>Desenvolvedor 1</h3>
-          <p>Front-end Specialist</p>
-        </div>
-        <div class="developer-card">
-          <div class="developer-avatar">D2</div>
-          <h3>Desenvolvedor 2</h3>
-          <p>Back-end Engineer</p>
-        </div>
-        <div class="developer-card">
-          <div class="developer-avatar">D3</div>
-          <h3>Desenvolvedor 3</h3>
-          <p>UI/UX Designer</p>
-        </div>
-      </div>
-      <div class="dots-container">
-        <div class="dot active"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <p>&copy; 2025 - JustSetGo</p>
-  </footer>
-
-  <script>
-    // Script simples para o carrossel
-    document.addEventListener('DOMContentLoaded', function() {
-      const slides = document.querySelectorAll('.carousel-slide');
-      const dots = document.querySelectorAll('.dot');
-      let currentSlide = 0;
-      
-      function showSlide(n) {
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
-        
-        currentSlide = (n + slides.length) % slides.length;
-        
-        slides[currentSlide].classList.add('active');
-        dots[currentSlide].classList.add('active');
-      }
-      
-      // Adiciona eventos aos dots
-      dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-          showSlide(index);
-        });
-      });
-      
-      // Auto-rotacionar o carrossel
-      setInterval(() => {
-        showSlide(currentSlide + 1);
-      }, 5000);
-    });
+    <h1 class="mb-3">Discover</h1>
     
-    // Sistema de toggle de tema
-    (function() {
-      const themeToggle = document.getElementById('themeToggle');
-      const htmlElement = document.documentElement;
-      
-      // Função para aplicar o tema
-      function applyTheme(theme) {
-        htmlElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-      }
-      
-      // Função para alternar tema
-      function toggleTheme() {
-        const currentTheme = htmlElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        applyTheme(newTheme);
-      }
-      
-      // Carregar tema salvo ou usar preferência do sistema
-      function loadTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        const theme = savedTheme || systemPreference;
-        applyTheme(theme);
-      }
-      
-      // Event listeners
-      themeToggle.addEventListener('click', toggleTheme);
-      
-      // Escutar mudanças na preferência do sistema
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        if (!localStorage.getItem('theme')) {
-          applyTheme(e.matches ? 'dark' : 'light');
-        }
-      });
-      
-      // Inicializar tema
-      loadTheme();
-    })();
-  </script>
-</body>
-</html>
+    {% for event in events %}
+    <div class="post-card">
+      <!-- Imagem de fundo do post -->
+      <div class="post-background">
+        {% if event.images %}
+          <img src="{{ event.images[0] }}" alt="Imagem do evento" class="background-image">
+        {% else %}
+          <div class="default-background"></div>
+        {% endif %}
+        
+        <!-- Overlay escuro -->
+        <div class="post-overlay"></div>
+        
+        <!-- Conteúdo sobreposto -->
+        <div class="post-content">
+          <!-- Header/Categoria -->
+          <div class="post-header">
+            <span class="post-category">Discover</span>
+            <span class="post-type">Gastronômico</span>
+          </div>
+
+          <!-- Destino com Rating -->
+          <div class="post-destination">
+            <h2 class="post-title">{{ event.title }}</h2>
+            <div class="post-rating">
+              <span class="stars">
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+              </span>
+              <span class="rating-value">4.9</span>
+            </div>
+          </div>
+
+          <!-- Resumo da Viagem -->
+          <div class="post-summary">
+            <div class="summary-item">
+              <span class="label">Duração:</span>
+              <span class="value">{{ event.exit_date }} - {{ event.return_date }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Custo:</span>
+              <span class="value">R$ {{ event.price }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Vagas:</span>
+              <span class="value">{{ event.numSlots }}</span>
+            </div>
+          </div>
+
+          <!-- Perfil do Autor -->
+          <div class="post-author">
+            <span class="author-handle">@{{ event.organizer.username if event.organizer else 'organizador' }}</span>
+            <span class="author-role">Viajante</span>
+          </div>
+
+          <!-- Descrição -->
+          <div class="post-description">
+            <p class="description-text">{{ event.desc }}</p>
+            <div class="post-hashtags">
+              <span class="hashtag">#viagem</span>
+              <span class="hashtag">#aventura</span>
+              <span class="hashtag">#descobrir</span>
+            </div>
+          </div>
+
+          <!-- Tags de Conteúdo -->
+          <div class="post-content-tags">
+            <span class="content-tag">#gastronomia</span>
+            <span class="content-tag">#cultura</span>
+            <span class="content-tag">#cidade</span>
+          </div>
+
+          <!-- Métricas de Engajamento -->
+          <div class="post-metrics">
+            <div class="metric">
+              <span class="metric-icon"><ion-icon name="heart"></ion-icon></span>
+              <span class="metric-value">9.9K</span>
+            </div>
+            <div class="metric">
+              <span class="metric-icon"><ion-icon name="save"></ion-icon></span>
+              <span class="metric-value">2.3K</span>
+            </div>
+            <div class="metric">
+              <span class="metric-icon"><ion-icon name="share"></ion-icon></span>
+              <span class="metric-value">567</span>
+            </div>
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="post-actions">
+            <button class="action-btn primary">Rota</button>
+            <button class="action-btn secondary">Planejar</button>
+            <button class="action-btn icon"><ion-icon name="location"></ion-icon></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mapa -->
+      <div class="map-container">
+        <div class="map map-embed"
+             id="map-{{ loop.index }}"
+             data-route='{{ event.route | default({}) | tojson | safe }}'>
+        </div>
+      </div>
+
+      <!-- Status de participação -->
+      {% for events in user.joinedEvents %}
+        {% if events == event.id %}
+        <div class="participation-status">
+          <p class="status-message">Você já está participando desta viagem!</p>
+          <form action="{{url_for('chat_group')}}" method="post">
+            <input type="hidden" name="org_uid" value="{{ event.id }}">
+            <button class="btn btn-secondary">Falar com o grupo</button>
+          </form>
+        </div>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Formulário de participação -->
+      <form action="{{url_for('joinEvent')}}" method="post" class="join-form">
+        <button class="btn btn-primary">Participar da viagem</button>
+        <input type="hidden" name="event_id" value="{{ event.id }}">
+      </form>
+    </div>
+    {% endfor %}
+
+    <a class="btn btn-outline mt-3" href="{{ url_for('new_event') }}">Criar post</a>
+  </section>
+ </div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // seleciona todas as divs de mapas
+  const mapDivs = document.querySelectorAll('.map');
+
+  mapDivs.forEach(div => {
+    
+    let route;
+    try {
+      route = JSON.parse(div.dataset.route);
+    } catch (e) {
+      console.warn("Route inválida:", div.id, div.dataset.route);
+      return; // pula se não for válido
+    }
+
+    if (!route || !route.start || !route.end) {
+      console.warn("Evento sem rota válida:", div.id);
+      return;
+    }
+
+    const centerLat = (route.start.latitude + route.end.latitude) / 2;
+    const centerLng = (route.start.longitude + route.end.longitude) / 2;
+
+    const map = L.map(div.id).setView([centerLat, centerLng], 8);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // Marcadores
+    L.marker([route.start.latitude, route.start.longitude])
+      .addTo(map)
+      .bindPopup(route.display_start || "Saída");
+
+    L.marker([route.end.latitude, route.end.longitude])
+      .addTo(map)
+      .bindPopup(route.display_end || "Chegada");
+
+    // Linha da rota
+    L.Routing.control({
+      waypoints: [
+        L.latLng(route.start.latitude, route.start.longitude),
+        L.latLng(route.end.latitude, route.end.longitude)
+      ],
+      lineOptions: { styles: [{ color: 'blue', opacity: 0.7, weight: 4 }] },
+      addWaypoints: false,
+      draggableWaypoints: false,
+      routeWhileDragging: false,
+      fitSelectedRoutes: true,
+      showAlternatives: false
+    })
+    .on('routesfound', e => console.log("Rota encontrada:", e.routes))
+    .on('routingerror', e => console.error("Erro no roteamento:", e))
+    .addTo(map);
+
+    // força o redimensionamento
+    setTimeout(() => map.invalidateSize(), 500);
+  });
+});
+</script>
+{% endblock %}

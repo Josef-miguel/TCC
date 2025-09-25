@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JustSetGo - Sua próxima aventura começa aqui</title>
+
+  <!-- CSS global -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="brand">
+        <div class="logo-placeholder"><img src="{{ url_for('static', filename='img/JSGlogo.png') }}" class="logo-img" alt="Logo"></div>
+        <span class="brand-name">JustSetGo</span>
+      </div>
+      <div class="nav-container">
+        <div class="search-bar">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 21L16.65 16.65M19 11.5C19 15.6421 15.6421 19 11.5 19C7.35786 19 4 15.6421 4 11.5C4 7.35786 7.35786 4 11.5 4C15.6421 4 19 7.35786 19 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <input type="text" placeholder="Pesquisar viagens..." aria-label="Pesquisar viagens">
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+          <svg class="theme-icon sun" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <svg class="theme-icon moon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </button>
+        <a href="{{url_for('login')}}" class="btn">Login</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero section com carrossel -->
+    <section class="hero">
+      <div class="carousel">
+        <div class="carousel-slide active" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?paris');">
+          <div class="slide-content">
+            <h2>Descubra Paris</h2>
+            <a href="#" class="btn">Comece Agora</a>
+          </div>
+        </div>
+        <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?tokyo');">
+          <div class="slide-content">
+            <h2>Explore Tóquio</h2>
+            <a href="#" class="btn">Comece Agora</a>
+          </div>
+        </div>
+        <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://source.unsplash.com/random/1600x900/?bali');">
+          <div class="slide-content">
+            <h2>Relaxe em Bali</h2>
+            <a href="#" class="btn">Comece Agora</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção de desenvolvedores -->
+    <section class="developers container">
+      <h2 class="section-title">Nossa Equipe</h2>
+      <div class="developer-cards">
+        <div class="developer-card">
+          <div class="developer-avatar">D1</div>
+          <h3>Desenvolvedor 1</h3>
+          <p>Front-end Specialist</p>
+        </div>
+        <div class="developer-card">
+          <div class="developer-avatar">D2</div>
+          <h3>Desenvolvedor 2</h3>
+          <p>Back-end Engineer</p>
+        </div>
+        <div class="developer-card">
+          <div class="developer-avatar">D3</div>
+          <h3>Desenvolvedor 3</h3>
+          <p>UI/UX Designer</p>
+        </div>
+      </div>
+      <div class="dots-container">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 - JustSetGo</p>
+  </footer>
+
+  <script>
+    // Script simples para o carrossel
+    document.addEventListener('DOMContentLoaded', function() {
+      const slides = document.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.dot');
+      let currentSlide = 0;
+      
+      function showSlide(n) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        currentSlide = (n + slides.length) % slides.length;
+        
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+      }
+      
+      // Adiciona eventos aos dots
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+          showSlide(index);
+        });
+      });
+      
+      // Auto-rotacionar o carrossel
+      setInterval(() => {
+        showSlide(currentSlide + 1);
+      }, 5000);
+    });
+    
+    // Sistema de toggle de tema
+    (function() {
+      const themeToggle = document.getElementById('themeToggle');
+      const htmlElement = document.documentElement;
+      
+      // Função para aplicar o tema
+      function applyTheme(theme) {
+        htmlElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+      }
+      
+      // Função para alternar tema
+      function toggleTheme() {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+      }
+      
+      // Carregar tema salvo ou usar preferência do sistema
+      function loadTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = savedTheme || systemPreference;
+        applyTheme(theme);
+      }
+      
+      // Event listeners
+      themeToggle.addEventListener('click', toggleTheme);
+      
+      // Escutar mudanças na preferência do sistema
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+          applyTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+      
+      // Inicializar tema
+      loadTheme();
+    })();
+  </script>
+</body>
+</html>

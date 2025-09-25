@@ -90,7 +90,7 @@ async function loginWithToken(idToken) {
 
     if (resp.ok && data && data.success) {
       alertDiv.innerHTML = '<div style="color:green">Login efetuado! Redirecionando...</div>';
-      window.location.href = data.redirect || '/dashboard';
+      window.location.href = data.redirect || '/home';
     } else {
       const msg = (data && data.message) ? data.message : ('Erro no login (status ' + resp.status + ')');
       alertDiv.innerHTML = `<div style="color:red">${msg}</div>`;

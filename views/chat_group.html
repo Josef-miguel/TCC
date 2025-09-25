@@ -1,22 +1,137 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Chat do Evento</h2>
+<div class="chat-interface group-chat">
+    <!-- Header do Chat em Grupo -->
+    <div class="chat-header-bar group-header">
+        <button class="back-btn" onclick="history.back()">
+            <ion-icon name="arrow-back-outline"></ion-icon>
+        </button>
+        <div class="chat-group-info">
+            <div class="chat-group-avatar">
+                <ion-icon name="people"></ion-icon>
+            </div>
+            <div class="chat-group-details">
+                <h3 class="chat-group-name">Grupo de Viagem</h3>
+                <span class="chat-group-members">5 membros online</span>
+            </div>
+        </div>
+        <div class="chat-actions">
+            <button class="chat-action-btn" onclick="showGroupInfo()">
+                <ion-icon name="information-circle-outline"></ion-icon>
+            </button>
+            <button class="chat-action-btn" onclick="showGroupMembers()">
+                <ion-icon name="people-outline"></ion-icon>
+            </button>
+            <button class="chat-action-btn">
+                <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+            </button>
+        </div>
+    </div>
 
-<div id="chat-box" style="border:1px solid #ccc; height:300px; overflow-y:scroll; padding:8px;"></div>
+    <!-- Área de Mensagens -->
+    <div class="chat-messages-container">
+        <div id="chat-box" class="chat-messages group-messages"></div>
+        
+        <!-- Indicador de digitação -->
+        <div class="typing-indicator" id="typing-indicator" style="display: none;">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="typing-text">Alguém está digitando...</span>
+        </div>
+    </div>
 
-<form id="chat-form">
-  <input type="text" id="message" placeholder="Digite uma mensagem..." autocomplete="off">
-  <button type="submit">Enviar</button>
-</form>
+    <!-- Input de Mensagem -->
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+            <button class="attachment-btn">
+                <ion-icon name="attach-outline"></ion-icon>
+            </button>
+            <div class="message-input-wrapper">
+                <input type="text" id="message" placeholder="Digite uma mensagem..." autocomplete="off">
+                <button class="emoji-btn">
+                    <ion-icon name="happy-outline"></ion-icon>
+                </button>
+            </div>
+            <button type="submit" id="send-btn" class="send-btn">
+                <ion-icon name="send"></ion-icon>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Informações do Grupo -->
+<div class="group-info-modal" id="group-info-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeGroupInfo()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Informações do Grupo</h3>
+            <button class="modal-close" onclick="closeGroupInfo()">
+                <ion-icon name="close-outline"></ion-icon>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="group-info-section">
+                <h4>Nome do Grupo</h4>
+                <p>Grupo de Viagem - Destino Especial</p>
+            </div>
+            <div class="group-info-section">
+                <h4>Descrição</h4>
+                <p>Grupo para planejar nossa próxima aventura juntos!</p>
+            </div>
+            <div class="group-info-section">
+                <h4>Membros</h4>
+                <div class="members-list">
+                    <div class="member-item">
+                        <div class="member-avatar">
+                            <ion-icon name="person"></ion-icon>
+                        </div>
+                        <span class="member-name">Você</span>
+                        <span class="member-role">Admin</span>
+                    </div>
+                    <div class="member-item">
+                        <div class="member-avatar">
+                            <ion-icon name="person"></ion-icon>
+                        </div>
+                        <span class="member-name">João Silva</span>
+                        <span class="member-role">Membro</span>
+                    </div>
+                    <div class="member-item">
+                        <div class="member-avatar">
+                            <ion-icon name="person"></ion-icon>
+                        </div>
+                        <span class="member-name">Maria Santos</span>
+                        <span class="member-role">Membro</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
   const eventId = "{{ event_id }}";
   const chatBox = document.getElementById("chat-box");
-  const form = document.getElementById("chat-form");
   const input = document.getElementById("message");
+  const sendBtn = document.getElementById("send-btn");
 
-  form.addEventListener("submit", async (e) => {
+  // Event listener para o botão de envio
+  sendBtn.addEventListener("click", async (e) => {
     e.preventDefault();
+    await sendMessage();
+  });
+
+  // Event listener para Enter no input
+  input.addEventListener("keypress", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      await sendMessage();
+    }
+  });
+
+  async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
 
@@ -33,7 +148,7 @@
     } else {
       alert(result.message || "Erro ao enviar");
     }
-  });
+  }
 
   async function loadMessages() {
     const res = await fetch(`/get_group_messages?event_id=${eventId}`);
@@ -41,14 +156,52 @@
     chatBox.innerHTML = "";
 
     data.messages.forEach(msg => {
-      const p = document.createElement("p");
-      p.innerHTML = `<strong>${msg.name || "Usuário"}:</strong> ${msg.text}`;
-      chatBox.appendChild(p);
+      const messageEl = createGroupMessageElement(msg);
+      chatBox.appendChild(messageEl);
     });
 
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
+  function createGroupMessageElement(message) {
+    const msgEl = document.createElement('div');
+    msgEl.className = 'group-message';
+    
+    const senderName = message.name || "Usuário";
+    const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    msgEl.innerHTML = `
+      <div class="group-message-content">
+        <div class="group-message-avatar">
+          <ion-icon name="person"></ion-icon>
+        </div>
+        <div class="group-message-bubble">
+          <div class="group-message-header">
+            <span class="group-sender-name">${senderName}</span>
+            <span class="group-message-time">${timestamp}</span>
+          </div>
+          <p class="group-message-text">${message.text}</p>
+        </div>
+      </div>
+    `;
+    
+    return msgEl;
+  }
+
+  // Funções para o modal
+  function showGroupInfo() {
+    document.getElementById('group-info-modal').style.display = 'flex';
+  }
+
+  function showGroupMembers() {
+    showGroupInfo(); // Por enquanto, mostra as mesmas informações
+  }
+
+  function closeGroupInfo() {
+    document.getElementById('group-info-modal').style.display = 'none';
+  }
+
+  // Auto-refresh das mensagens
   setInterval(loadMessages, 3000); 
   loadMessages();
 </script>
