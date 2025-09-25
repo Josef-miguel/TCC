@@ -3,51 +3,53 @@
 {% block content %}
 <div class="container">
   <div class="card">
-    <h3>Cadastrar Novo Evento</h3>
+    <h3>Editar Evento</h3>
     <form id="eventoForm">
       <div class="form-group">
         <label for="title">Título</label>
-        <input type="text" id="title" name="title" required class="form-control">
+        <input type="text" id="title" name="title" required class="form-control" value="{{ event.title }}">
       </div>
 
       <div class="form-group">
         <label for="image_urls">URLs das Imagens</label>
-        <textarea id="image_urls" name="image_urls" class="form-control" rows="3" placeholder="Cole uma URL por linha"></textarea>
+        <textarea id="image_urls" name="image_urls" class="form-control" rows="3" placeholder="Cole uma URL por linha">{% if event.images %}{{ event.images | join('\n') }}{% endif %}</textarea>
       </div>
 
       <div id="imagePreview" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:12px;"></div>
 
       <div class="form-group">
         <label for="desc">Descrição</label>
-        <textarea id="desc" name="desc" required class="form-control"></textarea>
+        <textarea id="desc" name="desc" required class="form-control">{{ event.desc }}</textarea>
       </div>
 
       <div class="form-group">
         <label for="price">Preço</label>
-        <input type="number" id="price" name="price" required class="form-control">
+        <input type="number" id="price" name="price" required class="form-control" value="{{ event.price }}">
       </div>
 
       <div class="form-group">
         <label for="numSlots">Número de vagas</label>
-        <input type="number" id="numSlots" name="numSlots" required class="form-control">
+        <input type="number" id="numSlots" name="numSlots" required class="form-control" value="{{ event.numSlots }}">
       </div>
 
       <div class="form-group">
         <label for="exit_date">Data de saída</label>
-        <input type="datetime-local" id="exit_date" name="exit_date" required class="form-control">
+        <input type="datetime-local" id="exit_date" name="exit_date" required class="form-control" 
+               value="{% if event.exit_date %}{{ event.exit_date.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
       </div>
 
       <div class="form-group">
         <label for="return_date">Data de retorno</label>
-        <input type="datetime-local" id="return_date" name="return_date" required class="form-control">
+        <input type="datetime-local" id="return_date" name="return_date" required class="form-control"
+               value="{% if event.return_date %}{{ event.return_date.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
       </div>
 
       <div class="form-group">
         <label for="type">Tipo</label>
         <select id="type" name="type" class="form-control">
-          <option value="1">Viagem</option>
-          <option value="2">Excursão</option>
-          <option value="3">Show</option>
+          <option value="1" {% if event.type == 1 %}selected{% endif %}>Viagem</option>
+          <option value="2" {% if event.type == 2 %}selected{% endif %}>Excursão</option>
+          <option value="3" {% if event.type == 3 %}selected{% endif %}>Show</option>
         </select>
       </div>
 
@@ -68,51 +70,51 @@
               </div>
               <div class="tags-options" id="tagsOptions">
                 <label class="tag-option">
-                  <input type="checkbox" value="relaxante">
+                  <input type="checkbox" value="relaxante" {% if 'relaxante' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Relaxante</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="aventura">
+                  <input type="checkbox" value="aventura" {% if 'aventura' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Aventura</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="acao">
+                  <input type="checkbox" value="acao" {% if 'acao' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Ação</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="cultural">
+                  <input type="checkbox" value="cultural" {% if 'cultural' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Cultural</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="gastronomia">
+                  <input type="checkbox" value="gastronomia" {% if 'gastronomia' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Gastronomia</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="natureza">
+                  <input type="checkbox" value="natureza" {% if 'natureza' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Natureza</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="esportes">
+                  <input type="checkbox" value="esportes" {% if 'esportes' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Esportes</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="praia">
+                  <input type="checkbox" value="praia" {% if 'praia' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Praia</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="montanha">
+                  <input type="checkbox" value="montanha" {% if 'montanha' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Montanha</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="cidade">
+                  <input type="checkbox" value="cidade" {% if 'cidade' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Cidade</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="romantico">
+                  <input type="checkbox" value="romantico" {% if 'romantico' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Romântico</span>
                 </label>
                 <label class="tag-option">
-                  <input type="checkbox" value="familia">
+                  <input type="checkbox" value="familia" {% if 'familia' in event.tags %}checked{% endif %}>
                   <span class="tag-label">Família</span>
                 </label>
               </div>
@@ -123,7 +125,7 @@
       </div>
 
       <!-- Campo hidden para armazenar a rota -->
-      <input type="hidden" id="route" name="route">
+      <input type="hidden" id="route" name="route" value="{{ event.route | tojson | safe }}">
 
       <div class="form-group" style="margin-top:16px;">
         <label>Selecione a rota no mapa</label>
@@ -139,7 +141,8 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary">Cadastrar</button>
+      <button type="submit" class="btn btn-primary">Atualizar Evento</button>
+      <a href="{{ url_for('my_vacations') }}" class="btn btn-secondary">Cancelar</a>
       <div id="formAlert" style="margin-top:12px"></div>
     </form>
   </div>
@@ -168,6 +171,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const tagsHiddenInput = document.getElementById("tags");
   let selectedTagsList = [];
 
+  // Inicializar tags selecionadas
+  const checkboxes = tagsOptions.querySelectorAll('input[type="checkbox"]:checked');
+  selectedTagsList = Array.from(checkboxes).map(cb => cb.value);
+  updateSelectedTagsDisplay();
+  updateTagsHiddenInput();
+
   // Inicializa o mapa
   const map = L.map('map').setView([-22.9068, -43.1729], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -176,6 +185,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let waypoints = [];
   let routingControl = null;
+
+  // Carregar rota existente se disponível
+  const existingRoute = routeInput.value ? JSON.parse(routeInput.value) : null;
+  if (existingRoute && existingRoute.start && existingRoute.end) {
+    waypoints = [
+      L.latLng(existingRoute.start.latitude, existingRoute.start.longitude),
+      L.latLng(existingRoute.end.latitude, existingRoute.end.longitude)
+    ];
+    
+    // Centralizar mapa na rota existente
+    const centerLat = (existingRoute.start.latitude + existingRoute.end.latitude) / 2;
+    const centerLng = (existingRoute.start.longitude + existingRoute.end.longitude) / 2;
+    map.setView([centerLat, centerLng], 8);
+    
+    // Adicionar marcadores
+    L.marker([existingRoute.start.latitude, existingRoute.start.longitude])
+      .addTo(map)
+      .bindPopup(existingRoute.display_start || "Saída");
+
+    L.marker([existingRoute.end.latitude, existingRoute.end.longitude])
+      .addTo(map)
+      .bindPopup(existingRoute.display_end || "Chegada");
+
+    // Adicionar rota
+    routingControl = L.Routing.control({
+      waypoints: waypoints,
+      lineOptions: { styles: [{ color: 'blue', opacity: 0.7, weight: 5 }] },
+      routeWhileDragging: true,
+      draggableWaypoints: true,
+      addWaypoints: false
+    }).addTo(map);
+  }
 
   // Sistema de Tags - Event Listeners
   tagsDropdownBtn.addEventListener('click', () => {
@@ -352,7 +393,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return data.display_name || `${lat}, ${lng}`;
   }
 
-
   async function saveRoute() {
     if (waypoints.length < 2) return;
 
@@ -400,7 +440,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log('Rota input value:', routeInput.value);
 
     try {
-      const resp = await fetch("/new_event", {
+      const resp = await fetch("/edit_post/{{ event_id }}", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
@@ -412,13 +452,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (resp.ok && result && result.success) {
         alertDiv.innerHTML = `<div style="color:green">${result.message}</div>`;
-        form.reset();
-        routeInput.value = "";
-        waypoints = [];
-        if (routingControl) {
-          map.removeControl(routingControl);
-          routingControl = null;
-        }
+        setTimeout(() => {
+          window.location.href = "{{ url_for('my_vacations') }}";
+        }, 1500);
       } else {
         const msg = (result && result.message) ? result.message : `Erro: ${resp.status}`;
         alertDiv.innerHTML = `<div style="color:red">${msg}</div>`;

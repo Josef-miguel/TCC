@@ -15,10 +15,6 @@
       <div class="main-search-bar">
         <form class="search-form" id="searchForm">
           <div class="search-input-group">
-            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
-              <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
             <input 
               type="search" 
               id="searchInput" 
@@ -29,7 +25,7 @@
             >
             <button type="button" class="filter-btn" id="filterBtn" aria-label="Abrir filtros">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 4h18M3 12h18M3 20h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
             <button type="submit" class="search-btn" aria-label="Pesquisar">
@@ -95,20 +91,61 @@
     
     <div class="modal-content">
       <form id="filterForm">
-        <!-- Filtro por Categoria -->
+        <!-- Filtro por Tags -->
         <div class="filter-group">
-          <label for="categoryFilter">Categoria</label>
-          <select id="categoryFilter" name="category">
-            <option value="">Todas as categorias</option>
-            <option value="aventura">Aventura</option>
-            <option value="cultural">Cultural</option>
-            <option value="relaxamento">Relaxamento</option>
-            <option value="gastronomia">Gastronomia</option>
-            <option value="esportes">Esportes</option>
-            <option value="natureza">Natureza</option>
-            <option value="cidade">Cidade</option>
-            <option value="praia">Praia</option>
-          </select>
+          <label for="tagsFilter">Tags</label>
+          <div class="tags-filter-container">
+            <div class="tags-checkboxes">
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="relaxante">
+                <span class="tag-label">Relaxante</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="aventura">
+                <span class="tag-label">Aventura</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="acao">
+                <span class="tag-label">Ação</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="cultural">
+                <span class="tag-label">Cultural</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="gastronomia">
+                <span class="tag-label">Gastronomia</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="natureza">
+                <span class="tag-label">Natureza</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="esportes">
+                <span class="tag-label">Esportes</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="praia">
+                <span class="tag-label">Praia</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="montanha">
+                <span class="tag-label">Montanha</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="cidade">
+                <span class="tag-label">Cidade</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="romantico">
+                <span class="tag-label">Romântico</span>
+              </label>
+              <label class="tag-checkbox">
+                <input type="checkbox" name="tags" value="familia">
+                <span class="tag-label">Família</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <!-- Filtro por Preço -->
@@ -194,7 +231,12 @@ document.addEventListener('DOMContentLoaded', function() {
       // Adicionar filtros aos parâmetros
       Object.keys(filters).forEach(key => {
         if (filters[key]) {
-          params.append(key, filters[key]);
+          if (key === 'tags' && Array.isArray(filters[key])) {
+            // Para tags, adicionar cada uma como parâmetro separado
+            filters[key].forEach(tag => params.append('tags', tag));
+          } else {
+            params.append(key, filters[key]);
+          }
         }
       });
 
@@ -332,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Função para obter label do filtro
   function getFilterLabel(key) {
     const labels = {
-      category: 'Categoria',
+      tags: 'Tags',
       price: 'Preço',
       rating: 'Avaliação',
       date: 'Data'
@@ -342,6 +384,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Função para obter valor do filtro
   function getFilterValue(key, value) {
+    if (key === 'tags' && Array.isArray(value)) {
+      return value.join(', ');
+    }
     if (key === 'price') {
       const ranges = {
         '0-100': 'Até R$ 100',
@@ -390,10 +435,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const formData = new FormData(document.getElementById('filterForm'));
     currentFilters = {};
     
+    // Processar tags separadamente
+    const tags = [];
     for (let [key, value] of formData.entries()) {
-      if (value) {
+      if (key === 'tags') {
+        tags.push(value);
+      } else if (value) {
         currentFilters[key] = value;
       }
+    }
+    
+    if (tags.length > 0) {
+      currentFilters.tags = tags;
     }
     
     updateAppliedFilters();
@@ -479,11 +532,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .search-input-group:focus-within {
   border-color: var(--primary-color);
-}
-
-.search-input-group svg {
-  color: var(--text-secondary);
-  margin-right: 0.75rem;
 }
 
 .search-input-group input {
@@ -792,6 +840,48 @@ document.addEventListener('DOMContentLoaded', function() {
   color: var(--text-secondary);
   font-size: 0.75rem;
   margin-top: 0.25rem;
+}
+
+.tags-filter-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--bg-secondary);
+}
+
+.tags-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.tag-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.tag-checkbox:hover {
+  background: var(--bg-hover);
+}
+
+.tag-checkbox input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+}
+
+.tag-label {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  user-select: none;
 }
 
 .modal-footer {

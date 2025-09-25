@@ -1,53 +1,575 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="container layout with-sidebar">
+  <div class="my-vacations-container">
+    <h1 class="page-title">Minhas Viagens</h1>
+    
+    <!-- Sistema de Abas -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button class="tab-button active" data-tab="participating">
+          <ion-icon name="people"></ion-icon>
+          <span>Viagens que Participo</span>
+          <span class="tab-count">{{ joined_vacations|length }}</span>
+        </button>
+        <button class="tab-button" data-tab="created">
+          <ion-icon name="create"></ion-icon>
+          <span>Viagens que Criei</span>
+          <span class="tab-count">{{ my_vacations|length }}</span>
+        </button>
+      </div>
+      
+      <!-- Conteúdo das Abas -->
+      <div class="tabs-content">
+        <!-- Aba: Viagens que Participa -->
+        <div class="tab-panel active" id="participating">
+          <div class="vacations-list">
+            {% if joined_vacations %}
+              {% for vacation in joined_vacations %}
+                <div class="post-card">
+                  <!-- Imagem de fundo do post -->
+                  <div class="post-background">
+                    {% if vacation.images %}
+                      <img src="{{ vacation.images[0] }}" alt="Imagem do evento" class="background-image">
+                    {% else %}
+                      <div class="default-background"></div>
+                    {% endif %}
+                    
+                    <!-- Overlay escuro -->
+                    <div class="post-overlay"></div>
+                    
+                    <!-- Conteúdo sobreposto -->
+                    <div class="post-content">
+                      <!-- Header/Categoria -->
+                      <div class="post-header">
+                        <span class="post-category">Participando</span>
+                        <span class="post-type">Viagem</span>
+                      </div>
 
-<h1>Minhas Viagens</h1>
+                      <!-- Destino com Rating -->
+                      <div class="post-destination">
+                        <h2 class="post-title">{{ vacation.title }}</h2>
+                        <div class="post-rating">
+                          <span class="stars">
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                          </span>
+                          <span class="rating-value">4.9</span>
+                        </div>
+                      </div>
 
-<h2>Viagens que eu criei</h2>
-{% if my_vacations %}
-<div style="border: 1px solid #fff;">
-    <ul>
-    {% for vacation in my_vacations %}
-        <li class="vacation-item">
-            <h3>{{ vacation.title }}</h3>
-            <p>{{ vacation.desc }}</p>
-            {% for image in vacation.images %}
-                <img src="{{ image }}">
-            {% endfor %}
-            <p>Data de Início: {{ vacation.exit_date }}</p>
-            <p>Data de Término: {{ vacation.return_date }}</p>
-        </li>
-    {% endfor %}
-    </ul>
+                      <!-- Resumo da Viagem -->
+                      <div class="post-summary">
+                        <div class="summary-item">
+                          <span class="label">Duração:</span>
+                          <span class="value">{{ vacation.exit_date }} - {{ vacation.return_date }}</span>
+                        </div>
+                        <div class="summary-item">
+                          <span class="label">Custo:</span>
+                          <span class="value">R$ {{ vacation.price }}</span>
+                        </div>
+                        <div class="summary-item">
+                          <span class="label">Vagas:</span>
+                          <span class="value">{{ vacation.numSlots }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Descrição -->
+                      <div class="post-description">
+                        <p class="description-text">{{ vacation.desc }}</p>
+                        <div class="post-hashtags">
+                          {% if vacation.tags %}
+                            {% for tag in vacation.tags %}
+                              <span class="hashtag">#{{ tag }}</span>
+                            {% endfor %}
+                          {% else %}
+                            <span class="hashtag">#viagem</span>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <!-- Botões de Ação -->
+                      <div class="post-actions">
+                        <button class="action-btn primary">Rota</button>
+                        <button class="action-btn secondary">Planejar</button>
+                        <form action="{{url_for('chat_group')}}" method="post" style="display: inline;">
+                          <input type="hidden" name="org_uid" value="{{ vacation.id }}">
+                          <button class="action-btn icon" type="submit"><ion-icon name="chatbubbles"></ion-icon></button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mapa -->
+                  <div class="map-container">
+                    <div class="map map-embed"
+                         id="map-joined-{{ loop.index }}"
+                         data-route='{{ vacation.route | default({}) | tojson | safe }}'>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-state">
+                <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+                <h3>Nenhuma viagem encontrada</h3>
+                <p>Você não está participando de nenhuma viagem ainda.</p>
+                <a href="{{ url_for('home') }}" class="btn btn-primary">Descobrir Viagens</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Aba: Viagens que Criou -->
+        <div class="tab-panel" id="created">
+          <div class="vacations-list">
+            {% if my_vacations %}
+              {% for vacation in my_vacations %}
+                <div class="post-card">
+                  <!-- Imagem de fundo do post -->
+                  <div class="post-background">
+                    {% if vacation.images %}
+                      <img src="{{ vacation.images[0] }}" alt="Imagem do evento" class="background-image">
+                    {% else %}
+                      <div class="default-background"></div>
+                    {% endif %}
+                    
+                    <!-- Overlay escuro -->
+                    <div class="post-overlay"></div>
+                    
+                    <!-- Conteúdo sobreposto -->
+                    <div class="post-content">
+                      <!-- Header/Categoria -->
+                      <div class="post-header">
+                        <span class="post-category">Meu Evento</span>
+                        <span class="post-type">Organizador</span>
+                        <!-- Status de Expiração -->
+                        {% if vacation.is_expired %}
+                          <span class="expired-badge">Expirado</span>
+                        {% else %}
+                          <span class="active-badge">Ativo</span>
+                        {% endif %}
+                      </div>
+
+                      <!-- Destino com Rating -->
+                      <div class="post-destination">
+                        <h2 class="post-title">{{ vacation.title }}</h2>
+                        <div class="post-rating">
+                          <span class="stars">
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                            <ion-icon name="star"></ion-icon>
+                          </span>
+                          <span class="rating-value">4.9</span>
+                        </div>
+                      </div>
+
+                      <!-- Resumo da Viagem -->
+                      <div class="post-summary">
+                        <div class="summary-item">
+                          <span class="label">Duração:</span>
+                          <span class="value">{{ vacation.exit_date }} - {{ vacation.return_date }}</span>
+                        </div>
+                        <div class="summary-item">
+                          <span class="label">Custo:</span>
+                          <span class="value">R$ {{ vacation.price }}</span>
+                        </div>
+                        <div class="summary-item">
+                          <span class="label">Vagas:</span>
+                          <span class="value">{{ vacation.numSlots }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Descrição -->
+                      <div class="post-description">
+                        <p class="description-text">{{ vacation.desc }}</p>
+                        <div class="post-hashtags">
+                          {% if vacation.tags %}
+                            {% for tag in vacation.tags %}
+                              <span class="hashtag">#{{ tag }}</span>
+                            {% endfor %}
+                          {% else %}
+                            <span class="hashtag">#viagem</span>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <!-- Botões de Ação -->
+                      <div class="post-actions">
+                        <button class="action-btn primary">Rota</button>
+                        <a href="{{ url_for('edit_post', event_id=vacation.id) }}" class="action-btn secondary">Editar Evento</a>
+                        <form action="{{url_for('chat_group')}}" method="post" style="display: inline;">
+                          <input type="hidden" name="org_uid" value="{{ vacation.id }}">
+                          <button class="action-btn icon" type="submit"><ion-icon name="chatbubbles"></ion-icon></button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mapa -->
+                  <div class="map-container">
+                    <div class="map map-embed"
+                         id="map-created-{{ loop.index }}"
+                         data-route='{{ vacation.route | default({}) | tojson | safe }}'>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-state">
+                <ion-icon name="create-outline" class="empty-icon"></ion-icon>
+                <h3>Nenhuma viagem criada</h3>
+                <p>Você ainda não criou nenhuma viagem.</p>
+                <a href="{{ url_for('new_event') }}" class="btn btn-primary">Criar Primeira Viagem</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-{% else %}
-    <p>Você não criou nenhuma viagem.</p>
-{% endif %}
 
-<br>
+<style>
+.my-vacations-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
 
-<h1>Viagens que eu participo</h1>
+.page-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  font-size: 2.5rem;
+  font-weight: 700;
+}
 
-{% if joined_vacations %}
-<div style="border: 1px solid #fff;">
-    <ul>
-    {% for vacation in joined_vacations %}
-        <li class="vacation-item">
-            <h3>{{ vacation.title }}</h3>
-            <p>{{ vacation.desc }}</p>
-            {% for image in vacation.images %}
-                <img src="{{ image }}">
-            {% endfor %}    
-            <p>Data de Início: {{ vacation.exit_date }}</p>
-            <p>Data de Término: {{ vacation.return_date }}</p>
-        </li>
-    {% endfor %}
-    </ul>
-</div>
-{% else %}
-    <p>Você não entrou em nenhuma viagem.</p>
-{% endif %} 
+/* Sistema de Abas */
+.tabs-container {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
 
+.tabs-header {
+  display: flex;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tab-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tab-button.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-color);
+}
+
+.tab-button ion-icon {
+  font-size: 1.25rem;
+}
+
+.tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.tab-button.active .tab-count {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.tabs-content {
+  padding: 2rem;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.vacations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.expired-badge {
+  background: #dc3545;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.active-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.post-header .expired-badge,
+.post-header .active-badge {
+  margin-left: auto;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .my-vacations-container {
+    padding: 1rem;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .tabs-content {
+    padding: 1rem;
+  }
+  
+  .tab-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .tab-button span:not(.tab-count) {
+    display: none;
+  }
+  
+  .tab-count {
+    margin-left: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabs-header {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .tab-button:last-child {
+    border-bottom: none;
+  }
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Sistema de Abas
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const targetTab = button.dataset.tab;
+      
+      // Remove active de todos os botões e painéis
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabPanels.forEach(panel => panel.classList.remove('active'));
+      
+      // Adiciona active ao botão clicado e painel correspondente
+      button.classList.add('active');
+      document.getElementById(targetTab).classList.add('active');
+      
+      // Reinicializa mapas após trocar de aba
+      setTimeout(() => {
+        initializeMaps();
+      }, 100);
+    });
+  });
+  
+  // Inicializar mapas
+  function initializeMaps() {
+    const mapDivs = document.querySelectorAll('.map');
+    
+    mapDivs.forEach(div => {
+      // Limpar mapa existente se houver
+      if (div._map) {
+        try {
+          div._map.remove();
+        } catch (e) {
+          console.warn("Erro ao remover mapa:", e);
+        }
+        div._map = null;
+      }
+      
+      let route;
+      try {
+        route = JSON.parse(div.dataset.route);
+      } catch (e) {
+        console.warn("Route inválida:", div.id, div.dataset.route);
+        return;
+      }
+
+      if (!route || !route.start || !route.end) {
+        console.warn("Evento sem rota válida:", div.id);
+        return;
+      }
+
+      const centerLat = (route.start.latitude + route.end.latitude) / 2;
+      const centerLng = (route.start.longitude + route.end.longitude) / 2;
+
+      const map = L.map(div.id).setView([centerLat, centerLng], 8);
+      div._map = map; // Armazenar referência do mapa
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+      }).addTo(map);
+
+      // Marcadores
+      L.marker([route.start.latitude, route.start.longitude])
+        .addTo(map)
+        .bindPopup(route.display_start || "Saída");
+
+      L.marker([route.end.latitude, route.end.longitude])
+        .addTo(map)
+        .bindPopup(route.display_end || "Chegada");
+
+      // Linha da rota com tratamento de erro melhorado
+      try {
+        const routingControl = L.Routing.control({
+          waypoints: [
+            L.latLng(route.start.latitude, route.start.longitude),
+            L.latLng(route.end.latitude, route.end.longitude)
+          ],
+          lineOptions: { styles: [{ color: 'blue', opacity: 0.7, weight: 4 }] },
+          addWaypoints: false,
+          draggableWaypoints: false,
+          routeWhileDragging: false,
+          fitSelectedRoutes: true,
+          showAlternatives: false,
+          createMarker: function() { return null; } // Desabilitar marcadores automáticos
+        })
+        .on('routesfound', e => {
+          console.log("Rota encontrada:", e.routes);
+        })
+        .on('routingerror', e => {
+          console.error("Erro no roteamento:", e);
+          // Desenhar linha simples se o roteamento falhar
+          L.polyline([
+            [route.start.latitude, route.start.longitude],
+            [route.end.latitude, route.end.longitude]
+          ], { color: 'blue', opacity: 0.7, weight: 4 }).addTo(map);
+        })
+        .addTo(map);
+        
+        // Armazenar referência do controle de roteamento
+        div._routingControl = routingControl;
+        
+      } catch (routingError) {
+        console.warn("Erro ao criar controle de roteamento:", routingError);
+        // Desenhar linha simples se houver erro
+        L.polyline([
+          [route.start.latitude, route.start.longitude],
+          [route.end.latitude, route.end.longitude]
+        ], { color: 'blue', opacity: 0.7, weight: 4 }).addTo(map);
+      }
+
+      // força o redimensionamento
+      setTimeout(() => {
+        try {
+          map.invalidateSize();
+        } catch (e) {
+          console.warn("Erro ao redimensionar mapa:", e);
+        }
+      }, 500);
+    });
+  }
+  
+  // Inicializar mapas na primeira carga
+  initializeMaps();
+});
+</script>
 {% endblock %}
 

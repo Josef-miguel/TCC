@@ -68,8 +68,8 @@
 
           <!-- Perfil do Autor -->
           <div class="post-author">
-            <span class="author-handle">@{{ event.organizer.username if event.organizer else 'organizador' }}</span>
-            <span class="author-role">Viajante</span>
+            <span class="author-handle">@{{ event.organizer.name if event.organizer else 'organizador' }}</span>
+            <span class="author-role">Organizador</span>
           </div>
 
           <!-- Descrição -->
@@ -84,9 +84,13 @@
 
           <!-- Tags de Conteúdo -->
           <div class="post-content-tags">
-            <span class="content-tag">#gastronomia</span>
-            <span class="content-tag">#cultura</span>
-            <span class="content-tag">#cidade</span>
+            {% if event.tags %}
+              {% for tag in event.tags %}
+                <span class="content-tag">#{{ tag }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="content-tag">#viagem</span>
+            {% endif %}
           </div>
 
           <!-- Métricas de Engajamento -->

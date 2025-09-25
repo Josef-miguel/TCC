@@ -515,6 +515,21 @@ header .container {
     display: block;
 }
 
+.profile-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-primary);
+    color: var(--text-inverted);
+    border-radius: 50%;
+}
+
+.profile-avatar-placeholder ion-icon {
+    font-size: 1.2em;
+}
+
 .nav-link {
     color: var(--text-secondary);
     padding: 0.2rem rem;
@@ -866,6 +881,74 @@ body.sidebar-open .content-with-sidebar {
     
     .sidebar.minimized .sidebar-link ion-icon {
         font-size: 1.2em;
+    }
+}
+
+/* ============================
+   Botão Flutuante para Criar Posts
+============================ */
+
+.floating-create-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background: var(--gradient-primary);
+    color: var(--text-inverted);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(255, 107, 0, 0.4);
+    transition: all var(--transition-normal);
+    z-index: 1000;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.floating-create-btn:hover {
+    transform: translateY(-4px) scale(1.1);
+    box-shadow: 0 12px 32px rgba(255, 107, 0, 0.6);
+    color: var(--text-inverted);
+    text-decoration: none;
+}
+
+.floating-create-btn:active {
+    transform: translateY(-2px) scale(1.05);
+}
+
+.floating-create-btn:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.floating-create-btn svg {
+    transition: transform var(--transition-normal);
+}
+
+.floating-create-btn:hover svg {
+    transform: rotate(90deg);
+}
+
+/* Responsividade do botão flutuante */
+@media (max-width: 768px) {
+    .floating-create-btn {
+        width: 56px;
+        height: 56px;
+        bottom: 1.5rem;
+        right: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-create-btn {
+        width: 52px;
+        height: 52px;
+        bottom: 1rem;
+        right: 1rem;
     }
 }
 
