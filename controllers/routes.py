@@ -137,20 +137,45 @@ def init_app(app, db):
         try:
             data = request.get_json(force=True) if request.is_json else request.form
             if not data:
-                return jsonify({"sucess" : False, "message" : "Nenhum dado recebido"}), 400
+                return jsonify({"success" : False, "message" : "Nenhum dado recebido"}), 400
             
-            exit_date = datetime.fromisoformat(data["exit_date"]) if data.get("exit_date") else None
-            return_date = datetime.fromisoformat(data["return_date"]) if data.get("return_date") else None
+            # Validações básicas
+            if not data.get("title"):
+                return jsonify({"success": False, "message": "Título do evento é obrigatório"}), 400
+            
+            # Processar datas com tratamento de erro
+            exit_date = None
+            return_date = None
+            
+            if data.get("exit_date"):
+                try:
+                    exit_date = datetime.fromisoformat(data["exit_date"])
+                except ValueError:
+                    return jsonify({"success": False, "message": "Formato de data de saída inválido"}), 400
+            
+            if data.get("return_date"):
+                try:
+                    return_date = datetime.fromisoformat(data["return_date"])
+                except ValueError:
+                    return jsonify({"success": False, "message": "Formato de data de retorno inválido"}), 400
 
             
+            # Processar números com tratamento de erro
+            try:
+                price = float(data.get("price", 0)) if data.get("price") else 0
+                num_slots = int(data.get("numSlots", 0)) if data.get("numSlots") else 0
+                event_type = int(data.get("type", 0)) if data.get("type") else 0
+            except (ValueError, TypeError):
+                return jsonify({"success": False, "message": "Valores numéricos inválidos"}), 400
+
             event = {
                 "title": data.get("title"),
-                "desc": data.get("desc"),
-                "price": data.get("price"),
-                "numSlots": data.get("numSlots"),
+                "desc": data.get("desc", ""),
+                "price": price,
+                "numSlots": num_slots,
                 "exit_date": exit_date,   
                 "return_date": return_date,
-                "type": int(data.get("type", 0)),
+                "type": event_type,
                 "comments": [],
                 "numAcess": 0,
                 "images": data.get("image_urls", []),
@@ -158,9 +183,31 @@ def init_app(app, db):
                 "created_at": firestore.SERVER_TIMESTAMP,
                 "uid" : g.user['uid'] if g.user else None
             }
+            # Salva o evento no Firestore
+            event_ref = db.collection("events").add(event)
+            event_id = event_ref[1].id  # O ID do documento está na posição [1]
 
-            # salva no Firestore
-            db.collection("events").add(event)
+            # Cria grupo de chat vinculado ao evento
+            try:
+                chat_group_ref = db.collection("chat-group").document(f"group_{event_id}")
+                chat_group_ref.set({
+                    "created_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "group_name": event["title"],
+                    "id_org": g.user['uid'] if g.user else None,
+                    "members": [g.user['uid']] if g.user else []
+                })
+
+                # Cria subcoleção messages com mensagem inicial
+                chat_group_ref.collection("messages").add({
+                    "system": True,
+                    "text": "Grupo criado",
+                    "timestamp": firestore.SERVER_TIMESTAMP
+                })
+            except Exception as chat_error:
+                logger.exception(f"Erro ao criar chat group: {chat_error}")
+                # Não falha o evento se o chat falhar, apenas loga o erro
+
 
             return jsonify({"success": True, "message": "Evento cadastrado com sucesso!"})
         except Exception as e:
@@ -344,8 +391,9 @@ def init_app(app, db):
         if not g.user:
             return redirect(url_for("login"))
         
-        event_id = request.form.get("chat_uid")
-        print(event_id)
+        # Aceita tanto chat_uid quanto org_uid para compatibilidade
+        event_id = request.form.get("chat_uid") or request.form.get("org_uid")
+        
         if not event_id:
             flash("ID do evento não informado.", "error")
             return redirect(url_for("dashboard"))
@@ -517,3 +565,168 @@ def init_app(app, db):
                    fav_vacations.append(data)
                    
         return render_template("favoritos.html", user=g.user, fav_vacations=fav_vacations)
+
+    @app.route("/edit_profile")
+    def edit_profile():
+        if not g.user:
+            return redirect(url_for('login'))
+        return render_template("editProfile.html", user=g.user)
+
+    @app.route("/updateProfile", methods=["POST"])
+    def updateProfile():
+        if not g.user:
+            return redirect(url_for('login'))
+        
+        try:
+            # Obter dados do formulário
+            username = request.form.get('username', '').strip()
+            surname = request.form.get('surname', '').strip()
+            desc = request.form.get('desc', '').strip()
+            is_organizer = request.form.get('isOrganizer') == 'true'
+            
+            # Validações básicas
+            if not username:
+                flash('Nome de usuário é obrigatório.', 'error')
+                return redirect(url_for('edit_profile'))
+            
+            # Preparar dados para atualização
+            update_data = {
+                'name': username,
+                'surname': surname,
+                'desc': desc,
+                'isOrganizer': is_organizer,
+                'updated_at': firestore.SERVER_TIMESTAMP
+            }
+            
+            # # Processar upload de imagem se houver
+            # if 'profileImage' in request.files:
+            #     profile_image = request.files['profileImage']
+            #     if profile_image and profile_image.filename:
+            #         try:
+            #             # Aqui você pode implementar upload para Firebase Storage
+            #             # Por enquanto, vamos apenas salvar a referência
+            #             image_url = f"profile_images/{g.user['uid']}/{profile_image.filename}"
+            #             update_data['profileImage'] = image_url
+                        
+            #             # TODO: Implementar upload real para Firebase Storage
+            #             # from firebase_admin import storage
+            #             # bucket = storage.bucket()
+            #             # blob = bucket.blob(image_url)
+            #             # blob.upload_from_file(profile_image)
+            #             # blob.make_public()
+            #             # update_data['profileImage'] = blob.public_url
+                        
+            #         except Exception as e:
+            #             logger.exception(f"Erro ao processar imagem: {e}")
+            #             flash('Erro ao processar imagem de perfil.', 'error')
+            
+            # Processar dados de verificação de identidade se fornecidos
+            verification_type = request.form.get('verificationType')
+            if verification_type:
+                verification_data = {
+                    'verificationType': verification_type,
+                    'verificationStatus': 'pending',
+                    'verificationDate': firestore.SERVER_TIMESTAMP
+                }
+                
+                if verification_type == 'company':
+                    verification_data.update({
+                        'companyName': request.form.get('companyName', '').strip(),
+                        'cnpj': request.form.get('cnpj', '').strip(),
+                        'vehiclePlate': request.form.get('companyVehiclePlate', '').strip(),
+                        'vehicleModel': request.form.get('companyVehicleModel', '').strip()
+                    })
+                elif verification_type == 'organizer':
+                    verification_data.update({
+                        'cnh': request.form.get('cnh', '').strip(),
+                        'vehiclePlate': request.form.get('organizerVehiclePlate', '').strip(),
+                        'vehicleModel': request.form.get('organizerVehicleModel', '').strip()
+                    })
+                
+                update_data['verificationData'] = verification_data
+            
+            # Atualizar no Firestore
+            user_ref = db.collection('user').document(g.user['uid'])
+            user_ref.update(update_data)
+            
+            # Atualizar dados na sessão
+            updated_user = user_ref.get().to_dict()
+            g.user.update(updated_user)
+            
+            flash('Perfil atualizado com sucesso!', 'success')
+            return redirect(url_for('perfil'))
+            
+        except Exception as e:
+            logger.exception(f"Erro ao atualizar perfil: {e}")
+            flash('Erro ao atualizar perfil. Tente novamente.', 'error')
+            return redirect(url_for('edit_profile'))
+
+    @app.route("/submitVerification", methods=["POST"])
+    def submitVerification():
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            verification_type = request.form.get('verificationType')
+            if not verification_type:
+                return jsonify({"success": False, "message": "Tipo de verificação não especificado"}), 400
+            
+            # Preparar dados de verificação
+            verification_data = {
+                'verificationType': verification_type,
+                'verificationStatus': 'pending',
+                'verificationDate': firestore.SERVER_TIMESTAMP,
+                'submittedBy': g.user['uid']
+            }
+            
+            # Validar e processar dados específicos do tipo
+            if verification_type == 'company':
+                company_name = request.form.get('companyName', '').strip()
+                cnpj = request.form.get('cnpj', '').strip()
+                vehicle_plate = request.form.get('companyVehiclePlate', '').strip()
+                vehicle_model = request.form.get('companyVehicleModel', '').strip()
+                
+                if not all([company_name, cnpj, vehicle_plate, vehicle_model]):
+                    return jsonify({"success": False, "message": "Todos os campos são obrigatórios para empresas"}), 400
+                
+                verification_data.update({
+                    'companyName': company_name,
+                    'cnpj': cnpj,
+                    'vehiclePlate': vehicle_plate,
+                    'vehicleModel': vehicle_model
+                })
+                
+            elif verification_type == 'organizer':
+                cnh = request.form.get('cnh', '').strip()
+                vehicle_plate = request.form.get('organizerVehiclePlate', '').strip()
+                vehicle_model = request.form.get('organizerVehicleModel', '').strip()
+                
+                if not all([cnh, vehicle_plate, vehicle_model]):
+                    return jsonify({"success": False, "message": "Todos os campos são obrigatórios para organizadores"}), 400
+                
+                verification_data.update({
+                    'cnh': cnh,
+                    'vehiclePlate': vehicle_plate,
+                    'vehicleModel': vehicle_model
+                })
+            
+            else:
+                return jsonify({"success": False, "message": "Tipo de verificação inválido"}), 400
+            
+            # Salvar dados de verificação no Firestore
+            verification_ref = db.collection('verifications').document()
+            verification_ref.set(verification_data)
+            
+            # Atualizar dados do usuário com referência à verificação
+            user_ref = db.collection('user').document(g.user['uid'])
+            user_ref.update({
+                'verificationData': verification_data,
+                'verificationId': verification_ref.id,
+                'updated_at': firestore.SERVER_TIMESTAMP
+            })
+            
+            return jsonify({"success": True, "message": "Verificação enviada com sucesso"})
+            
+        except Exception as e:
+            logger.exception(f"Erro ao processar verificação: {e}")
+            return jsonify({"success": False, "message": "Erro interno do servidor"}), 500
