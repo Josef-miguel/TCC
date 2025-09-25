@@ -2,31 +2,13 @@
 
 {% block content %}
 <div class="container layout with-sidebar">
-  <!-- Overlay para mobile -->
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
-  
-  <aside class="sidebar" id="appSidebar" aria-label="Menu lateral">
-    <div class="sidebar-header">
-      <span class="sidebar-title">Menu</span>
-      <button class="sidebar-close" id="sidebarClose" aria-label="Fechar menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
-    <nav class="sidebar-nav">
-      <a class="sidebar-link" href="{{ url_for('agenda') }}">📅 <span>Agenda</span></a>
-      <a class="sidebar-link" href="{{ url_for('my_chats') }}">💬 <span>Meus Chats</span></a>
-    </nav>
-  </aside>
-
   <section class="content-with-sidebar">
     <!-- Header com ícones de navegação -->
     <div class="dashboard-header">
       <div class="nav-icons">
-        <button class="nav-icon">🔍</button>
-        <button class="nav-icon">📍</button>
-        <button class="nav-icon">🔖</button>
+        <button class="nav-icon"><ion-icon name="search"></ion-icon></button>
+        <button class="nav-icon"><ion-icon name="location"></ion-icon></button>
+        <button class="nav-icon"><ion-icon name="bookmark"></ion-icon></button>
       </div>
     </div>
 
@@ -57,7 +39,13 @@
           <div class="post-destination">
             <h2 class="post-title">{{ event.title }}</h2>
             <div class="post-rating">
-              <span class="stars">⭐⭐⭐⭐⭐</span>
+              <span class="stars">
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+                <ion-icon name="star"></ion-icon>
+              </span>
               <span class="rating-value">4.9</span>
             </div>
           </div>
@@ -104,15 +92,15 @@
           <!-- Métricas de Engajamento -->
           <div class="post-metrics">
             <div class="metric">
-              <span class="metric-icon">❤️</span>
+              <span class="metric-icon"><ion-icon name="heart"></ion-icon></span>
               <span class="metric-value">9.9K</span>
             </div>
             <div class="metric">
-              <span class="metric-icon">💾</span>
+              <span class="metric-icon"><ion-icon name="save"></ion-icon></span>
               <span class="metric-value">2.3K</span>
             </div>
             <div class="metric">
-              <span class="metric-icon">📤</span>
+              <span class="metric-icon"><ion-icon name="share"></ion-icon></span>
               <span class="metric-value">567</span>
             </div>
           </div>
@@ -121,7 +109,7 @@
           <div class="post-actions">
             <button class="action-btn primary">Rota</button>
             <button class="action-btn secondary">Planejar</button>
-            <button class="action-btn icon">📍</button>
+            <button class="action-btn icon"><ion-icon name="location"></ion-icon></button>
           </div>
         </div>
       </div>

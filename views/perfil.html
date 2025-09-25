@@ -1,43 +1,169 @@
  {% extends "base.html" %}
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
-    <a href="{{url_for('dashboard')}}">voltar</a>
+<div class="container">
+  <!-- Botão voltar -->
+  <div class="profile-back-btn">
+    <a href="{{url_for('dashboard')}}" class="btn btn-outline">
+      <ion-icon name="arrow-back"></ion-icon>
+      Voltar
+    </a>
+  </div>
 
-  <!-- Avatar -->
-  {% if user.profileImage %}
-    <img src="{{ user.profileImage }}" alt="Avatar" 
-         style="width: 128px; height: 128px; border-radius: 50%; border: 2px solid #f37100;">
-  {% else %}
-    <div style="width:128px; height:128px; border-radius:50%; background:#191919; color:white; 
-                display:flex; align-items:center; justify-content:center; font-size:48px; margin:0 auto; border:2px solid #f37100;">
-      {{ user.name[0]|upper }}
+  <!-- Header do perfil -->
+  <div class="profile-header">
+    <div class="profile-avatar-container">
+      {% if user.profileImage %}
+        <img src="{{ user.profileImage }}" alt="Avatar" class="profile-avatar-img">
+      {% else %}
+        <div class="profile-avatar-placeholder">
+          {{ user.name[0]|upper }}
+        </div>
+      {% endif %}
+      <div class="profile-avatar-border"></div>
     </div>
-  {% endif %}
+    
+    <div class="profile-info">
+      <h1 class="profile-name">{{ user.name }}</h1>
+      <p class="profile-email">{{ user.email }}</p>
+      <div class="profile-stats">
+        <div class="stat-item">
+          <ion-icon name="calendar"></ion-icon>
+          <span>0 Viagens</span>
+        </div>
+        <div class="stat-item">
+          <ion-icon name="star"></ion-icon>
+          <span>0 Avaliações</span>
+        </div>
+        <div class="stat-item">
+          <ion-icon name="heart"></ion-icon>
+          <span>0 Favoritos</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="profile-actions">
+      <button class="btn btn-primary">
+        <ion-icon name="create"></ion-icon>
+        Editar Perfil
+      </button>
+    </div>
+  </div>
 
-  <!-- Nome e email -->
-  <h2 style="margin-top: 15px;">{{ user.name }}</h2>
-  <p>{{ user.email }}</p>
+  <!-- Seções do perfil -->
+  <div class="profile-sections">
+    <!-- Minhas Viagens -->
+    <div class="profile-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <ion-icon name="airplane"></ion-icon>
+        </div>
+        <div class="card-title">
+          <h3>Minhas Viagens</h3>
+          <p>Suas aventuras e experiências</p>
+        </div>
+      </div>
+      <div class="card-content">
+        <a href="{{ url_for('my_vacations') }}" class="card-link">
+          <ion-icon name="arrow-forward"></ion-icon>
+          Ver todas as viagens
+        </a>
+      </div>
+    </div>
 
-  <!-- Menu -->
-  <div style="margin-top: 30px; text-align: left;">
-    <a href="{{ url_for('perfil') }}" style="display:block; padding:10px 0; border-bottom:1px solid #ccc;">
-      Minha conta
-    </a>
-    <a href="#" style="display:block; padding:10px 0; border-bottom:1px solid #ccc;">
-      Configurações
-    </a>
-    <a href="#" style="display:block; padding:10px 0; border-bottom:1px solid #ccc;">
-      Avaliações
-    </a>
-    <a href="{{ url_for('favorites') }}" style="display:block; padding:10px 0; border-bottom:1px solid #ccc;">
-      Favoritos
-    </a>
-    <a href="{{ url_for('my_vacations') }}" style="display:block; padding:10px 0; border-bottom:1px solid #ccc;">
-      Minhas Viagens
-    </a>
-    <a href="{{ url_for('login') }}" style="display:block; padding:10px 0; color:red; font-weight:bold;">
-      Sair
-    </a>
+    <!-- Meus Eventos -->
+    <div class="profile-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <ion-icon name="calendar"></ion-icon>
+        </div>
+        <div class="card-title">
+          <h3>Meus Eventos</h3>
+          <p>Eventos que você criou ou participa</p>
+        </div>
+      </div>
+      <div class="card-content">
+        <a href="{{ url_for('new_event') }}" class="card-link">
+          <ion-icon name="arrow-forward"></ion-icon>
+          Gerenciar eventos
+        </a>
+      </div>
+    </div>
+
+    <!-- Favoritos -->
+    <div class="profile-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <ion-icon name="heart"></ion-icon>
+        </div>
+        <div class="card-title">
+          <h3>Favoritos</h3>
+          <p>Destinos e experiências salvos</p>
+        </div>
+      </div>
+      <div class="card-content">
+        <a href="{{ url_for('favorites') }}" class="card-link">
+          <ion-icon name="arrow-forward"></ion-icon>
+          Ver favoritos
+        </a>
+      </div>
+    </div>
+
+    <!-- Configurações -->
+    <div class="profile-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <ion-icon name="settings"></ion-icon>
+        </div>
+        <div class="card-title">
+          <h3>Configurações</h3>
+          <p>Preferências e configurações da conta</p>
+        </div>
+      </div>
+      <div class="card-content">
+        <a href="#" class="card-link">
+          <ion-icon name="arrow-forward"></ion-icon>
+          Configurar conta
+        </a>
+      </div>
+    </div>
+
+    <!-- Avaliações -->
+    <div class="profile-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <ion-icon name="star"></ion-icon>
+        </div>
+        <div class="card-title">
+          <h3>Avaliações</h3>
+          <p>Suas avaliações e comentários</p>
+        </div>
+      </div>
+      <div class="card-content">
+        <a href="#" class="card-link">
+          <ion-icon name="arrow-forward"></ion-icon>
+          Ver avaliações
+        </a>
+      </div>
+    </div>
+
+    <!-- Sair -->
+    <div class="profile-card danger-card">
+      <div class="card-header">
+        <div class="card-icon danger-icon">
+          <ion-icon name="log-out"></ion-icon>
+        </div>
+        <div class="card-title">
+          <h3>Sair da Conta</h3>
+          <p>Encerrar sessão atual</p>
+        </div>
+      </div>
+      <div class="card-content">
+        <a href="{{ url_for('login') }}" class="card-link danger-link">
+          <ion-icon name="arrow-forward"></ion-icon>
+          Sair agora
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

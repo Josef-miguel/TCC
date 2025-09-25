@@ -9,6 +9,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 
+  <!-- Ionicons v4 -->
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -30,7 +34,7 @@
         <div class="logo-placeholder"><img src="{{ url_for('static', filename='img/JSGlogo.png') }}" class="logo-img" alt="Logo"></div>
         <span class="brand-name">JustSetGo</span>
       </div>
-      <button class="sidebar-toggle" id="sidebarToggleLeft" aria-label="Abrir menu lateral" aria-controls="appSidebar" aria-expanded="false">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menu lateral" aria-controls="appSidebar" aria-expanded="false">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -56,7 +60,7 @@
           </svg>
         </button>
         <a href="{{ url_for('perfil') }}" class="nav-link profile-link" aria-label="Perfil">
-          <img class="profile-avatar" src="{{ (user.photo_url if (user is defined and user and user.photo_url) else url_for('static', filename='img/JSGlogo.png')) }}" alt="Foto do perfil">
+          <img class="profile-avatar" img src="{{ user.profileImage }}" alt="Avatar">
         </a>
       </nav>
     </div>
@@ -68,6 +72,43 @@
     <hr>
   </main>
 
+  <!-- Overlay para fechar a sidebar -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="appSidebar" aria-hidden="true">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Menu</span>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Fechar menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('home') }}" class="sidebar-link">
+        <ion-icon name="home-outline"></ion-icon>
+        <span>Início</span>
+      </a>
+      <a href="{{ url_for('agenda') }}" class="sidebar-link">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>Agenda</span>
+      </a>
+      <a href="{{ url_for('my_chats') }}" class="sidebar-link">
+        <ion-icon name="chatbubbles-outline"></ion-icon>
+        <span>Meus Chats</span>
+      </a>
+      <a href="{{ url_for('perfil') }}" class="sidebar-link">
+        <ion-icon name="person-outline"></ion-icon>
+        <span>Perfil</span>
+      </a>
+      <a href="{{ url_for('new_event') }}" class="sidebar-link">
+        <ion-icon name="list-outline"></ion-icon>
+        <span>Eventos</span>
+      </a>
+    </nav>
+  </aside>
+
   <footer>
     <!-- rodapé se quiser -->
   </footer>
@@ -75,13 +116,12 @@
   <!-- espaço para scripts que cada template pode injetar -->
   {% block scripts %}{% endblock %}
   
-  <!-- Script do toggle de tema -->
+  <!-- Script do toggle de tema e sidebar -->
   <script>
-    // Sistema de toggle de tema
+    // Sistema de toggle de tema e sidebar
     (function() {
       const themeToggle = document.getElementById('themeToggle');
       const sidebarToggle = document.getElementById('sidebarToggle');
-      const sidebarToggleLeft = document.getElementById('sidebarToggleLeft');
       const htmlElement = document.documentElement;
       
       // Função para aplicar o tema
@@ -105,23 +145,45 @@
         applyTheme(theme);
       }
       
-      // Event listeners
-      themeToggle.addEventListener('click', toggleTheme);
-      
+      // Função para alternar sidebar
       function toggleSidebar(btn) {
         const isOpen = document.body.classList.toggle('sidebar-open');
+        const sidebar = document.getElementById('appSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
         if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (sidebar) sidebar.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        
+        // Prevenir scroll do body quando sidebar aberta
+        if (isOpen) {
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.body.style.overflow = '';
+        }
       }
       
+      // Função para fechar sidebar
       function closeSidebar() {
         document.body.classList.remove('sidebar-open');
-        const sidebarToggleLeft = document.getElementById('sidebarToggleLeft');
-        if (sidebarToggleLeft) sidebarToggleLeft.setAttribute('aria-expanded', 'false');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('appSidebar');
+        
+        if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'false');
+        if (sidebar) sidebar.setAttribute('aria-hidden', 'true');
+        
+        // Restaurar scroll do body
+        document.body.style.overflow = '';
+      }
+      
+      // Event listeners para tema
+      if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
       }
       
       // Event listeners para abrir sidebar
-      if (sidebarToggle) sidebarToggle.addEventListener('click', () => toggleSidebar(sidebarToggle));
-      if (sidebarToggleLeft) sidebarToggleLeft.addEventListener('click', () => toggleSidebar(sidebarToggleLeft));
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => toggleSidebar(sidebarToggle));
+      }
       
       // Event listeners para fechar sidebar
       const sidebarClose = document.getElementById('sidebarClose');
