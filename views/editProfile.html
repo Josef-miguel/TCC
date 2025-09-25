@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+{% block title %}Editar Perfil - JustSetGo{% endblock %}
+
+{% block head %}
+<style>
+  .edit-profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+  }
+
+  .profile-image-section {
+    position: relative;
+    margin-right: 30px;
+  }
+
+  .profile-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .profile-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(243, 113, 0, 0.3);
+  }
+
+  .image-upload-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+  }
+
+  .profile-image-section:hover .image-upload-overlay {
+    opacity: 1;
+  }
+
+  .image-upload-text {
+    color: white;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .profile-info h1 {
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+  }
+
+  .profile-info p {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+
+  .form-section {
+    margin-bottom: 30px;
+  }
+
+  .form-section h2 {
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-size: 1.5em;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: border-color 0.3s ease;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .toggle-switch {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    background: var(--border-color);
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .toggle-switch.active {
+    background: var(--primary-color);
+  }
+
+  .toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+  }
+
+  .toggle-switch.active .toggle-slider {
+    transform: translateX(30px);
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .btn-primary {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #e06600;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+  }
+
+  .btn-secondary:hover {
+    background: var(--border-color);
+  }
+
+  .btn-back {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
+  }
+
+  .btn-back:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+  }
+
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+  }
+
+  .modal-content {
+    background: var(--bg-primary);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal-header {
+    padding: 20px 30px;
+    border-bottom: 2px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .close {
+    color: var(--text-secondary);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+
+  .close:hover {
+    color: var(--text-primary);
+  }
+
+  .modal-body {
+    padding: 30px;
+  }
+
+  .verification-step {
+    display: none;
+  }
+
+  .verification-step.active {
+    display: block;
+  }
+
+  .step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  .step {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--border-color);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+    font-weight: bold;
+  }
+
+  .step.active {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .step.completed {
+    background: #28a745;
+    color: white;
+  }
+
+  .verification-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .verification-option {
+    padding: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .verification-option:hover {
+    border-color: var(--primary-color);
+    background: rgba(243, 113, 0, 0.1);
+  }
+
+  .verification-option.selected {
+    border-color: var(--primary-color);
+    background: rgba(243, 113, 0, 0.1);
+  }
+
+  .verification-option h3 {
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+  }
+
+  .verification-option p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .modal-footer {
+    padding: 20px 30px;
+    border-top: 2px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+  }
+
+  .success-message {
+    background: #d4edda;
+    color: #155724;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #c3e6cb;
+  }
+
+  .age-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #ffeaa7;
+  }
+
+  .age-warning h3 {
+    margin: 0 0 10px 0;
+    color: #856404;
+  }
+
+  .age-warning p {
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .verification-options {
+      grid-template-columns: 1fr;
+    }
+    
+    .profile-header {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .profile-image-section {
+      margin-right: 0;
+      margin-bottom: 20px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+  <!-- Header com imagem de perfil -->
+  <div class="profile-header">
+    <div class="profile-image-section">
+      {% if user.profileImage %}
+        <img src="{{ user.profileImage }}" alt="Foto de perfil" class="profile-image" id="profileImage">
+      {% else %}
+        <div class="profile-image" id="profileImage" style="background: var(--bg-secondary); color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: bold;">
+          {{ user.name[0]|upper if user.name else 'U' }}
+        </div>
+      {% endif %}
+      <div class="image-upload-overlay" onclick="document.getElementById('imageInput').click()">
+        <div class="image-upload-text">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <br>Alterar foto
+        </div>
+      </div>
+      <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+    </div>
+    <div class="profile-info">
+      <h1>{{ user.name if user.name else 'Usuário' }}</h1>
+      <p>{{ user.email if user.email else 'email@exemplo.com' }}</p>
+    </div>
+  </div>
+
+  <!-- Formulário de edição -->
+  <form method="POST" action="{{ url_for('updateProfile') }}" enctype="multipart/form-data">
+    <!-- Informações básicas -->
+    <div class="form-section">
+      <h2>Informações Básicas</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="username">Nome de usuário *</label>
+          <input type="text" id="username" name="username" value="{{ user.name if user.name else '' }}" required>
+        </div>
+        <div class="form-group">
+          <label for="surname">Sobrenome</label>
+          <input type="text" id="surname" name="surname" value="{{ user.surname if user.surname else '' }}">
+        </div>
+        <div class="form-group full-width">
+          <label for="desc">Descrição</label>
+          <textarea id="desc" name="desc" placeholder="Conte um pouco sobre você...">{{ user.desc if user.desc else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configurações -->
+    <div class="form-section">
+      <h2>Configurações</h2>
+      <div class="toggle-container">
+        <label for="isOrganizer">Sou um organizador de eventos</label>
+        <div class="toggle-switch" id="organizerToggle" onclick="toggleOrganizer()">
+          <div class="toggle-slider"></div>
+        </div>
+        <input type="hidden" id="isOrganizer" name="isOrganizer" value="{{ 'true' if user.isOrganizer else 'false' }}">
+      </div>
+    </div>
+
+    <!-- Botões de ação -->
+    <div class="action-buttons">
+      <button type="button" class="btn btn-secondary" onclick="openPaymentModal()">
+        Formas de Pagamento
+      </button>
+      <button type="button" class="btn btn-secondary" onclick="openVerificationModal()">
+        Verificação de Identidade
+      </button>
+    </div>
+
+    <!-- Botões de salvar/cancelar -->
+    <div class="action-buttons" style="margin-top: 30px;">
+      <button type="submit" class="btn btn-primary">
+        Salvar Alterações
+      </button>
+      <a href="{{ url_for('perfil') }}" class="btn btn-back">
+        Cancelar
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Modal de Verificação de Identidade -->
+<div id="verificationModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Verificação de Identidade</h2>
+      <span class="close" onclick="closeVerificationModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <!-- Step 1: Verificação de idade -->
+      <div id="ageVerificationStep" class="verification-step active">
+        <div class="step-indicator">
+          <div class="step active">1</div>
+          <div class="step">2</div>
+          <div class="step">3</div>
+        </div>
+        <div id="ageCheckResult"></div>
+      </div>
+
+      <!-- Step 2: Seleção de tipo -->
+      <div id="typeSelectionStep" class="verification-step">
+        <div class="step-indicator">
+          <div class="step completed">1</div>
+          <div class="step active">2</div>
+          <div class="step">3</div>
+        </div>
+        <h3>Selecione o tipo de verificação:</h3>
+        <div class="verification-options">
+          <div class="verification-option" onclick="selectVerificationType('company')">
+            <h3>🏢 Sou uma Empresa</h3>
+            <p>Verificação para empresas que organizam eventos</p>
+          </div>
+          <div class="verification-option" onclick="selectVerificationType('organizer')">
+            <h3>👤 Sou Organizador</h3>
+            <p>Verificação para organizadores individuais</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Formulário de dados -->
+      <div id="dataFormStep" class="verification-step">
+        <div class="step-indicator">
+          <div class="step completed">1</div>
+          <div class="step completed">2</div>
+          <div class="step active">3</div>
+        </div>
+        
+        <!-- Formulário para Empresa -->
+        <div id="companyForm" style="display: none;">
+          <h3>Dados da Empresa</h3>
+          <div class="form-group">
+            <label for="companyName">Nome da Empresa *</label>
+            <input type="text" id="companyName" name="companyName" required>
+          </div>
+          <div class="form-group">
+            <label for="cnpj">CNPJ *</label>
+            <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" required>
+          </div>
+          <div class="form-group">
+            <label for="companyVehiclePlate">Placa do Veículo *</label>
+            <input type="text" id="companyVehiclePlate" name="companyVehiclePlate" placeholder="ABC-1234" required>
+          </div>
+          <div class="form-group">
+            <label for="companyVehicleModel">Modelo do Veículo *</label>
+            <input type="text" id="companyVehicleModel" name="companyVehicleModel" required>
+          </div>
+        </div>
+
+        <!-- Formulário para Organizador -->
+        <div id="organizerForm" style="display: none;">
+          <h3>Dados do Organizador</h3>
+          <div class="form-group">
+            <label for="cnh">CNH (Carteira Nacional de Habilitação) *</label>
+            <input type="text" id="cnh" name="cnh" placeholder="00000000000" required>
+          </div>
+          <div class="form-group">
+            <label for="organizerVehiclePlate">Placa do Veículo *</label>
+            <input type="text" id="organizerVehiclePlate" name="organizerVehiclePlate" placeholder="ABC-1234" required>
+          </div>
+          <div class="form-group">
+            <label for="organizerVehicleModel">Modelo do Veículo *</label>
+            <input type="text" id="organizerVehicleModel" name="organizerVehicleModel" required>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-back" onclick="closeVerificationModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextVerificationStep()" style="display: none;">Próximo</button>
+      <button type="button" class="btn btn-primary" id="finishBtn" onclick="finishVerification()" style="display: none;">Finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Formas de Pagamento (placeholder) -->
+<div id="paymentModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Formas de Pagamento</h2>
+      <span class="close" onclick="closePaymentModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p>Funcionalidade em desenvolvimento...</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" onclick="closePaymentModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentVerificationType = '';
+  let currentStep = 1;
+
+  // Toggle do organizador
+  function toggleOrganizer() {
+    const toggle = document.getElementById('organizerToggle');
+    const input = document.getElementById('isOrganizer');
+    
+    if (toggle.classList.contains('active')) {
+      toggle.classList.remove('active');
+      input.value = 'false';
+    } else {
+      toggle.classList.add('active');
+      input.value = 'true';
+    }
+  }
+
+  // Inicializar estado do toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const isOrganizer = document.getElementById('isOrganizer').value === 'true';
+    if (isOrganizer) {
+      document.getElementById('organizerToggle').classList.add('active');
+    }
+  });
+
+  // Upload de imagem
+  function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.getElementById('profileImage');
+        if (img.tagName === 'IMG') {
+          img.src = e.target.result;
+        } else {
+          // Se for div, criar img
+          const newImg = document.createElement('img');
+          newImg.src = e.target.result;
+          newImg.alt = 'Foto de perfil';
+          newImg.className = 'profile-image';
+          newImg.id = 'profileImage';
+          img.parentNode.replaceChild(newImg, img);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Modal de verificação
+  function openVerificationModal() {
+    document.getElementById('verificationModal').style.display = 'block';
+    checkUserAge();
+  }
+
+  function closeVerificationModal() {
+    document.getElementById('verificationModal').style.display = 'none';
+    resetVerificationModal();
+  }
+
+  function resetVerificationModal() {
+    currentStep = 1;
+    currentVerificationType = '';
+    
+    // Reset steps
+    document.getElementById('ageVerificationStep').classList.add('active');
+    document.getElementById('typeSelectionStep').classList.remove('active');
+    document.getElementById('dataFormStep').classList.remove('active');
+    
+    // Reset buttons
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('finishBtn').style.display = 'none';
+    
+    // Reset forms
+    document.getElementById('companyForm').style.display = 'none';
+    document.getElementById('organizerForm').style.display = 'none';
+    
+    // Reset selections
+    document.querySelectorAll('.verification-option').forEach(option => {
+      option.classList.remove('selected');
+    });
+  }
+
+  function checkUserAge() {
+    const userBirthDate = '{{ user.dataNasc if user.dataNasc else "" }}';
+    
+    if (!userBirthDate) {
+      document.getElementById('ageCheckResult').innerHTML = `
+        <div class="error-message">
+          <h3>Data de nascimento não encontrada</h3>
+          <p>Por favor, atualize sua data de nascimento no perfil antes de prosseguir com a verificação.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const birthDate = new Date(userBirthDate);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      document.getElementById('ageCheckResult').innerHTML = `
+        <div class="age-warning">
+          <h3>⚠️ Verificação não disponível</h3>
+          <p>Você precisa ter pelo menos 18 anos para realizar a verificação de identidade.</p>
+          <p><strong>Idade atual:</strong> ${age} anos</p>
+        </div>
+      `;
+      
+      setTimeout(() => {
+        closeVerificationModal();
+      }, 3000);
+    } else {
+      document.getElementById('ageCheckResult').innerHTML = `
+        <div class="success-message">
+          <h3>✅ Verificação disponível</h3>
+          <p>Você tem ${age} anos e pode prosseguir com a verificação de identidade.</p>
+        </div>
+      `;
+      
+      setTimeout(() => {
+        nextVerificationStep();
+      }, 2000);
+    }
+  }
+
+  function nextVerificationStep() {
+    if (currentStep === 1) {
+      // Ir para seleção de tipo
+      document.getElementById('ageVerificationStep').classList.remove('active');
+      document.getElementById('typeSelectionStep').classList.add('active');
+      currentStep = 2;
+    } else if (currentStep === 2) {
+      // Ir para formulário de dados
+      if (currentVerificationType) {
+        document.getElementById('typeSelectionStep').classList.remove('active');
+        document.getElementById('dataFormStep').classList.add('active');
+        document.getElementById('nextBtn').style.display = 'none';
+        document.getElementById('finishBtn').style.display = 'inline-block';
+        currentStep = 3;
+      }
+    }
+  }
+
+  function selectVerificationType(type) {
+    currentVerificationType = type;
+    
+    // Remover seleção anterior
+    document.querySelectorAll('.verification-option').forEach(option => {
+      option.classList.remove('selected');
+    });
+    
+    // Adicionar seleção atual
+    event.target.closest('.verification-option').classList.add('selected');
+    
+    // Mostrar formulário correspondente
+    if (type === 'company') {
+      document.getElementById('companyForm').style.display = 'block';
+      document.getElementById('organizerForm').style.display = 'none';
+    } else {
+      document.getElementById('companyForm').style.display = 'none';
+      document.getElementById('organizerForm').style.display = 'block';
+    }
+    
+    // Mostrar botão próximo
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  }
+
+  function finishVerification() {
+    // Validar campos obrigatórios
+    let isValid = true;
+    let errorMessage = '';
+    
+    if (currentVerificationType === 'company') {
+      const companyName = document.getElementById('companyName').value.trim();
+      const cnpj = document.getElementById('cnpj').value.trim();
+      const vehiclePlate = document.getElementById('companyVehiclePlate').value.trim();
+      const vehicleModel = document.getElementById('companyVehicleModel').value.trim();
+      
+      if (!companyName || !cnpj || !vehiclePlate || !vehicleModel) {
+        isValid = false;
+        errorMessage = 'Todos os campos são obrigatórios para empresas.';
+      }
+    } else {
+      const cnh = document.getElementById('cnh').value.trim();
+      const vehiclePlate = document.getElementById('organizerVehiclePlate').value.trim();
+      const vehicleModel = document.getElementById('organizerVehicleModel').value.trim();
+      
+      if (!cnh || !vehiclePlate || !vehicleModel) {
+        isValid = false;
+        errorMessage = 'Todos os campos são obrigatórios para organizadores.';
+      }
+    }
+    
+    if (!isValid) {
+      alert(errorMessage);
+      return;
+    }
+    
+    // Enviar dados de verificação via AJAX
+    const verificationData = new FormData();
+    verificationData.append('verificationType', currentVerificationType);
+    
+    if (currentVerificationType === 'company') {
+      verificationData.append('companyName', document.getElementById('companyName').value);
+      verificationData.append('cnpj', document.getElementById('cnpj').value);
+      verificationData.append('companyVehiclePlate', document.getElementById('companyVehiclePlate').value);
+      verificationData.append('companyVehicleModel', document.getElementById('companyVehicleModel').value);
+    } else {
+      verificationData.append('cnh', document.getElementById('cnh').value);
+      verificationData.append('organizerVehiclePlate', document.getElementById('organizerVehiclePlate').value);
+      verificationData.append('organizerVehicleModel', document.getElementById('organizerVehicleModel').value);
+    }
+    
+    fetch('/submitVerification', {
+      method: 'POST',
+      body: verificationData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Verificação enviada com sucesso! Seus dados serão analisados em breve.');
+        closeVerificationModal();
+      } else {
+        alert('Erro ao enviar verificação: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+      alert('Erro ao enviar verificação. Tente novamente.');
+    });
+  }
+
+  // Modal de formas de pagamento
+  function openPaymentModal() {
+    document.getElementById('paymentModal').style.display = 'block';
+  }
+
+  function closePaymentModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+  }
+
+  // Fechar modais ao clicar fora
+  window.onclick = function(event) {
+    const verificationModal = document.getElementById('verificationModal');
+    const paymentModal = document.getElementById('paymentModal');
+    
+    if (event.target === verificationModal) {
+      closeVerificationModal();
+    }
+    if (event.target === paymentModal) {
+      closePaymentModal();
+    }
+  }
+
+  // Máscaras para campos
+  document.addEventListener('DOMContentLoaded', function() {
+    // Máscara para CNPJ
+    const cnpjInput = document.getElementById('cnpj');
+    if (cnpjInput) {
+      cnpjInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+        e.target.value = value;
+      });
+    }
+
+    // Máscara para CNH
+    const cnhInput = document.getElementById('cnh');
+    if (cnhInput) {
+      cnhInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+      });
+    }
+
+    // Máscara para placa
+    const plateInputs = document.querySelectorAll('input[name*="VehiclePlate"]');
+    plateInputs.forEach(input => {
+      input.addEventListener('input', function(e) {
+        let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (value.length > 3) {
+          value = value.substring(0, 3) + '-' + value.substring(3, 7);
+        }
+        e.target.value = value;
+      });
+    });
+  });
+</script>
+{% endblock %}
