@@ -11,22 +11,19 @@ import {
   FlatList,
   Dimensions,
   Alert,
+  Animated,
+  StatusBar,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import LeafletMap from "../../components/LeafletMap";
 import SimpleRouteMap from "../../components/SimpleRouteMap";
-import axios from 'axios';
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
-import { doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from "firebase/firestore";
-
+import { doc, updateDoc, onSnapshot, arrayUnion, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from "firebase/firestore";
 import ReportarProblema from "../ReportarProblema";
 import { auth } from "../../../services/firebase";
 import { useTranslation } from 'react-i18next';
-
-
-
 
 const { width, height } = Dimensions.get("window");
 
@@ -42,36 +39,79 @@ const PostScreen = ({
   const { t } = useTranslation();
 
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
-  const [chatModalVisible, setChatModalVisible] = useState(false);
   const [starRating, setStarRating] = useState(0);
   const [newText, setNewText] = useState("");
-  const [comments, setComments] = useState(selectedPost?.comments || []);
-  const [routeCoords, setRouteCoords] = useState((selectedPost?.route && selectedPost.route.coordinates) ? selectedPost.route.coordinates : []);
-  const [whoTravels, setWhoTravels] = useState("Outra pessoa");
+  const [comments, setComments] = useState([]);
+  const [whoTravels, setWhoTravels] = useState("Sou eu");
   const [whoGoes, setWhoGoes] = useState("Jovens 15 a 17 anos (com acompanhante)");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageZoomVisible, setImageZoomVisible] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
   const [reportarProblemaVisible, setReportarProblemaVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("Cartão de Crédito");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Pix");
   const [participants, setParticipants] = useState([]);
   const [availableSlots, setAvailableSlots] = useState(0);
+  const [activeTab, setActiveTab] = useState("info");
 
-  const handleStarPress = (rating) => {
-    setStarRating(rating);
+  const fadeAnim = new Animated.Value(0);
+
+  useEffect(() => {
+    if (modalVisible) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [modalVisible]);
+
+  // Função para converter Firebase Timestamp para string de data
+  const formatFirebaseTimestamp = (timestamp) => {
+    if (!timestamp) return 'Data não disponível';
+    
+    try {
+      // Se for um objeto Timestamp do Firebase
+      if (timestamp.seconds && timestamp.nanoseconds !== undefined) {
+        const date = new Date(timestamp.seconds * 1000);
+        return date.toLocaleDateString('pt-BR');
+      }
+      
+      // Se for uma função toDate (Timestamp do Firebase)
+      if (typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString('pt-BR');
+      }
+      
+      // Se já for uma string ou Date
+      return new Date(timestamp).toLocaleDateString('pt-BR');
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return 'Data inválida';
+    }
   };
 
-  // Função para buscar participantes e calcular vagas disponíveis
+  // Função para garantir que todos os valores sejam strings antes da renderização
+  const safeRender = (value) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') {
+      // Se for um objeto Timestamp, formata
+      if (value.seconds !== undefined || value.toDate) {
+        return formatFirebaseTimestamp(value);
+      }
+      // Para outros objetos, converte para string JSON ou retorna string vazia
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return '';
+      }
+    }
+    return String(value);
+  };
+
   const fetchParticipants = async () => {
     if (!selectedPost?.id) return;
     
     try {
-      // Buscar todos os usuários que têm este evento em joinedEvents
       const usersRef = collection(db, 'user');
       const q = query(usersRef, where('joinedEvents', 'array-contains', selectedPost.id));
       const querySnapshot = await getDocs(q);
@@ -82,16 +122,12 @@ const PostScreen = ({
         participantsList.push({
           id: doc.id,
           nome: userData.nome || userData.userInfo?.nome || 'Usuário',
-          email: userData.email || 'email@exemplo.com'
         });
       });
       
       setParticipants(participantsList);
-      
-      // Calcular vagas disponíveis
       const totalSlots = selectedPost?.numSlots || 0;
-      const occupiedSlots = participantsList.length;
-      const available = Math.max(0, totalSlots - occupiedSlots);
+      const available = Math.max(0, totalSlots - participantsList.length);
       setAvailableSlots(available);
       
     } catch (error) {
@@ -99,136 +135,65 @@ const PostScreen = ({
     }
   };
 
-  // Buscar participantes quando o modal abrir
   useEffect(() => {
     if (modalVisible && selectedPost) {
       fetchParticipants();
     }
   }, [modalVisible, selectedPost]);
 
+  const handleOpenPrivateChat = async () => {
+    try {
+      let targetUserId = selectedPost?.uid || selectedPost?.creator?.id || null;
 
+      if (!auth.currentUser) {
+        Alert.alert('Atenção', 'Faça login para conversar com o organizador.');
+        return;
+      }
 
-// Abre chat privado com o organizador usando a coleção 'chats'
-const handleOpenPrivateChat = async () => {
-  try {
-    // Resolve uid do organizador do post (mesma lógica de handleVisualizarPerfil)
-    let targetUserId = selectedPost?.uid
-      || selectedPost?.creator?.id
-      || selectedPost?.creator?.uid
-      || selectedPost?.userId
-      || selectedPost?.user?.uid
-      || selectedPost?.ownerId
-      || null;
+      if (!targetUserId) {
+        Alert.alert('Chat indisponível', 'Organizador não encontrado.');
+        return;
+      }
 
-    if (targetUserId && typeof targetUserId !== 'string') {
-      if (typeof targetUserId.uid === 'string') targetUserId = targetUserId.uid;
-      else if (typeof targetUserId.id === 'string') targetUserId = targetUserId.id;
-      else targetUserId = String(targetUserId);
+      const myUid = auth.currentUser.uid;
+      const chatId = [myUid, targetUserId].sort().join('_');
+      navigation.navigate('Chat', { chatId, otherUid: targetUserId });
+      setModalVisible(false);
+    } catch (e) {
+      console.error('Erro ao abrir chat:', e);
     }
-    if (typeof targetUserId === 'string') {
-      targetUserId = targetUserId.trim();
-      if (targetUserId === '') targetUserId = null;
-    }
+  };
 
-    // Requer usuário autenticado (não usar anônimo)
-    if (!auth.currentUser) {
-      Alert.alert('Atenção', 'Faça login para conversar com o organizador.');
-      return;
-    }
-    const myUid = auth.currentUser?.uid || null;
-    if (!myUid || !targetUserId) {
-      console.warn('TelaPost: Chat privado indisponível. myUid=', myUid, 'targetUserId=', targetUserId);
-      Alert.alert('Chat indisponível', 'Não foi possível iniciar a conversa.');
+  const handleParticipar = async () => {
+    if (!auth.currentUser || !selectedPost?.id) {
+      Alert.alert('Erro', 'Usuário não autenticado ou evento sem ID');
       return;
     }
 
-    const makeChatId = (a, b) => [a, b].sort().join('_');
-    const chatId = makeChatId(myUid, targetUserId);
+    try {
+      const userRef = doc(db, "user", auth.currentUser.uid);
+      await updateDoc(userRef, {
+        joinedEvents: arrayUnion(selectedPost.id),
+      });
 
-    navigation.navigate('Chat', { chatId, otherUid: targetUserId });
-  } catch (e) {
-    // noop
-  }
-};
-
-// Abre chat em grupo para membros da viagem
-const handleOpenGroupChat = async () => {
-  try {
-    // Requer usuário autenticado
-    if (!auth.currentUser) {
-      Alert.alert('Atenção', 'Faça login para acessar o chat do grupo.');
-      return;
+      await fetchParticipants();
+      setParticipationModalVisible(false);
+      setPaymentModalVisible(true);
+    } catch (error) {
+      console.error("Erro ao salvar participação:", error);
+      Alert.alert('Erro', 'Não foi possível realizar a inscrição');
     }
-
-    const myUid = auth.currentUser.uid;
-    const eventId = selectedPost?.id;
-
-    if (!eventId) {
-      Alert.alert('Erro', 'ID do evento não encontrado.');
-      return;
-    }
-
-    // Verificar se o usuário é membro da viagem
-    const isMember = participants.some(p => p.id === myUid);
-    
-    if (!isMember) {
-      Alert.alert('Acesso negado', 'Você precisa participar da viagem para acessar o chat do grupo.');
-      return;
-    }
-
-    // Navegar para o chat em grupo
-    navigation.navigate('ChatEmGrupo', { eventId });
-  } catch (e) {
-    console.error('Erro ao abrir chat em grupo:', e);
-    Alert.alert('Erro', 'Não foi possível abrir o chat do grupo.');
-  }
-};
-
-
-  
-const handleParticipar = async () => {
-  if (!auth.currentUser || !selectedPost?.id) {
-    console.log("Usuário não autenticado ou evento sem ID");
-    return;
-  }
-
-  try {
-    console.log("Salvando participação para evento:", selectedPost.id);
-    const userRef = doc(db, "user", auth.currentUser.uid);
-    await updateDoc(userRef, {
-      joinedEvents: arrayUnion(selectedPost.id),
-    });
-
-    console.log("Participação salva no Firebase!");
-    
-    // O chat em grupo agora usa a estrutura existente do evento
-    // Não precisamos criar grupos separados
-    
-    // Recarregar participantes para atualizar vagas disponíveis
-    await fetchParticipants();
-    
-    setParticipationModalVisible(false);
-    setPaymentModalVisible(true);
-  } catch (error) {
-    console.error("Erro ao salvar participação:", error);
-  }
-};
-
-// As funções de grupo de chat foram simplificadas
-// Agora usamos a estrutura existente do evento com subcoleção 'groupMessages'
+  };
 
   const handleSendComment = async () => {
-  if (newText.trim() === "") return;
+    if (newText.trim() === "") return;
 
-  const postId = selectedPost?.id;
-  if (!postId) {
-    alert("Post inválido.");
-    return;
-  }
+    const postId = selectedPost?.id;
+    if (!postId) return;
 
-  const user = auth.currentUser;
+    const user = auth.currentUser;
     const commentObj = {
-      user_id: user?.uid || null,
+      user_id: user?.uid,
       username: user?.displayName || user?.email || "Usuário",
       comment_text: newText.trim(),
       nota: starRating || 0,
@@ -236,59 +201,50 @@ const handleParticipar = async () => {
     };
 
     try {
-      // 1) cria documento em events/{postId}/avaliacoes
       const colRef = collection(db, "events", postId, "avaliacoes");
       await addDoc(colRef, commentObj);
 
-      // 2) opcionalmente atualizar agregados no doc do evento (contagem/soma)
-      // (recomendo ter campos ratingCount e ratingSum no evento para cálculo rápido)
       const eventRef = doc(db, "events", postId);
       await updateDoc(eventRef, {
         ratingCount: increment(1),
         ratingSum: increment(commentObj.nota)
       });
 
-      // 3) atualiza UI local imediatamente (opcional)
-      setComments(prev => [
-        ...prev,
-        {
-          ...commentObj,
-          createdAt: new Date().toISOString() // mostrar instantaneamente (serverTimestamp é no servidor)
-        }
-      ]);
       setNewText("");
-      setStarRating(0); // opcional: limpar estrelas
+      setStarRating(0);
     } catch (error) {
       console.error("Erro ao enviar comentário:", error);
-      alert("Erro ao enviar avaliação: " + (error?.message || error));
     }
   };
 
-
   useEffect(() => {
     if (!selectedPost?.id) return;
 
-    const unsub = onSnapshot(doc(db, "events", selectedPost.id), (docSnap) => {
-      if (docSnap.exists()) {
-        setComments(docSnap.data().comments || []);
-      }
-    });
-
-    return () => unsub();
-  }, [selectedPost]);
-
-
-  useEffect(() => {
-    if (!selectedPost?.id) return;
-
-    // Escuta a subcoleção 'avaliacoes' em tempo real
     const unsub = onSnapshot(
       collection(db, "events", selectedPost.id, "avaliacoes"),
       (querySnapshot) => {
         const commentsData = [];
         querySnapshot.forEach((doc) => {
-          commentsData.push({ id: doc.id, ...doc.data() });
+          const data = doc.data();
+          commentsData.push({ 
+            id: doc.id, 
+            ...data,
+            // Garante que temos valores seguros para renderização
+            username: safeRender(data.username),
+            comment_text: safeRender(data.comment_text),
+            nota: Number(data.nota) || 0,
+            // Mantém o timestamp original para formatação
+            createdAt: data.createdAt
+          });
         });
+        
+        // Ordena por data (mais recentes primeiro)
+        commentsData.sort((a, b) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        });
+        
         setComments(commentsData);
       },
       (error) => {
@@ -296,564 +252,510 @@ const handleParticipar = async () => {
       }
     );
 
-  return () => unsub();
-}, [selectedPost]);
-
-  // When selectedPost changes, ensure we have route coordinates derived from start/end
-  useEffect(() => {
-    if (selectedPost?.route?.start && selectedPost?.route?.end) {
-      // If coordinates are already stored on the post, use them directly
-      if (selectedPost.route.coordinates && selectedPost.route.coordinates.length) {
-        setRouteCoords(selectedPost.route.coordinates);
-      } else {
-        // Use fallback to straight line instead of API call to avoid 404 errors
-        setRouteCoords([selectedPost.route.start, selectedPost.route.end]);
-      }
-    } else {
-      setRouteCoords([]);
-    }
+    return () => unsub();
   }, [selectedPost]);
 
-
-  // Verifica se o post está salvo quando carrega
-  useEffect(() => {
-    const checkIfSaved = async () => {
-      if (!auth.currentUser || !selectedPost?.id) return;
-      
-      try {
-        const userRef = doc(db, "user", auth.currentUser.uid);
-        const userDoc = await getDoc(userRef);
-        
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const savedPosts = userData.savedPosts || [];
-        }
-      } catch (error) {
-        console.error("Erro ao verificar se post está salvo:", error);
-      }
-    };
-
-    checkIfSaved();
-  }, [selectedPost?.id, auth.currentUser]);
-
-  if (!selectedPost || !modalVisible) return null;
-
-  // Centralized close handler to reset modal state when closing
   const handleCloseModal = () => {
-    try {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
       setModalVisible(false);
-      // Reset transient states to ensure clean reopen
-      // setSelectedPost(null);
       setCurrentImageIndex(0);
       setStarRating(0);
       setNewText("");
-      setComments([]);
-      setRouteCoords([]);
-      setImageZoomVisible(false);
-      setZoomedImage(null);
-      setParticipationModalVisible(false);
-      setChatModalVisible(false);
-      setReportarProblemaVisible(false);
-      setPaymentModalVisible(false);
-    } catch (e) {
-      // no-op fail safe
-    }
+      setActiveTab("info");
+    });
   };
-  
 
-  return (
-    <View style={{ flex: 1 }}>
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={handleCloseModal}
-        onDismiss={handleCloseModal}
+  if (!selectedPost || !modalVisible) return null;
+
+  const renderHeader = () => (
+    <View style={[styles.header, { backgroundColor: theme?.background }]}>
+      <TouchableOpacity onPress={handleCloseModal} style={styles.backButton}>
+        <Ionicons name="chevron-down" size={28} color={theme?.textPrimary} />
+      </TouchableOpacity>
+      
+      <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>
+        Detalhes do Evento
+      </Text>
+      
+      <TouchableOpacity 
+        onPress={() => setReportarProblemaVisible(true)}
+        style={styles.reportButton}
       >
-        <View style={[styles.modalContainer, { backgroundColor: theme?.background }]}>
-          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalInner}>
+        <Ionicons name="flag-outline" size={22} color={theme?.textTertiary} />
+      </TouchableOpacity>
+    </View>
+  );
 
-            {/* Carrossel de imagens */}
-            <View style={{ position: "relative" }}>
-              <FlatList
-                data={selectedPost.images || []}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(_, i) => i.toString()}
-                onMomentumScrollEnd={(event) => {
-                  const index = Math.round(event.nativeEvent.contentOffset.x / width);
-                  setCurrentImageIndex(index);
-                }}
-                getItemLayout={(data, index) => ({
-                  length: width,
-                  offset: width * index,
-                  index,
-                })}
-                ref={(ref) => {
-                  if (ref && currentImageIndex > 0) {
-                    ref.scrollToIndex({ index: currentImageIndex, animated: true });
-                  }
-                }}
-                renderItem={({ item, index }) => (
-                  <View style={styles.imageContainer}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setZoomedImage(item);
-                        setImageZoomVisible(true);
-                      }}
-                      activeOpacity={0.9}
-                    >
-                      <Image 
-                        source={{ uri: item }} 
-                        style={styles.fullscreenImage} 
-                        resizeMode="cover"
-                        onError={() => console.log(`Erro ao carregar imagem ${index}`)}
-                      />
-                    </TouchableOpacity>
-                    
-                    {/* Overlay de informações da imagem */}
-                    <View style={styles.imageOverlay}>
-                      <Text style={styles.imageCounter}>
-                        {index + 1} / {selectedPost.images?.length || 1}
-                      </Text>
+  const renderImageCarousel = () => (
+    <View style={styles.carouselContainer}>
+      <FlatList
+        data={selectedPost.images || []}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(event) => {
+          const index = Math.round(event.nativeEvent.contentOffset.x / width);
+          setCurrentImageIndex(index);
+        }}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => {
+              setZoomedImage(item);
+              setImageZoomVisible(true);
+            }}
+            activeOpacity={0.9}
+          >
+            <Image source={{ uri: item }} style={styles.carouselImage} />
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={() => (
+          <View style={styles.noImageContainer}>
+            <Ionicons name="image-outline" size={64} color={theme?.textTertiary} />
+            <Text style={[styles.noImageText, { color: theme?.textTertiary }]}>
+              {t('post.noImages')}
+            </Text>
+          </View>
+        )}
+      />
+      
+      {selectedPost.images && selectedPost.images.length > 1 && (
+        <View style={styles.pagination}>
+          {selectedPost.images.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.paginationDot,
+                {
+                  backgroundColor: index === currentImageIndex 
+                    ? theme?.primary 
+                    : theme?.textTertiary + '40'
+                }
+              ]}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  const renderEventInfo = () => (
+    <View style={styles.infoSection}>
+      <Text style={[styles.eventTitle, { color: theme?.textPrimary }]}>
+        {safeRender(selectedPost.title) || t('home.noTitle')}
+      </Text>
+      
+      <View style={styles.priceContainer}>
+        <Text style={[styles.price, { color: theme?.primary }]}>
+          R$ {safeRender(selectedPost.price) || "0"}
+        </Text>
+        <Text style={[styles.priceLabel, { color: theme?.textSecondary }]}>
+          por pessoa
+        </Text>
+      </View>
+
+      <View style={styles.detailsGrid}>
+        <View style={styles.detailItem}>
+          <Ionicons name="calendar-outline" size={20} color={theme?.primary} />
+          <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
+            {safeRender(selectedPost.exit_date) || "Data não definida"}
+          </Text>
+        </View>
+        
+        <View style={styles.detailItem}>
+          <Ionicons name="location-outline" size={20} color={theme?.primary} />
+          <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
+            {safeRender(selectedPost.location) || "Local não definido"}
+          </Text>
+        </View>
+        
+        <View style={styles.detailItem}>
+          <Ionicons name="people-outline" size={20} color={theme?.primary} />
+          <Text style={[styles.detailText, { color: availableSlots > 0 ? theme?.primary : '#ff4444' }]}>
+            {safeRender(availableSlots)} vagas restantes
+          </Text>
+        </View>
+        
+        <View style={styles.detailItem}>
+          <Ionicons name="time-outline" size={20} color={theme?.primary} />
+          <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
+            {selectedPost.type === 1 ? "Viagem" : 
+             selectedPost.type === 2 ? "Excursão" : 
+             selectedPost.type === 3 ? "Show" : "Evento"}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={[styles.description, { color: theme?.textSecondary }]}>
+        {safeRender(selectedPost.desc) || t('home.noDescription')}
+      </Text>
+    </View>
+  );
+
+  const renderTabs = () => (
+    <View style={[styles.tabContainer, { backgroundColor: theme?.backgroundSecondary }]}>
+      {["info", "route", "reviews"].map((tab) => (
+        <TouchableOpacity
+          key={tab}
+          style={[
+            styles.tab,
+            activeTab === tab && [styles.activeTab, { backgroundColor: theme?.primary }]
+          ]}
+          onPress={() => setActiveTab(tab)}
+        >
+          <Text style={[
+            styles.tabText,
+            { color: theme?.textSecondary },
+            activeTab === tab && [styles.activeTabText, { color: theme?.textInverted }]
+          ]}>
+            {tab === "info" ? "Informações" : 
+             tab === "route" ? "Rota" : "Avaliações"}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "route":
+        return (
+          <View style={styles.routeSection}>
+            {selectedPost.route?.start ? (
+              <>
+                <View style={styles.routeInfo}>
+                  <View style={styles.routeStep}>
+                    <View style={[styles.stepIcon, { backgroundColor: theme?.primary }]}>
+                      <Ionicons name="play" size={16} color="#fff" />
                     </View>
-                  </View>
-                )}
-                ListEmptyComponent={() => (
-                  <View style={[styles.imageContainer, { justifyContent: 'center', alignItems: 'center' }]}>
-                    <Ionicons name="image-outline" size={64} color="#ccc" />
-                    <Text style={{ color: "#ccc", marginTop: 10, fontSize: 16 }}>
-                      {t('post.noImages')}
+                    <Text style={[styles.routeText, { color: theme?.textPrimary }]}>
+                      {safeRender(selectedPost.route.display_start) || "Ponto de partida"}
                     </Text>
                   </View>
-                )}
-              />
-
-              {/* Indicadores de página */}
-              {selectedPost.images && selectedPost.images.length > 1 && (
-                <View style={styles.paginationContainer}>
-                  {selectedPost.images.map((_, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.paginationDot,
-                        {
-                          backgroundColor: index === currentImageIndex 
-                            ? theme?.primary || "#f37100" 
-                            : "rgba(255, 255, 255, 0.5)"
-                        }
-                      ]}
-                    />
-                  ))}
+                  
+                  <View style={styles.routeStep}>
+                    <View style={[styles.stepIcon, { backgroundColor: theme?.primary }]}>
+                      <Ionicons name="flag" size={16} color="#fff" />
+                    </View>
+                    <Text style={[styles.routeText, { color: theme?.textPrimary }]}>
+                      {safeRender(selectedPost.route.display_end) || "Destino"}
+                    </Text>
+                  </View>
                 </View>
-              )}
-
-              {/* Botões de navegação */}
-              {selectedPost.images && selectedPost.images.length > 1 && (
-                <>
-                  <TouchableOpacity
-                    style={[styles.navButton, styles.prevButton]}
-                    onPress={() => {
-                      if (currentImageIndex > 0) {
-                        setCurrentImageIndex(currentImageIndex - 1);
-                      }
-                    }}
-                    disabled={currentImageIndex === 0}
-                  >
-                    <Ionicons 
-                      name="chevron-back" 
-                      size={24} 
-                      color={currentImageIndex === 0 ? "rgba(255,255,255,0.3)" : "#fff"} 
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.navButton, styles.nextButton]}
-                    onPress={() => {
-                      if (currentImageIndex < (selectedPost.images?.length || 1) - 1) {
-                        setCurrentImageIndex(currentImageIndex + 1);
-                      }
-                    }}
-                    disabled={currentImageIndex === (selectedPost.images?.length || 1) - 1}
-                  >
-                    <Ionicons 
-                      name="chevron-forward" 
-                      size={24} 
-                      color={currentImageIndex === (selectedPost.images?.length || 1) - 1 ? "rgba(255,255,255,0.3)" : "#fff"} 
-                    />
-                  </TouchableOpacity>
-                </>
-              )}
-
-              {/* Botão de voltar flutuante */}
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleCloseModal}
-              >
-                <Ionicons name="arrow-back" size={28} color="#fff" />
-              </TouchableOpacity>
-
-            </View>
-
-            {/* Rota */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.tripRoute')}</Text>
-            <View style={[styles.routeBox, { borderColor: theme?.border, backgroundColor: theme?.backgroundSecondary }]}>
-              <Ionicons name="location-sharp" size={24} color={theme?.textPrimary} />
-              <View style={{ marginLeft: 10 }}>
-                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>{t('post.start')}: {selectedPost.route?.display_start}</Text>
-                <Text style={[styles.routeText, { color: theme?.textPrimary }]}>{t('post.destination')}: {selectedPost.route?.display_end}</Text>
-              </View>
-            </View>
-
-            <View style={[styles.routeBox, { borderColor: theme?.border, backgroundColor: theme?.backgroundSecondary }]}>
-              {selectedPost.route?.start && (
-                <View style={[styles.mapContainer, { borderColor: theme?.border }]}>
+                
+                <View style={styles.mapContainer}>
                   <SimpleRouteMap
                     startCoordinate={selectedPost.route.start}
                     endCoordinate={selectedPost.route.end}
                     height={200}
-                    style={{ borderColor: theme?.border }}
-                    onRouteCalculated={(route) => {
-                      // Atualizar as coordenadas da rota se necessário
-                      console.log('Rota simples calculada:', route);
-                    }}
                   />
                 </View>
-              )}
-            </View>
-
-            {/* Informações */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.excursionInfo')}</Text>
-            <View style={[styles.infoBox, { borderColor: theme?.border }]}>
-              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>{t('post.description')}: </Text>
-              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>{selectedPost?.desc}</Text>
-              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>{t('post.availableSlots')}: </Text>
-              <Text style={[styles.commentText, { color: availableSlots > 0 ? theme?.primary : 'red' }]}>
-                {availableSlots} de {selectedPost?.numSlots || 0} vagas
+              </>
+            ) : (
+              <Text style={[styles.noRouteText, { color: theme?.textTertiary }]}>
+                Rota não disponível
               </Text>
-              {availableSlots === 0 && (
-                <Text style={[styles.commentText, { color: 'red', fontWeight: 'bold' }]}>
-                  ⚠️ {t('post.tripExhausted')}!
-                </Text>
-              )}
-              <Text style={[styles.commentTitle, { color: theme?.textPrimary }]}>{t('post.tripType')}: </Text>
-              <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
-                {(selectedPost?.type == 1) ? "Viagem" : (selectedPost?.type == 2) ? "Excursão" : (selectedPost?.type == 3) ? "Show" : "Sem tipo"}
+            )}
+          </View>
+        );
+
+      case "reviews":
+        return (
+          <View style={styles.reviewsSection}>
+            <View style={styles.ratingContainer}>
+              <Text style={[styles.ratingTitle, { color: theme?.textPrimary }]}>
+                Sua Avaliação
               </Text>
-            </View>
-
-            <TouchableOpacity onPress={() => navigation.navigate('Avaliacoes', { eventId: selectedPost.id })}>
-              <Text style={{color: 'white'}}>{t('post.viewReviews')}</Text>
-            </TouchableOpacity>
-            {/* Avaliação */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.rating')}</Text>
-            <View style={styles.starContainer}>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => handleStarPress(i)}
-                  style={styles.starButton}
-                >
-                  <Ionicons
-                    name={i <= starRating ? "star" : "star-outline"}
-                    size={30}
-                    color={theme?.primary || "#f37100"}
-                  />
-                </TouchableOpacity>
-              ))}
-              <Text style={[styles.starText, { color: theme?.textPrimary }]}>
-                {starRating} de 5
-              </Text>
-            </View>
-
-            {/* Comentários */}
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('post.comments')}</Text>
-            <View style={[styles.commentsBox, { borderColor: theme?.border }]}>
-              {comments.length === 0 ? (
-                <Text style={{ color: theme?.textSecondary }}>{t('post.noComments')}</Text>
-              ) : (
-                comments.map((c, idx) => (
-                  <View key={idx} style={{ marginBottom: 8 }}>
-                    <Text style={{ color: theme?.textPrimary, fontWeight: "bold" }}>
-                      {c.username || t('post.anonymous')}
-                    </Text>
-                    <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
-                      "{c.comment_text}"
-                    </Text>
-                  </View>
-                ))
-              )}
-
-              {/* Input de comentário */}
-              <View style={styles.commentInputContainer}>
-                <TextInput
-                  style={[
-                    styles.commentInput,
-                    { borderColor: theme?.primary, color: theme?.textPrimary },
-                  ]}
-                  placeholder={t('post.typeComment')}
-                  placeholderTextColor={theme?.textTertiary || "#aaa"}
-                  value={newText}
-                  onChangeText={setNewText}
-                />
-                <TouchableOpacity onPress={handleSendComment}>
-                  <Ionicons
-                    name="send"
-                    size={24}
-                    color={theme?.primary || "#f37100"}
-                  />
-                </TouchableOpacity>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setStarRating(star)}
+                    style={styles.starButton}
+                  >
+                    <Ionicons
+                      name={star <= starRating ? "star" : "star-outline"}
+                      size={28}
+                      color={theme?.primary}
+                    />
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
-            {/* Botões de ação */}
-            {/* <TouchableOpacity
-              style={[styles.modalButton, styles.joinButton, { backgroundColor: theme?.primary }]}
-              onPress={() => setParticipationModalVisible(true)}
-            >
-              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Participar da viagem</Text>
-            </TouchableOpacity> */}
-            <TouchableOpacity
-      style={[
-        styles.partButton, 
-        { 
-          backgroundColor: availableSlots > 0 ? theme?.primary : '#666',
-          opacity: availableSlots > 0 ? 1 : 0.6
-        }
-      ]}
-      onPress={() => availableSlots > 0 ? setParticipationModalVisible(true) : null}
-      disabled={availableSlots === 0}
->
-  <Text style={[styles.buttonText, { color: theme?.textInverted }]}>
-    {availableSlots > 0 ? t('post.confirmParticipation') : t('post.tripExhausted')}
-  </Text>
-</TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chatButton, styles.modalButton]}
-              onPress={handleOpenPrivateChat}
-            >
-              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('post.chatWithOrganizer')}</Text>
-            </TouchableOpacity>
-
-            {/* Botão para falar com o grupo - só aparece para membros */}
-            {participants.some(p => p.id === auth.currentUser?.uid) && (
-              <TouchableOpacity
-                style={[styles.groupChatButton, styles.modalButton]}
-                onPress={handleOpenGroupChat}
+            <View style={styles.commentInputContainer}>
+              <TextInput
+                style={[styles.commentInput, { 
+                  backgroundColor: theme?.backgroundSecondary,
+                  color: theme?.textPrimary,
+                  borderColor: theme?.border 
+                }]}
+                placeholder="Deixe seu comentário..."
+                placeholderTextColor={theme?.textTertiary}
+                value={newText}
+                onChangeText={setNewText}
+                multiline
+              />
+              <TouchableOpacity 
+                onPress={handleSendComment}
+                style={[styles.sendButton, { backgroundColor: theme?.primary }]}
+                disabled={!newText.trim()}
               >
-                <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('post.chatWithGroup')}</Text>
+                <Ionicons name="send" size={20} color="#fff" />
               </TouchableOpacity>
-            )}
-          </ScrollView>
-        </View>
+            </View>
 
-     
+            <ScrollView style={styles.commentsList}>
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <View key={comment.id} style={styles.commentItem}>
+                    <View style={styles.commentHeader}>
+                      <Text style={[styles.commentAuthor, { color: theme?.textPrimary }]}>
+                        {safeRender(comment.username)}
+                      </Text>
+                      <Text style={[styles.commentDate, { color: theme?.textTertiary }]}>
+                        {formatFirebaseTimestamp(comment.createdAt)}
+                      </Text>
+                    </View>
+                    {comment.nota > 0 && (
+                      <View style={styles.ratingStars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Ionicons
+                            key={star}
+                            name={star <= comment.nota ? "star" : "star-outline"}
+                            size={16}
+                            color={theme?.primary}
+                          />
+                        ))}
+                      </View>
+                    )}
+                    <Text style={[styles.commentText, { color: theme?.textSecondary }]}>
+                      {safeRender(comment.comment_text)}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={[styles.noCommentsText, { color: theme?.textTertiary }]}>
+                  Nenhum comentário ainda. Seja o primeiro a avaliar!
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+        );
+
+      default:
+        return renderEventInfo();
+    }
+  };
+
+  const renderActionButtons = () => (
+    <View style={[styles.actionButtons, { backgroundColor: theme?.background }]}>
+      <TouchableOpacity
+        style={[
+          styles.actionButton,
+          styles.primaryButton,
+          { 
+            backgroundColor: availableSlots > 0 ? theme?.primary : '#666',
+            opacity: availableSlots > 0 ? 1 : 0.6
+          }
+        ]}
+        onPress={() => availableSlots > 0 && setParticipationModalVisible(true)}
+        disabled={availableSlots === 0}
+      >
+        <Ionicons 
+          name="checkmark-circle" 
+          size={22} 
+          color="#fff" 
+          style={styles.buttonIcon}
+        />
+        <Text style={styles.primaryButtonText}>
+          {availableSlots > 0 ? "Participar do Evento" : "Vagas Esgotadas"}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.actionButton, styles.secondaryButton, { borderColor: theme?.primary }]}
+        onPress={handleOpenPrivateChat}
+      >
+        <Ionicons 
+          name="chatbubble-ellipses" 
+          size={20} 
+          color={theme?.primary} 
+          style={styles.buttonIcon}
+        />
+        <Text style={[styles.secondaryButtonText, { color: theme?.primary }]}>
+          Falar com Organizador
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={handleCloseModal}
+        statusBarTranslucent
+      >
+        <View style={[styles.container, { backgroundColor: theme?.background }]}>
+          {renderHeader()}
+          <ScrollView 
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+          >
+            {renderImageCarousel()}
+            {renderTabs()}
+            {renderTabContent()}
+          </ScrollView>
+          {renderActionButtons()}
+        </View>
       </Modal>
 
-      {/* Modal de Participação embutido */}
-      <Modal visible={participationModalVisible} transparent animationType="slide">
-        <View style={[styles.partContainer, { backgroundColor: theme?.overlay }]}>
-          <View style={[styles.partContent, { backgroundColor: theme?.backgroundSecondary }]}>
-            <Text style={[styles.partTitle, { color: theme?.textPrimary }]}>{t('post.whoTravels')}</Text>
-            {['Sou eu', 'Outra pessoa'].map(opt => (
-              <TouchableOpacity
-                key={opt}
-                style={styles.partOption}
-                onPress={() => setWhoTravels(opt)}
-              >
-                <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
-                  {whoTravels === opt && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
-                </View>
-                <Text style={[styles.partOptionText, { color: theme?.textSecondary }]}>{opt}</Text>
-              </TouchableOpacity>
-            ))}
+      {/* Modal de Participação */}
+      <Modal visible={participationModalVisible} transparent animationType="fade">
+        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.participationModal, { backgroundColor: theme?.background }]}>
+            <Text style={[styles.modalTitle, { color: theme?.textPrimary }]}>
+              Confirmar Participação
+            </Text>
+            
+            <Text style={[styles.modalSubtitle, { color: theme?.textSecondary }]}>
+              Preencha as informações para participar deste evento
+            </Text>
 
-            <Text style={[styles.partTitle, { marginTop: 20, color: theme?.textPrimary }]}>{t('post.whoGoes')}</Text>
-            {[
-              'Criança de colo (com acompanhante)',
-              'Criança 6 de 14 anos (acompanhante)',
-              'Jovem 15 a 17 anos (acompanhante)',
-              'Idoso 60 anos ou mais'
-            ].map(opt => (
-              <TouchableOpacity
-                key={opt}
-                style={styles.partOption}
-                onPress={() => setWhoGoes(opt)}
-              >
-                <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
-                  {whoGoes === opt && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
-                </View>
-                <Text style={[styles.partOptionText, { color: theme?.textSecondary }]}>{opt}</Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity
-              style={[
-                styles.partButton, 
-                { 
-                  backgroundColor: availableSlots > 0 ? theme?.primary : '#666',
-                  opacity: availableSlots > 0 ? 1 : 0.6
-                }
-              ]}
-              onPress={availableSlots > 0 ? handleParticipar : null}
-              disabled={availableSlots === 0}
-            >
-              <Text style={[styles.buttonText, { color: theme?.textInverted }]}>
-                {availableSlots > 0 ? t('post.confirm') : t('post.noSlots')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-                 </View>
-       </Modal>
-
-       {/* Modal de Zoom da Imagem */}
-       <Modal visible={imageZoomVisible} transparent animationType="fade">
-         <View style={styles.zoomOverlay}>
-           <TouchableOpacity 
-             style={styles.zoomCloseButton}
-             onPress={() => setImageZoomVisible(false)}
-           >
-             <Ionicons name="close" size={28} color="#fff" />
-           </TouchableOpacity>
-           
-           <TouchableOpacity 
-             style={styles.zoomImageContainer}
-             onPress={() => setImageZoomVisible(false)}
-             activeOpacity={1}
-           >
-             <Image 
-               source={{ uri: zoomedImage }} 
-               style={styles.zoomedImage} 
-               resizeMode="contain"
-             />
-           </TouchableOpacity>
-         </View>
-       </Modal>
-
-       <Modal visible={paymentModalVisible} transparent animationType="slide">
-          <View style={[styles.paymentOverlay, { backgroundColor: theme?.overlay }]}>
-            <View style={[styles.paymentContainer, { backgroundColor: theme?.backgroundSecondary }]}>
-              <Text style={[styles.partTitle, { color: theme?.textPrimary, fontSize: 20 }]}>
-                {t('post.simulatedPayment')}
-              </Text>
-
-              <Text style={[styles.label, { color: theme?.textSecondary, marginTop: 10 }]}>{t('post.method')}:</Text>
-              {["Cartão de Crédito", "Pix", "Boleto"].map((method) => (
+            <View style={styles.participationForm}>
+              <Text style={[styles.formLabel, { color: theme?.textPrimary }]}>Quem vai viajar?</Text>
+              {['Sou eu', 'Outra pessoa'].map(option => (
                 <TouchableOpacity
-                  key={method}
-                  style={styles.partOption}
-                  onPress={() => setPaymentMethod(method)}
+                  key={option}
+                  style={styles.radioOption}
+                  onPress={() => setWhoTravels(option)}
                 >
-                  <View style={[styles.radioOuter, { borderColor: theme?.primary }]}>
-                    {paymentMethod === method && <View style={[styles.radioInner, { backgroundColor: theme?.primary }]} />}
+                  <View style={[styles.radio, { borderColor: theme?.primary }]}>
+                    {whoTravels === option && (
+                      <View style={[styles.radioSelected, { backgroundColor: theme?.primary }]} />
+                    )}
                   </View>
-                  <Text style={[styles.partOptionText, { color: theme?.textSecondary }]}>{method}</Text>
+                  <Text style={[styles.radioLabel, { color: theme?.textPrimary }]}>{option}</Text>
                 </TouchableOpacity>
               ))}
 
-              {paymentMethod === "Cartão de Crédito" && (
-                <>
-                  <TextInput
-                    style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
-                    placeholder={t('post.cardNumber')}
-                    placeholderTextColor={theme?.textTertiary}
-                    keyboardType="numeric"
-                    value={cardNumber}
-                    onChangeText={setCardNumber}
-                  />
-                  <TextInput
-                    style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary }]}
-                    placeholder={t('post.cardName')}
-                    placeholderTextColor={theme?.textTertiary}
-                    value={cardName}
-                    onChangeText={setCardName}
-                  />
-                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <TextInput
-                      style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary, flex: 1, marginRight: 5 }]}
-                      placeholder="MM/AA"
-                      placeholderTextColor={theme?.textTertiary}
-                      value={expiry}
-                      onChangeText={setExpiry}
-                    />
-                    <TextInput
-                      style={[styles.commentInput, { borderColor: theme?.primary, color: theme?.textPrimary, flex: 1, marginLeft: 5 }]}
-                      placeholder="CVV"
-                      placeholderTextColor={theme?.textTertiary}
-                      keyboardType="numeric"
-                      value={cvv}
-                      onChangeText={setCvv}
-                    />
+              <Text style={[styles.formLabel, { color: theme?.textPrimary }]}>Categoria</Text>
+              {[
+                'Criança de colo (com acompanhante)',
+                'Criança 6-14 anos (com acompanhante)',
+                'Jovem 15-17 anos (com acompanhante)',
+                'Adulto (18-59 anos)',
+                'Idoso (60+ anos)'
+              ].map(option => (
+                <TouchableOpacity
+                  key={option}
+                  style={styles.radioOption}
+                  onPress={() => setWhoGoes(option)}
+                >
+                  <View style={[styles.radio, { borderColor: theme?.primary }]}>
+                    {whoGoes === option && (
+                      <View style={[styles.radioSelected, { backgroundColor: theme?.primary }]} />
+                    )}
                   </View>
-                </>
-              )}
+                  <Text style={[styles.radioLabel, { color: theme?.textPrimary }]}>{option}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
+            <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.partButton, { backgroundColor: theme?.primary, marginTop: 20 }]}
-                onPress={() => {
-                  alert("Pagamento simulado realizado com sucesso!");
-                  setPaymentModalVisible(false);
-                }}
+                style={[styles.modalButton, styles.cancelButton, { borderColor: theme?.border }]}
+                onPress={() => setParticipationModalVisible(false)}
               >
-                <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('post.pay')}</Text>
+                <Text style={[styles.cancelButtonText, { color: theme?.textSecondary }]}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
-
+              
               <TouchableOpacity
-                style={{ marginTop: 10, alignSelf: "center" }}
-                onPress={() => setPaymentModalVisible(false)}
+                style={[styles.modalButton, styles.confirmButton, { backgroundColor: theme?.primary }]}
+                onPress={handleParticipar}
               >
-                <Text style={{ color: theme?.primary }}>{t('post.cancel')}</Text>
+                <Text style={styles.confirmButtonText}>Confirmar</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
+        </View>
+      </Modal>
 
-       {/* Modal de Reportar Problema */}
-       <ReportarProblema 
-         visible={reportarProblemaVisible} 
-         setVisible={setReportarProblemaVisible} 
-       />
+      {/* Modal de Zoom da Imagem */}
+      <Modal visible={imageZoomVisible} transparent animationType="fade">
+        <View style={styles.zoomOverlay}>
+          <TouchableOpacity 
+            style={styles.zoomCloseButton}
+            onPress={() => setImageZoomVisible(false)}
+          >
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          <Image source={{ uri: zoomedImage }} style={styles.zoomedImage} resizeMode="contain" />
+        </View>
+      </Modal>
 
-     
-     </View>
+      <ReportarProblema 
+        visible={reportarProblemaVisible} 
+        setVisible={setReportarProblemaVisible} 
+      />
+    </Animated.View>
   );
 };
 
-
-  const styles = StyleSheet.create({
-  modalContainer: { flex: 1 },
-  modalScroll: { flex: 1 },
-  modalInner: { padding: 16 },
-  fullscreenImage: { width, height: height * 0.4 },
-  imageContainer: {
+// Os estilos permanecem os mesmos do código anterior...
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  reportButton: {
+    padding: 8,
+  },
+  carouselContainer: {
+    height: 300,
+  },
+  carouselImage: {
     width: width,
-    height: height * 0.4,
-    position: "relative",
+    height: 300,
   },
-  imageOverlay: {
-    position: "absolute",
-    top: 60,
-    right: 20,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+  noImageContainer: {
+    width: width,
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  imageCounter: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
+  noImageText: {
+    marginTop: 10,
+    fontSize: 16,
   },
-  paginationContainer: {
-    position: "absolute",
+  pagination: {
+    flexDirection: 'row',
+    position: 'absolute',
     bottom: 20,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    alignSelf: 'center',
   },
   paginationDot: {
     width: 8,
@@ -861,166 +763,317 @@ const handleParticipar = async () => {
     borderRadius: 4,
     marginHorizontal: 4,
   },
-  navButton: {
-    position: "absolute",
-    top: "50%",
-    transform: [{ translateY: -20 }],
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 12,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
+  infoSection: {
+    padding: 20,
   },
-  prevButton: { left: 15 },
-  nextButton: { right: 15 },
-  backButton: {
-    position: "absolute",
-    top: 40,
-    left: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 8,
-    borderRadius: 50,
+  eventTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
-  optionsButton: {
-    position: "absolute",
-    top: 40,
-    right: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 8,
-    borderRadius: 50,
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 20,
   },
-  dropdownMenu: {
-    position: "absolute",
-    top: 80,
-    right: 20,
-    borderRadius: 8,
-    padding: 8,
-    minWidth: 180,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  price: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginRight: 5,
   },
-  dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+  priceLabel: {
+    fontSize: 16,
   },
-  dropdownText: {
-    marginLeft: 12,
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%',
+    marginBottom: 15,
+  },
+  detailText: {
+    marginLeft: 10,
     fontSize: 14,
-    fontWeight: "500",
   },
-  sectionTitle: { fontWeight: "bold", marginTop: 12, marginBottom: 6, fontSize: 16 },
-  commentTitle: { fontWeight: "bold", fontSize: 16, paddingBottom: 4 },
-  routeBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 6,
-    marginBottom: 12,
-    flexWrap: "wrap",
-    width: "100%",
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
   },
-  routeText: { fontSize: 14, marginBottom: 4, flexShrink: 1, flexWrap: "wrap" },
-  infoBox: { padding: 10, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  starContainer: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  starButton: { marginHorizontal: 4 },
-  starText: { marginLeft: 8, fontSize: 16 },
-  commentsBox: { padding: 10, borderWidth: 1, borderRadius: 6, marginBottom: 12 },
-  commentText: { marginBottom: 4, fontStyle: "italic" },
-  commentInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderColor: "#444",
-    paddingTop: 10,
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
-  commentInput: { flex: 1, borderWidth: 1, borderRadius: 6, padding: 8, marginRight: 8 },
-  modalButton: { padding: 12, borderRadius: 6, marginBottom: 8, alignItems: "center" },
-  chatButton: { backgroundColor: "#f65a65" },
-  groupChatButton: { backgroundColor: "#4CAF50" },
-  buttonText: { fontWeight: "bold" },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginHorizontal: 5,
+  },
+  activeTab: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tabText: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    fontWeight: '600',
+  },
+  routeSection: {
+    padding: 20,
+  },
+  routeInfo: {
+    marginBottom: 20,
+  },
+  routeStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  stepIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  routeText: {
+    fontSize: 16,
+    flex: 1,
+  },
   mapContainer: {
     height: 200,
-    width: "100%",
-    borderRadius: 6,
-    overflow: "hidden",
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  noRouteText: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 50,
+  },
+  reviewsSection: {
+    padding: 20,
+  },
+  ratingContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  ratingTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+  },
+  starButton: {
+    padding: 5,
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginRight: 10,
+    fontSize: 16,
+  },
+  sendButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  commentsList: {
+    maxHeight: 200,
+  },
+  commentItem: {
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  commentAuthor: {
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  commentDate: {
+    fontSize: 12,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  commentText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  noCommentsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 20,
+    fontStyle: 'italic',
+  },
+  actionButtons: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  primaryButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  secondaryButton: {
+    borderWidth: 2,
+  },
+  buttonIcon: {
+    marginRight: 10,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  participationModal: {
+    width: '90%',
+    borderRadius: 20,
+    padding: 25,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 25,
+  },
+  participationForm: {
+    marginBottom: 25,
+  },
+  formLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  radioOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
-    borderWidth: 1,
   },
-  map: { ...StyleSheet.absoluteFillObject },
-
-  // Modal de Participação
-  partContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  partContent: { width: "80%", borderRadius: 8, padding: 16 },
-  partTitle: { fontWeight: "bold", fontSize: 16, marginBottom: 12 },
-  partOption: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  radioOuter: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  radioInner: { width: 12, height: 12, borderRadius: 6 },
-  partOptionText: { marginLeft: 10 },
-  partButton: { marginTop: 20, padding: 12, borderRadius: 6, alignItems: "center" },
-
-  // Modal de Zoom
+  radioSelected: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  radioLabel: {
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 15,
+    borderRadius: 12,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    borderWidth: 2,
+  },
+  confirmButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cancelButtonText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   zoomOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.9)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   zoomCloseButton: {
-    position: "absolute",
-    top: 50,
+    position: 'absolute',
+    top: 60,
     right: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 10,
-    borderRadius: 25,
     zIndex: 1000,
-  },
-  zoomImageContainer: {
-    flex: 1,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 10,
   },
   zoomedImage: {
-    width: width,
-    height: height * 0.8,
+    width: width * 0.9,
+    height: height * 0.7,
   },
-  // Modal de Pagamento
-  paymentOverlay: {
+  scrollView: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.7)",
-  },
-  paymentContainer: {
-    width: "85%",
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "stretch",
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 6,
   },
 });
-
 
 export default PostScreen;

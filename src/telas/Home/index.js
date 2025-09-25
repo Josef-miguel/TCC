@@ -182,7 +182,6 @@ export default function Home({ navigation, route }) {
   // Funções do menu de três pontos
   const handleReportarProblema = () => {
     setShowPostMenu(false);
-    // Aqui você pode implementar a lógica de reportar problema
     Alert.alert('Reportar Problema', 'Funcionalidade de reportar problema será implementada em breve.');
   };
 
@@ -219,7 +218,6 @@ export default function Home({ navigation, route }) {
   const handleVisualizarPerfil = () => {
     setShowPostMenu(false);
 
-    // Attempt to resolve a stable uid for the creator from several legacy/variant fields
     let targetUserId = selectedPostForMenu?.uid
       || selectedPostForMenu?.creator?.id
       || selectedPostForMenu?.creator?.uid
@@ -228,14 +226,12 @@ export default function Home({ navigation, route }) {
       || selectedPostForMenu?.ownerId
       || null;
 
-    // Defensive: if we have an object instead of string (sometimes creator is a user object), try common properties
     if (targetUserId && typeof targetUserId !== 'string') {
       if (typeof targetUserId.uid === 'string') targetUserId = targetUserId.uid;
       else if (typeof targetUserId.id === 'string') targetUserId = targetUserId.id;
       else targetUserId = String(targetUserId);
     }
 
-    // Trim and final validation
     if (typeof targetUserId === 'string') {
       targetUserId = targetUserId.trim();
       if (targetUserId === '') targetUserId = null;
@@ -247,7 +243,6 @@ export default function Home({ navigation, route }) {
       return;
     }
 
-    // Pass explicit uid and also include any lightweight creator object if available as a convenience
     const creatorObj = (selectedPostForMenu?.creator && typeof selectedPostForMenu.creator === 'object')
       ? selectedPostForMenu.creator
       : (selectedPostForMenu?.user && typeof selectedPostForMenu.user === 'object') ? selectedPostForMenu.user : null;
@@ -277,7 +272,6 @@ export default function Home({ navigation, route }) {
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // Simular recarregamento
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
@@ -317,9 +311,6 @@ export default function Home({ navigation, route }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={() => openModal(post)}>
           <Ionicons name="chatbubble-outline" size={24} color={theme?.textPrimary} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="paper-plane-outline" size={24} color={theme?.textPrimary} />
         </TouchableOpacity>
       </View>
       <TouchableOpacity onPress={() => toggleSave(post.id)}>
@@ -389,35 +380,28 @@ export default function Home({ navigation, route }) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme?.background }]}>
-      {/* Header Fixo */}
+      <StatusBar 
+        barStyle={theme?.mode === 'dark' ? 'light-content' : 'dark-content'} 
+        backgroundColor={theme?.background} 
+      />
+      
+      {/* Header Compacto */}
       <View style={[styles.header, { backgroundColor: theme?.background }]}>
-        <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>
-          {t('home.title')}
-        </Text>
-      </View>
-
-      {/* Barra de Pesquisa com Ícones */}
-      <View style={[styles.searchContainer, { backgroundColor: theme?.background }]}>
-        <View style={styles.searchRow}>
-          <TouchableOpacity onPress={toggleSidebar} style={styles.headerIcon}>
-            <Ionicons name="menu" size={24} color={theme?.primary} />
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={toggleSidebar} style={styles.menuButton}>
+            <Ionicons name="menu" size={28} color={theme?.primary} />
           </TouchableOpacity>
           
-          <View style={styles.searchInputContainer}>
-            <TextInput
-              style={[styles.searchInput, { 
-                backgroundColor: theme?.backgroundSecondary,
-                color: theme?.textPrimary,
-              }]}
-              placeholder={t('home.searchPlaceholder')}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={theme?.textTertiary}
-            />
-            <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
+          <View style={styles.headerCenter}>
+            <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>
+              Excursões
+            </Text>
           </View>
           
-          <TouchableOpacity onPress={() => navigation.navigate('Notificacoes')} style={styles.headerIcon}>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Notificacoes')} 
+            style={styles.notificationButton}
+          >
             <View style={{ position: 'relative' }}>
               <Ionicons name="notifications-outline" size={24} color={theme?.primary} />
               {typeof totalUnread === 'number' && totalUnread > 0 && (
@@ -430,9 +414,30 @@ export default function Home({ navigation, route }) {
             </View>
           </TouchableOpacity>
         </View>
+        
+        {/* Barra de Pesquisa Integrada */}
+        <View style={[styles.searchContainer, { backgroundColor: theme?.background }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: theme?.backgroundSecondary }]}>
+            <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
+            <TextInput
+              style={[styles.searchInput, { 
+                color: theme?.textPrimary,
+              }]}
+              placeholder="Buscar excursões..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme?.textTertiary}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       </View>
 
-      {/* Tabs */}
+      {/* Tabs Estilo Instagram */}
       <View style={[styles.tabContainer, { backgroundColor: theme?.background }]}>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'timeline' && styles.activeTab]}
@@ -440,11 +445,12 @@ export default function Home({ navigation, route }) {
         >
           <Text style={[
             styles.tabText, 
-            { color: theme?.textPrimary },
-            activeTab === 'timeline' && styles.activeTabText
+            { color: theme?.textSecondary },
+            activeTab === 'timeline' && [styles.activeTabText, { color: theme?.textPrimary }]
           ]}>
-            {t('home.timeline')}
+            Para você
           </Text>
+          {activeTab === 'timeline' && <View style={[styles.tabIndicator, { backgroundColor: theme?.primary }]} />}
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -453,11 +459,12 @@ export default function Home({ navigation, route }) {
         >
           <Text style={[
             styles.tabText, 
-            { color: theme?.textPrimary },
-            activeTab === 'popular' && styles.activeTabText
+            { color: theme?.textSecondary },
+            activeTab === 'popular' && [styles.activeTabText, { color: theme?.textPrimary }]
           ]}>
-            {t('home.popular')}
+            Populares
           </Text>
+          {activeTab === 'popular' && <View style={[styles.tabIndicator, { backgroundColor: theme?.primary }]} />}
         </TouchableOpacity>
       </View>
 
@@ -474,18 +481,32 @@ export default function Home({ navigation, route }) {
         backgroundColor: theme?.backgroundDark,
         transform: [{ translateX: sidebarAnimation }] 
       }]}>
-        <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>{t('home.menu')}</Text>
+        <View style={styles.sidebarHeader}>
+          <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>Menu</Text>
+          <TouchableOpacity onPress={toggleSidebar}>
+            <Ionicons name="close" size={24} color={theme?.textPrimary} />
+          </TouchableOpacity>
+        </View>
+        
         <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>{t('home.agenda')}</Text>
+          <Ionicons name="calendar-outline" size={22} color={theme?.textSecondary} />
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Minha Agenda</Text>
         </TouchableOpacity>
+        
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
           navigation.navigate('Favoritos');
           toggleSidebar();
         }}>
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>{t('home.favorites')}</Text>
+          <Ionicons name="heart-outline" size={22} color={theme?.textSecondary} />
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: theme?.primary }]} onPress={toggleSidebar}>
-          <Text style={{ color: theme?.textInverted, textAlign: 'center' }}>{t('home.close')}</Text>
+        
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => {
+          navigation.navigate('Salvos');
+          toggleSidebar();
+        }}>
+          <Ionicons name="bookmark-outline" size={22} color={theme?.textSecondary} />
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Posts Salvos</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -507,7 +528,10 @@ export default function Home({ navigation, route }) {
           <View style={styles.emptyContainer}>
             <Ionicons name="calendar-outline" size={64} color={theme?.textTertiary} />
             <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>
-              {t('home.noEvents')}
+              Nenhuma excursão encontrada
+            </Text>
+            <Text style={[styles.emptySubtext, { color: theme?.textTertiary }]}>
+              {searchQuery ? 'Tente buscar com outros termos' : 'Novas excursões em breve!'}
             </Text>
           </View>
         }
@@ -575,48 +599,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: Platform.OS === 'ios' ? 10 : StatusBar.currentHeight + 10,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  searchRow: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
-  headerIcon: {
-    padding: 8,
+  menuButton: {
+    padding: 4,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    letterSpacing: -0.5,
+  },
+  notificationButton: {
+    padding: 6,
     borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.05)',
   },
-  searchInputContainer: {
-    flex: 1,
-    marginHorizontal: 12,
-    position: 'relative',
+  searchContainer: {
+    marginTop: 4,
   },
-  searchInput: {
-    height: 40,
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 20,
-    paddingHorizontal: 40,
-    fontSize: 16,
+    paddingHorizontal: 16,
+    height: 40,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
   },
   searchIcon: {
-    position: 'absolute',
-    left: 12,
-    top: 10,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -625,19 +655,23 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-  },
-  activeTab: {
-    // Removido indicador visual da tab ativa
+    position: 'relative',
   },
   tabText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   activeTabText: {
-    color: '#f37100',
     fontWeight: 'bold',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    height: 3,
+    width: '40%',
+    borderRadius: 2,
   },
   listContent: {
     paddingBottom: 20,
@@ -717,40 +751,53 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
     marginTop: 16,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    marginTop: 8,
     textAlign: 'center',
   },
   sidebar: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    top: 0,
     left: -30,
     width: 280,
     height: '100%',
-    padding: 24,
+    padding: 20,
     zIndex: 100,
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+  },
+  sidebarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+    marginTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 20,
   },
   sidebarTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 24,
-    marginTop: 16,
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   sidebarItem: {
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 4,
+    paddingHorizontal: 12,
   },
   sidebarText: {
     fontSize: 16,
+    marginLeft: 12,
+    fontWeight: '500',
   },
   overlay: {
     position: 'absolute',
@@ -778,7 +825,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
-  // Estilos do menu dropdown
   menuOverlay: {
     position: 'absolute',
     top: 0,
