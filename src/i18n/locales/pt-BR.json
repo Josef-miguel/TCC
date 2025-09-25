@@ -102,6 +102,7 @@
     "typeComment": "Digite um comentário...",
     "confirmParticipation": "Confirmar participação",
     "chatWithOrganizer": "Conversar com o organizador",
+    "chatWithGroup": "Falar com o grupo",
     "whoTravels": "Quem vai viajar...",
     "whoGoes": "Quem vai ir?",
     "confirm": "Confirmar",
@@ -112,6 +113,11 @@
     "cardName": "Nome no cartão",
     "pay": "Pagar",
     "noImages": "Nenhuma imagem disponível"
+    },
+    "chat": {
+    "you": "Você",
+    "anonymous": "Usuário Anônimo",
+    "typeMessage": "Digite sua mensagem..."
     },
     "register": {
     "title": "Criar Conta",

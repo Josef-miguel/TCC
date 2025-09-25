@@ -151,6 +151,39 @@ const handleOpenPrivateChat = async () => {
   }
 };
 
+// Abre chat em grupo para membros da viagem
+const handleOpenGroupChat = async () => {
+  try {
+    // Requer usuário autenticado
+    if (!auth.currentUser) {
+      Alert.alert('Atenção', 'Faça login para acessar o chat do grupo.');
+      return;
+    }
+
+    const myUid = auth.currentUser.uid;
+    const eventId = selectedPost?.id;
+
+    if (!eventId) {
+      Alert.alert('Erro', 'ID do evento não encontrado.');
+      return;
+    }
+
+    // Verificar se o usuário é membro da viagem
+    const isMember = participants.some(p => p.id === myUid);
+    
+    if (!isMember) {
+      Alert.alert('Acesso negado', 'Você precisa participar da viagem para acessar o chat do grupo.');
+      return;
+    }
+
+    // Navegar para o chat em grupo
+    navigation.navigate('ChatEmGrupo', { eventId });
+  } catch (e) {
+    console.error('Erro ao abrir chat em grupo:', e);
+    Alert.alert('Erro', 'Não foi possível abrir o chat do grupo.');
+  }
+};
+
 
   
 const handleParticipar = async () => {
@@ -168,6 +201,9 @@ const handleParticipar = async () => {
 
     console.log("Participação salva no Firebase!");
     
+    // O chat em grupo agora usa a estrutura existente do evento
+    // Não precisamos criar grupos separados
+    
     // Recarregar participantes para atualizar vagas disponíveis
     await fetchParticipants();
     
@@ -177,6 +213,9 @@ const handleParticipar = async () => {
     console.error("Erro ao salvar participação:", error);
   }
 };
+
+// As funções de grupo de chat foram simplificadas
+// Agora usamos a estrutura existente do evento com subcoleção 'groupMessages'
 
   const handleSendComment = async () => {
   if (newText.trim() === "") return;
@@ -597,6 +636,16 @@ const handleParticipar = async () => {
             >
               <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('post.chatWithOrganizer')}</Text>
             </TouchableOpacity>
+
+            {/* Botão para falar com o grupo - só aparece para membros */}
+            {participants.some(p => p.id === auth.currentUser?.uid) && (
+              <TouchableOpacity
+                style={[styles.groupChatButton, styles.modalButton]}
+                onPress={handleOpenGroupChat}
+              >
+                <Text style={[styles.buttonText, { color: theme?.textInverted }]}>{t('post.chatWithGroup')}</Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
         </View>
 
@@ -898,6 +947,7 @@ const handleParticipar = async () => {
   commentInput: { flex: 1, borderWidth: 1, borderRadius: 6, padding: 8, marginRight: 8 },
   modalButton: { padding: 12, borderRadius: 6, marginBottom: 8, alignItems: "center" },
   chatButton: { backgroundColor: "#f65a65" },
+  groupChatButton: { backgroundColor: "#4CAF50" },
   buttonText: { fontWeight: "bold" },
   mapContainer: {
     height: 200,
