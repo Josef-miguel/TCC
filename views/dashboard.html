@@ -2,9 +2,17 @@
 
 {% block content %}
 <div class="container layout with-sidebar">
+  <!-- Overlay para mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  
   <aside class="sidebar" id="appSidebar" aria-label="Menu lateral">
     <div class="sidebar-header">
       <span class="sidebar-title">Menu</span>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Fechar menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
     <nav class="sidebar-nav">
       <a class="sidebar-link" href="{{ url_for('agenda') }}">📅 <span>Agenda</span></a>
@@ -13,58 +21,141 @@
   </aside>
 
   <section class="content-with-sidebar">
+    <!-- Header com ícones de navegação -->
+    <div class="dashboard-header">
+      <div class="nav-icons">
+        <button class="nav-icon">🔍</button>
+        <button class="nav-icon">📍</button>
+        <button class="nav-icon">🔖</button>
+      </div>
+    </div>
 
-  <h1 class="mb-3">Todos os Eventos</h1>
-  <ul class="events-list">
+    <h1 class="mb-3">Discover</h1>
+    
     {% for event in events %}
-      <li class="event-item card">
-        <div class="event-header">
-          <h2 class="event-title">{{ event.title }}</h2>
-          <form action="{{url_for('chat_individual')}}"></form>
-        </div>
+    <div class="post-card">
+      <!-- Imagem de fundo do post -->
+      <div class="post-background">
+        {% if event.images %}
+          <img src="{{ event.images[0] }}" alt="Imagem do evento" class="background-image">
+        {% else %}
+          <div class="default-background"></div>
+        {% endif %}
+        
+        <!-- Overlay escuro -->
+        <div class="post-overlay"></div>
+        
+        <!-- Conteúdo sobreposto -->
+        <div class="post-content">
+          <!-- Header/Categoria -->
+          <div class="post-header">
+            <span class="post-category">Discover</span>
+            <span class="post-type">Gastronômico</span>
+          </div>
 
-        <div class="event-images">
-          {% for image in event.images %}
-            <img src="{{ image }}" alt="Imagem do evento" style="height: 120px; object-fit:cover; border-radius:8px; width:100%; max-width: 200px;">
-          {% endfor %}
-        </div>
+          <!-- Destino com Rating -->
+          <div class="post-destination">
+            <h2 class="post-title">{{ event.title }}</h2>
+            <div class="post-rating">
+              <span class="stars">⭐⭐⭐⭐⭐</span>
+              <span class="rating-value">4.9</span>
+            </div>
+          </div>
 
-        <p class="clamp-3">{{ event.desc }}</p>
-        <div class="event-meta">
-          <span>Saída: {{ event.exit_date }}</span>
-          <span>Retorno: {{ event.return_date }}</span>
-          <span>Preço: R$ {{ event.price }}</span>
-          <span>Vagas: {{ event.numSlots }}</span>
-        </div>
+          <!-- Resumo da Viagem -->
+          <div class="post-summary">
+            <div class="summary-item">
+              <span class="label">Duração:</span>
+              <span class="value">{{ event.exit_date }} - {{ event.return_date }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Custo:</span>
+              <span class="value">R$ {{ event.price }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Vagas:</span>
+              <span class="value">{{ event.numSlots }}</span>
+            </div>
+          </div>
 
+          <!-- Perfil do Autor -->
+          <div class="post-author">
+            <span class="author-handle">@{{ event.organizer.username if event.organizer else 'organizador' }}</span>
+            <span class="author-role">Viajante</span>
+          </div>
+
+          <!-- Descrição -->
+          <div class="post-description">
+            <p class="description-text">{{ event.desc }}</p>
+            <div class="post-hashtags">
+              <span class="hashtag">#viagem</span>
+              <span class="hashtag">#aventura</span>
+              <span class="hashtag">#descobrir</span>
+            </div>
+          </div>
+
+          <!-- Tags de Conteúdo -->
+          <div class="post-content-tags">
+            <span class="content-tag">#gastronomia</span>
+            <span class="content-tag">#cultura</span>
+            <span class="content-tag">#cidade</span>
+          </div>
+
+          <!-- Métricas de Engajamento -->
+          <div class="post-metrics">
+            <div class="metric">
+              <span class="metric-icon">❤️</span>
+              <span class="metric-value">9.9K</span>
+            </div>
+            <div class="metric">
+              <span class="metric-icon">💾</span>
+              <span class="metric-value">2.3K</span>
+            </div>
+            <div class="metric">
+              <span class="metric-icon">📤</span>
+              <span class="metric-value">567</span>
+            </div>
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="post-actions">
+            <button class="action-btn primary">Rota</button>
+            <button class="action-btn secondary">Planejar</button>
+            <button class="action-btn icon">📍</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mapa -->
+      <div class="map-container">
         <div class="map map-embed"
              id="map-{{ loop.index }}"
              data-route='{{ event.route | default({}) | tojson | safe }}'>
         </div>
+      </div>
 
-        {% for events in user.joinedEvents %}
-          {% if events == event.id %}
-          <p class="mt-2" style="color:green; font-weight:bold;">Você já está participando desta viagem!</p>
-          <form action="{{url_for('chat_group')}}" method="post" class="mt-1">
+      <!-- Status de participação -->
+      {% for events in user.joinedEvents %}
+        {% if events == event.id %}
+        <div class="participation-status">
+          <p class="status-message">Você já está participando desta viagem!</p>
+          <form action="{{url_for('chat_group')}}" method="post">
             <input type="hidden" name="org_uid" value="{{ event.id }}">
             <button class="btn btn-secondary">Falar com o grupo</button>
           </form>
-          {% endif %}
-        {% endfor %}
+        </div>
+        {% endif %}
+      {% endfor %}
 
-        <form action="{{url_for('joinEvent')}}" method="post" class="event-actions mt-2">
-          <button class="btn">Participar da viagem</button>
-          <input type="hidden" name="event_id" value="{{ event.id }}">
-        </form>
-
-
-      </li>
+      <!-- Formulário de participação -->
+      <form action="{{url_for('joinEvent')}}" method="post" class="join-form">
+        <button class="btn btn-primary">Participar da viagem</button>
+        <input type="hidden" name="event_id" value="{{ event.id }}">
+      </form>
+    </div>
     {% endfor %}
-  </ul>
 
-  <a class="btn btn-outline mt-3" href="{{ url_for('new_event') }}">Criar post</a>
-
- 
+    <a class="btn btn-outline mt-3" href="{{ url_for('new_event') }}">Criar post</a>
   </section>
  </div>
 {% endblock %}
