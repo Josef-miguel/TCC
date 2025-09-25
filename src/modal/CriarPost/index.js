@@ -1,24 +1,31 @@
-// miguel isack tentou arrumar em casa pelo web, mas ainda não sei se está a funcionar. Caso tenha erro, volte a versão anterior
-
-import { useState, useContext } from "react";
-import { Text, TextInput, Modal, View, TouchableOpacity, ScrollView, StyleSheet, Image, Linking, Alert } from "react-native";
+import React, { useState, useContext } from "react";
+import { 
+  Text, 
+  TextInput, 
+  Modal, 
+  View, 
+  TouchableOpacity, 
+  ScrollView, 
+  StyleSheet, 
+  Image, 
+  Linking, 
+  Alert,
+  Platform,
+  KeyboardAvoidingView
+} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { showMessage } from 'react-native-flash-message';
 
 import { Feather } from '@expo/vector-icons';
-import InteractiveLeafletMap from '../../components/InteractiveLeafletMap';
 import SimpleRouteMap from '../../components/SimpleRouteMap';
 import RouteInfo from '../../components/RouteInfo';
-import axios from 'axios';
 
-
-import { collection, addDoc } from "firebase/firestore";
-import {db} from '../../../services/firebase'
+import { collection, addDoc, doc, setDoc } from "firebase/firestore";
+import { db } from '../../../services/firebase'
 import { getAuth } from 'firebase/auth';
 import { ThemeContext } from '../../context/ThemeContext';
-
 
 const CreatePost = ({ modalVisible, setModalVisible }) => {
   const { theme } = useContext(ThemeContext);
@@ -27,174 +34,137 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [tripType, setTripType] = useState(1);
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState([]);
-  const [tripPrice, setTripPrice] = useState(0);
-  const [numSlots, setNumSlots] = useState(0);
+  const [tripPrice, setTripPrice] = useState('');
+  const [numSlots, setNumSlots] = useState('');
   const [exit_date, setExitDate] = useState(new Date());
   const [return_date, setReturnDate] = useState(new Date());
-  const [searchText, setSearchText] = useState("");
   
   const [showExitDate, setShowExitDate] = useState(false);
   const [showReturnDate, setShowReturnDate] = useState(false);
 
-  const [mapRegion, setMapRegion] = useState({
-  latitude: -23.55052,
-  longitude: -46.633308,
-  latitudeDelta: 0.1,
-  longitudeDelta: 0.1,
-});
-
-const [mapMarker, setMapMarker] = useState(null);
-
   const [mapStart, setMapStart] = useState(null);
   const [mapEnd, setMapEnd] = useState(null);
-  const [MapDisplayName, setMapDisplayName] = useState([]);
   const [routeCoords, setRouteCoords] = useState([]);
-  const [useSimpleRoute, setUseSimpleRoute] = useState(true); // Usar rota simples por padrão
+  const [isLoading, setIsLoading] = useState(false);
 
+  const tripTypes = [
+    { id: 1, label: 'VIAGEM', icon: 'airplane' },
+    { id: 2, label: 'EXCURSÃO', icon: 'bus' },
+    { id: 3, label: 'SHOW', icon: 'musical-notes' }
+  ];
 
-  function limparCampos(){
+  function limparCampos() {
     setPostName("");
     setTripType(1);
     setDescription("");
     setImageUri([]);
-    setTripPrice(0);
-    setNumSlots(0);
+    setTripPrice("");
+    setNumSlots("");
     setMapStart(null);
     setMapEnd(null);
     setRouteCoords([]);
   }
 
-  async function saveData() {
-
-    if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0) {
-      showMessage({
-        message: "Erro ao Salvar",
-        description: 'Preencha os Campos Obrigatórios!',
-        type: "warning",
-      });
-      return;
+  const validateForm = () => {
+    if (!postName.trim()) {
+      showMessage({ message: "Nome obrigatório", description: 'Digite um nome para a viagem', type: "warning" });
+      return false;
     }
+    if (!description.trim()) {
+      showMessage({ message: "Descrição obrigatória", description: 'Digite uma descrição para a viagem', type: "warning" });
+      return false;
+    }
+    if (imageUri.length === 0) {
+      showMessage({ message: "Imagem obrigatória", description: 'Adicione pelo menos uma imagem', type: "warning" });
+      return false;
+    }
+    if (!tripPrice || Number(tripPrice) <= 0) {
+      showMessage({ message: "Preço inválido", description: 'Digite um preço válido', type: "warning" });
+      return false;
+    }
+    if (!numSlots || Number(numSlots) <= 0) {
+      showMessage({ message: "Vagas inválidas", description: 'Digite um número válido de vagas', type: "warning" });
+      return false;
+    }
+    if (!mapStart || !mapEnd) {
+      showMessage({ message: "Rota incompleta", description: 'Selecione o ponto de partida e destino no mapa', type: "warning" });
+      return false;
+    }
+    return true;
+  };
 
-    console.log("tentar");
+  async function saveData() {
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
 
     try {
-  const auth = getAuth();
-  const uid = auth.currentUser?.uid || null;
+      const auth = getAuth();
+      const uid = auth.currentUser?.uid;
 
-  await addDoc(collection(db, 'events', ), {
-        title: postName || '',
-        desc: description || '',
-        type: tripType || '',
-        images: imageUri || [],
-        numSlots: Number(numSlots) || 0,
-        price: Number(tripPrice) || 0,
-        exit_date: exit_date || '',
-        return_date: return_date || '',
+      if (!uid) {
+        showMessage({ message: "Erro de autenticação", description: "Usuário não logado", type: "danger" });
+        return;
+      }
+
+      const postData = {
+        title: postName.trim(),
+        desc: description.trim(),
+        type: tripType,
+        images: imageUri,
+        numSlots: Number(numSlots),
+        price: Number(tripPrice),
+        exit_date: exit_date.toISOString(),
+        return_date: return_date.toISOString(),
         route: {
           start: mapStart,
           end: mapEnd,
           coordinates: routeCoords,
-          display_start: MapDisplayName[0],
-          display_end: MapDisplayName[1]
-        }
+        },
+        uid: uid,
+        createdAt: new Date().toISOString(),
+        favoriteCount: 0,
+        status: 'active'
+      };
 
-  ,
-  uid: uid,
-  createdAt: new Date().toISOString(),
-
-      });
+      const docRef = await addDoc(collection(db, 'events'), postData);
+      await setDoc(docRef, { id: docRef.id }, { merge: true });
 
       showMessage({
-        message: "Criação de post bem-Sucedida",
-        description: "Bem-vindo!",
+        message: "Viagem criada!",
+        description: "Sua excursão foi publicada com sucesso",
         type: "success",
-        duration: 1800,
+        duration: 2000,
       });
+
       setModalVisible(false);
       limparCampos();
+      
     } catch (error) {
+      console.error("Erro ao criar post:", error);
       showMessage({
-        message: "Ocorreu algum erro: " + error,
-        description: "erro",
-        type: 'warning',
-        duration: 2000
+        message: "Erro ao criar viagem",
+        description: "Tente novamente em alguns instantes",
+        type: "danger",
+        duration: 3000
       });
-      console.log(error);
+    } finally {
+      setIsLoading(false);
     }
-
-    console.log("rodando");
-
-  if (!postName || !tripType || !description || imageUri.length === 0 || tripPrice <= 0 || numSlots <= 0) {
-    showMessage({
-      message: "Erro ao Salvar",
-      description: 'Preencha os Campos Obrigatórios!',
-      type: "warning",
-    });
-    return;
-
   }
-
-  try {
-    // cria o documento no Firestore
-    const docRef = await addDoc(collection(db, 'events'), {
-      title: postName || '',
-      desc: description || '',
-      type: tripType || '',
-      images: imageUri || [],
-      numSlots: Number(numSlots) || 0,
-      price: Number(tripPrice) || 0,
-      exit_date: exit_date || '',
-      return_date: return_date || '',
-      route: {
-        start: mapStart,
-        end: mapEnd,
-        coordinates: routeCoords,
-        display_start: MapDisplayName[0],
-        display_end: MapDisplayName[1]
-      }
-    });
-
-    // adiciona o próprio id dentro do documento
-    await setDoc(docRef, { id: docRef.id }, { merge: true });
-
-    showMessage({
-      message: "Criação de post bem-sucedida",
-      description: "Bem-vindo!",
-      type: "success",
-      duration: 1800,
-    });
-
-    setModalVisible(false);
-    limparCampos();
-  } catch (error) {
-    showMessage({
-      message: "Ocorreu algum erro: " + error,
-      description: "erro",
-      type: 'warning',
-      duration: 2000
-    });
-    console.log(error);
-  }
-}
-
-
 
   const pickImage = async () => {
-    const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
-      if (!canAskAgain) {
-        Alert.alert(
-          'Permissão necessária',
-          'Você precisa permitir o acesso às fotos nas configurações do app.',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Abrir configurações', onPress: () => Linking.openSettings() },
-          ]
-        );
-      } else {
-        Alert.alert('Permissão negada', 'Precisamos de permissão para acessar suas fotos.');
-      }
+      Alert.alert(
+        'Permissão necessária',
+        'Precisamos de acesso às suas fotos para adicionar imagens à viagem.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Abrir configurações', onPress: () => Linking.openSettings() },
+        ]
+      );
       return;
     }
 
@@ -202,258 +172,219 @@ const [mapMarker, setMapMarker] = useState(null);
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        quality: 1,
+        aspect: [4, 3],
+        quality: 0.8,
+        allowsMultipleSelection: true,
+        selectionLimit: 5
       });
 
-      // console.log('Resultado da imagem:', result);
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const newImage = result.assets[0].uri;
-        setImageUri(prevUris => [...prevUris, newImage]);
+      if (!result.canceled && result.assets) {
+        const newImages = result.assets.map(asset => asset.uri);
+        setImageUri(prev => [...prev, ...newImages].slice(0, 5)); // Limite de 5 imagens
       }
-      console.log(imageUri);
     } catch (error) {
-      console.log('Error picking image: ', error);
+      console.log('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem');
     }
   };
 
-const handleSearch = async () => {
-  console.log("Buscando por" + searchText + "...");
-  showMessage({
-        message: "Pesquisando...",
-        description: "Buscando por: " + searchText + "...",
-        type: "notice",
-        duration: 2000,
-      });
-  const response = await fetch(
-  `https://nominatim.openstreetmap.org/search?format=json&q=${searchText}`,
-  {
-    headers: {
-      'User-Agent': 'JSG/1.0 (jubscrebis@gmail.com)' // ou outro seu
-    }
-  }
-);
-  const results = await response.json();
-  if (results.length > 0) {
-    const { lat, lon } = results[0];
-    setMapRegion({
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lon),
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    });
-    setMapMarker({
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lon),
-    });
-  }
-};
-
-const handleMapPress = (e) => {
-  const { latitude, longitude } = e.nativeEvent.coordinate;
-
-  if (!mapStart) {
-    setMapStart({ latitude, longitude });
-  } else if (!mapEnd) {
-    const endCoord = { latitude, longitude };
-    setMapEnd(endCoord);
-    getRouteFromAPI(mapStart, endCoord);
-  }
-};
-
-    // FUNÇÃO PARA TRAÇAR A ROTA
-  const getRouteFromAPI = async (startCoord, endCoord) => {
-    try {
-      const response = await axios.post(
-        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
-        {
-          coordinates: [
-            [startCoord.longitude, startCoord.latitude],
-            [endCoord.longitude, endCoord.latitude],
-          ],
-        },
-        {
-          headers: {
-            Authorization: '5b3ce3597851110001cf6248391ebde1fc8d4266ab1f2b4264a64558',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const coords = response.data.features[0].geometry.coordinates.map(([lng, lat]) => ({
-        latitude: lat,
-        longitude: lng,
-      }));
-
-      setRouteCoords(coords);
-
-      // Geocodifica início e fim da rota
-      const first = coords[0];
-      const last = coords[coords.length - 1];
-
-      reverseGeocode(first.latitude, first.longitude);
-      reverseGeocode(last.latitude, last.longitude);
-
-      
-    } catch (error) {
-      console.log('Erro ao traçar rota:', error);
-      showMessage({
-        message: 'Erro ao traçar rota',
-        description: 'Verifique sua conexão ou chave da API.',
-        type: 'danger',
-      });
-    }
-    console.log(MapDisplayName);
+  const removeImage = (index) => {
+    setImageUri(prev => prev.filter((_, i) => i !== index));
   };
 
+  const formatCurrency = (value) => {
+    const number = value.replace(/\D/g, '');
+    return number ? `R$ ${(Number(number) / 100).toFixed(2)}` : '';
+  };
 
-const reverseGeocode = async (latitude, longitude) => {
-  try {
-    
-    const response = await axios.get(
-      `https://nominatim.openstreetmap.org/reverse`,
-      {
-        params: {
-          format: 'json',
-          lat: latitude,
-          lon: longitude,
-        },
-        headers: {
-          'User-Agent': 'JSG/1.0 (jubscrebis@gmail.com)', 
-        }
-      }
-    );
+  const handlePriceChange = (text) => {
+    // Remove tudo que não é número
+    const numbers = text.replace(/\D/g, '');
+    setTripPrice(numbers);
+  };
 
-    const displayName = response.data.display_name;
-    setMapDisplayName(prev => [...prev, displayName]);
-    console.log('Endereço obtido:', displayName);
-  } catch (error) {
-    console.error('Erro na geocodificação reversa:', error);
-  }
-};
-
-
+  const formatPriceDisplay = (value) => {
+    if (!value) return '';
+    return `R$ ${(Number(value) / 100).toFixed(2)}`;
+  };
 
   return (
-    <>
-      {/* Modal que aparece ao acionar a criação de post */}
-      <Modal
-        animationType="slide"           // Animação de slide ao abrir/fechar
-        transparent={true}               // Fundo semitransparente
-        visible={modalVisible}           // Controla visibilidade via prop
-        onRequestClose={() => setModalVisible(false)} // Fecha modal ao solicitar
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalVisible}
+      onRequestClose={() => { setModalVisible(false); limparCampos(); }}
+    >
+      <KeyboardAvoidingView 
+        style={[styles.modalOverlay, { backgroundColor: theme?.overlay }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={[styles.modalOverlay, { backgroundColor: theme?.overlay }]}>
-          {/* ScrollView permite rolagem quando o conteúdo ultrapassa a tela */}
-          <ScrollView contentContainerStyle={[styles.modalContent, { backgroundColor: theme?.backgroundSecondary }]}>
+        <View style={[styles.modalContainer, { backgroundColor: theme?.backgroundSecondary }]}>
+          
+          {/* Header Fixo */}
+          <View style={[styles.modalHeader, { borderBottomColor: theme?.border }]}>
+            <TouchableOpacity 
+              onPress={() => { setModalVisible(false); limparCampos(); }}
+              style={styles.backButton}
+            >
+              <Ionicons name="close" size={28} color={theme?.textPrimary} />
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: theme?.textPrimary }]}>
+              Nova Excursão
+            </Text>
+            <View style={styles.headerRight} />
+          </View>
 
-            {/* Cabeçalho do modal com botão de voltar e título */}
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => {setModalVisible(false); limparCampos()}}>
-                <Ionicons name="arrow-back" size={32} color={theme?.primary || "#f37100"} />
-              </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: theme?.primary }]}>Criar post</Text>
-            </View>
-
-            {/* Placeholder para imagens do destino */}
-            <View style={[styles.imagePlaceholder, { backgroundColor: theme?.backgroundDark }]}>
+          <ScrollView 
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Seção de Imagens */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Fotos da Viagem
+              </Text>
               
-              <TouchableOpacity style={[styles.uploadButton, { backgroundColor: theme?.backgroundDark }]} onPress={pickImage}>
-                {imageUri.length > 0 ? (
-                  imageUri.map((uri, index) => (
-                    <Image key={index} source={{ uri }} style={styles.profileImage} />
-                  ))
-                ) : (
-                  <Ionicons name="cloud-upload-outline" size={30} color={theme?.primary || "#f37100"} />
+              <View style={styles.imagesContainer}>
+                {imageUri.map((uri, index) => (
+                  <View key={index} style={styles.imageItem}>
+                    <Image source={{ uri }} style={styles.uploadedImage} />
+                    <TouchableOpacity 
+                      style={[styles.removeImageButton, { backgroundColor: theme?.error }]}
+                      onPress={() => removeImage(index)}
+                    >
+                      <Ionicons name="close" size={16} color="#FFF" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                
+                {imageUri.length < 5 && (
+                  <TouchableOpacity 
+                    style={[styles.uploadButton, { backgroundColor: theme?.background }]}
+                    onPress={pickImage}
+                  >
+                    <Ionicons name="camera" size={32} color={theme?.primary} />
+                    <Text style={[styles.uploadText, { color: theme?.textSecondary }]}>
+                      {imageUri.length}/5
+                    </Text>
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+              </View>
             </View>
 
-            {/* Input para nome do post */}
-            <Text style={[styles.label, { color: theme?.textPrimary }]}>Nome do post</Text>
-            <TextInput
-              style={[styles.input, { 
-                borderColor: theme?.primary,
-                color: theme?.textPrimary,
-                backgroundColor: theme?.background
-              }]}
-              placeholder="Viagem para Miracatu, SP..."
-              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
-              value={postName}
-              onChangeText={setPostName}    // Atualiza estado postName
-            />
-
-      
-            {/* Seleção de tipo de viagem */}
-            <Text style={[styles.label, { color: theme?.textPrimary }]}>Tipo de viagem</Text>
-            <View style={styles.tripTypeContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.tripTypeButton,
-                  { borderColor: theme?.border },
-                  tripType === 1 && { backgroundColor: theme?.primary, borderColor: theme?.primary }
-                ]}
-                onPress={() => setTripType(1)}  // Marca 'Viagem'
-              >
-                <Text style={[
-                  styles.tripTypeText,
-                  { color: theme?.textPrimary },
-                  tripType === 1 && { color: theme?.textInverted, fontWeight: 'bold' }
-                ]}>
-                  VIAGEM
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.tripTypeButton,
-                  { borderColor: theme?.border },
-                  tripType === 3 && { backgroundColor: theme?.primary, borderColor: theme?.primary }
-                ]}
-                onPress={() => setTripType(3)} // Marca 'Show'
-              >
-                <Text style={[
-                  styles.tripTypeText,
-                  { color: theme?.textPrimary },
-                  tripType === 3 && { color: theme?.textInverted, fontWeight: 'bold' }
-                ]}>
-                  SHOW
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tripTypeButton,
-                  { borderColor: theme?.border },
-                  tripType === 2 && { backgroundColor: theme?.primary, borderColor: theme?.primary }
-                ]}
-                onPress={() => setTripType(2)} // Marca 'Excursão'
-              >
-                <Text style={[
-                  styles.tripTypeText,
-                  { color: theme?.textPrimary },
-                  tripType === 2 && { color: theme?.textInverted, fontWeight: 'bold' }
-                ]}>
-                  EXCURSÃO
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.label, { color: theme?.textPrimary }]}>Data de saída</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: theme?.background }]}>
-                <Feather name="calendar" size={20} style={[styles.icon, { color: theme?.primary }]} />
-                <TouchableOpacity
+            {/* Seção de Informações Básicas */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Informações da Viagem
+              </Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: theme?.textSecondary }]}>Título da Viagem *</Text>
+                <TextInput
                   style={[styles.input, { 
-                    borderColor: theme?.primary,
+                    backgroundColor: theme?.background,
                     color: theme?.textPrimary,
-                    backgroundColor: theme?.background
+                    borderColor: theme?.border
                   }]}
-                  onPress={() => setShowExitDate(true)}
-                  
-                >
-                  <Text style={{ color: theme?.textTertiary || '#a9a9a9', fontSize: 16 }}>
-                    {exit_date.toLocaleDateString()}
-                  </Text>
-                </TouchableOpacity>
+                  placeholder="Ex: Viagem para Praia Grande - SP"
+                  placeholderTextColor={theme?.textTertiary}
+                  value={postName}
+                  onChangeText={setPostName}
+                  maxLength={60}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: theme?.textSecondary }]}>Tipo de Viagem *</Text>
+                <View style={styles.tripTypeContainer}>
+                  {tripTypes.map((type) => (
+                    <TouchableOpacity
+                      key={type.id}
+                      style={[
+                        styles.tripTypeButton,
+                        { backgroundColor: theme?.background, borderColor: theme?.border },
+                        tripType === type.id && { backgroundColor: theme?.primary, borderColor: theme?.primary }
+                      ]}
+                      onPress={() => setTripType(type.id)}
+                    >
+                      <Ionicons 
+                        name={type.icon} 
+                        size={16} 
+                        color={tripType === type.id ? theme?.textInverted : theme?.primary} 
+                      />
+                      <Text style={[
+                        styles.tripTypeText,
+                        { color: tripType === type.id ? theme?.textInverted : theme?.textPrimary }
+                      ]}>
+                        {type.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: theme?.textSecondary }]}>Descrição *</Text>
+                <TextInput
+                  style={[styles.textArea, { 
+                    backgroundColor: theme?.background,
+                    color: theme?.textPrimary,
+                    borderColor: theme?.border
+                  }]}
+                  placeholder="Descreva os detalhes da viagem, pontos turísticos, programação..."
+                  placeholderTextColor={theme?.textTertiary}
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  maxLength={500}
+                />
+                <Text style={[styles.charCount, { color: theme?.textTertiary }]}>
+                  {description.length}/500
+                </Text>
+              </View>
+            </View>
+
+            {/* Seção de Datas e Preços */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Datas e Valores
+              </Text>
+              
+              <View style={styles.row}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                  <Text style={[styles.label, { color: theme?.textSecondary }]}>Data de Saída</Text>
+                  <TouchableOpacity
+                    style={[styles.dateInput, { 
+                      backgroundColor: theme?.background,
+                      borderColor: theme?.border
+                    }]}
+                    onPress={() => setShowExitDate(true)}
+                  >
+                    <Ionicons name="calendar" size={20} color={theme?.primary} />
+                    <Text style={[styles.dateText, { color: theme?.textPrimary }]}>
+                      {exit_date.toLocaleDateString('pt-BR')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                  <Text style={[styles.label, { color: theme?.textSecondary }]}>Data de Retorno</Text>
+                  <TouchableOpacity
+                    style={[styles.dateInput, { 
+                      backgroundColor: theme?.background,
+                      borderColor: theme?.border
+                    }]}
+                    onPress={() => setShowReturnDate(true)}
+                  >
+                    <Ionicons name="calendar" size={20} color={theme?.primary} />
+                    <Text style={[styles.dateText, { color: theme?.textPrimary }]}>
+                      {return_date.toLocaleDateString('pt-BR')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {showExitDate && (
@@ -461,7 +392,7 @@ const reverseGeocode = async (latitude, longitude) => {
                   value={exit_date}
                   mode="date"
                   display="default"
-                  style={styles.input}
+                  minimumDate={new Date()}
                   onChange={(event, selectedDate) => {
                     setShowExitDate(false);
                     if (selectedDate) setExitDate(selectedDate);
@@ -469,236 +400,300 @@ const reverseGeocode = async (latitude, longitude) => {
                 />
               )}
 
+              {showReturnDate && (
+                <DateTimePicker
+                  value={return_date}
+                  mode="date"
+                  display="default"
+                  minimumDate={exit_date}
+                  onChange={(event, selectedDate) => {
+                    setShowReturnDate(false);
+                    if (selectedDate) setReturnDate(selectedDate);
+                  }}
+                />
+              )}
 
-            <Text style={[styles.label, { color: theme?.textPrimary }]}>Data de retorno</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: theme?.background }]}>
-              <Feather name="calendar" size={20} style={[styles.icon, { color: theme?.primary }]} />
-              <TouchableOpacity
-                style={[styles.input, { 
-                  borderColor: theme?.primary,
-                  color: theme?.textPrimary,
-                  backgroundColor: theme?.background
-                }]}
-                onPress={() => setShowReturnDate(true)}
-              >
-                <Text style={{ color: theme?.textTertiary || '#a9a9a9', fontSize: 16 }}>
-                  {return_date.toLocaleDateString()}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.row}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                  <Text style={[styles.label, { color: theme?.textSecondary }]}>Preço por pessoa *</Text>
+                  <View style={[styles.priceInputContainer, { backgroundColor: theme?.background, borderColor: theme?.border }]}>
+                    <Text style={[styles.currencySymbol, { color: theme?.textPrimary }]}>R$</Text>
+                    <TextInput
+                      style={[styles.priceInput, { color: theme?.textPrimary }]}
+                      placeholder="0,00"
+                      placeholderTextColor={theme?.textTertiary}
+                      value={tripPrice ? (Number(tripPrice) / 100).toFixed(2) : ''}
+                      onChangeText={handlePriceChange}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+
+                <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                  <Text style={[styles.label, { color: theme?.textSecondary }]}>Vagas disponíveis *</Text>
+                  <TextInput
+                    style={[styles.input, { 
+                      backgroundColor: theme?.background,
+                      color: theme?.textPrimary,
+                      borderColor: theme?.border
+                    }]}
+                    placeholder="0"
+                    placeholderTextColor={theme?.textTertiary}
+                    value={numSlots}
+                    onChangeText={(text) => setNumSlots(text.replace(/[^0-9]/g, ''))}
+                    keyboardType="numeric"
+                    maxLength={3}
+                  />
+                </View>
+              </View>
             </View>
 
-            {showReturnDate && (
-              <DateTimePicker
-                value={return_date}
-                mode="date"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  setShowReturnDate(false);
-                  if (selectedDate) setReturnDate(selectedDate);
-                }}
+            {/* Seção do Mapa */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Rota da Viagem *
+              </Text>
+              
+              <SimpleRouteMap
+                startCoordinate={mapStart}
+                endCoordinate={mapEnd}
+                height={200}
+                onRouteCalculated={setRouteCoords}
+                theme={theme}
               />
-            )}
+              
+              <RouteInfo
+                routeCoordinates={routeCoords}
+                startCoordinate={mapStart}
+                endCoordinate={mapEnd}
+                theme={theme}
+              />
+            </View>
 
-
-
-            {/* Input para quantidade de pessoas */}
-            <Text style={[styles.label, { color: theme?.textPrimary }]}>Quantidade de pessoas</Text>
-            <TextInput
-              style={[styles.input, { 
-                borderColor: theme?.primary,
-                color: theme?.textPrimary,
-                backgroundColor: theme?.background
-              }]}
-              placeholder="Quantidade de pessoas"
-              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
-              value={String(numSlots)}
-              onChangeText={(t) => setNumSlots(Number(t) || 0)}
-              keyboardType="numeric"          // Tipo numérico
-            />
-            {/* Input para o preço */}
-            <Text style={[styles.label, { color: theme?.textPrimary }]}>Preço R$</Text>
-            <TextInput
-              style={[styles.input, { 
-                borderColor: theme?.primary,
-                color: theme?.textPrimary,
-                backgroundColor: theme?.background
-              }]}
-              placeholder="R$00,00"
-              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
-              value={String(tripPrice)}
-              onChangeText={(t) => setTripPrice(Number(t) || 0)}
-              keyboardType="numeric"          // Tipo numérico
-            />
-
-            {/* Input de descrição da viagem */}
-            <Text style={[styles.label, { color: theme?.textPrimary }]}>Descrição da viagem</Text>
-            <TextInput
-              style={[styles.input, styles.descriptionInput, { 
-                borderColor: theme?.primary,
-                color: theme?.textPrimary,
-                backgroundColor: theme?.background
-              }]}
-              placeholder="Vamos nos divertir pela cidade!"
-              placeholderTextColor={theme?.textTertiary || "#a9a9a9"}
-              value={description}
-              onChangeText={setDescription}    // Atualiza estado description
-              multiline                         // Permite múltiplas linhas
-            />
-
-            {/* Mapa com rota simples */}
-            <SimpleRouteMap
-              startCoordinate={mapStart}
-              endCoordinate={mapEnd}
-              height={200}
-              style={{ marginBottom: 15 }}
-              onRouteCalculated={(route) => {
-                setRouteCoords(route);
-                console.log('Rota simples calculada:', route);
-              }}
-            />
-            
-            {/* Informações da rota */}
-            <RouteInfo
-              routeCoordinates={routeCoords}
-              startCoordinate={mapStart}
-              endCoordinate={mapEnd}
-              theme={theme}
-            />
-            
-            {/* Texto de termos de uso com link */}
+            {/* Termos e Condições */}
             <Text style={[styles.termsText, { color: theme?.textTertiary }]}>
-              Ao criar uma publicação no aplicativo, você concorda com os{' '}
-              <Text style={[styles.termsLink, { color: theme?.primary }]}>Termos de Uso e Política de Privacidade</Text>
-              {' '}do JSG.
+              Ao criar uma publicação, você concorda com os{' '}
+              <Text style={[styles.termsLink, { color: theme?.primary }]}>
+                Termos de Uso
+              </Text>{' '}
+              e{' '}
+              <Text style={[styles.termsLink, { color: theme?.primary }]}>
+                Política de Privacidade
+              </Text>
             </Text>
 
-            {/* Botão para submeter/criar o post */}
-            <TouchableOpacity style={[styles.submitButton, { 
-              backgroundColor: theme?.primary,
-              borderColor: theme?.primary
-            }]} onPress={saveData}>
-              <Text style={[styles.submitButtonText, { color: theme?.textInverted }]}>VIAJAR</Text>
+            {/* Botão de Publicar */}
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                { 
+                  backgroundColor: isLoading ? theme?.textTertiary : theme?.primary,
+                  opacity: isLoading ? 0.7 : 1
+                }
+              ]}
+              onPress={saveData}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Text style={[styles.submitButtonText, { color: theme?.textInverted }]}>
+                  Publicando...
+                </Text>
+              ) : (
+                <>
+                  <Ionicons name="rocket" size={20} color={theme?.textInverted} />
+                  <Text style={[styles.submitButtonText, { color: theme?.textInverted }]}>
+                    PUBLICAR EXCURSÃO
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
-
           </ScrollView>
         </View>
-      </Modal>
-    </>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
-// Estilos do componente
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
   },
-  modalContent: {
-    marginHorizontal: 20,
-    borderRadius: 10,
-    padding: 15,
-    minHeight: '90%',                
+  modalContainer: {
+    flex: 1,
+    marginTop: Platform.OS === 'ios' ? 50 : 30,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   modalHeader: {
-    flexDirection: 'row',           
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    padding: 4,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
   },
-  imagePlaceholder: {
-    height: 100,
+  headerRight: {
+    width: 36,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  section: {
+    marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  imagesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  imageItem: {
+    position: 'relative',
+  },
+  uploadedImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadButton: {
+    width: 80,
+    height: 80,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    borderWidth: 1,
+    borderStyle: 'dashed',
   },
-  placeholderText: {
-    color: '#888',
+  uploadText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  inputGroup: {
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '500',
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
   },
-  descriptionInput: {
-    height: 80,
-    textAlignVertical: 'top',     
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    fontSize: 12,
+    textAlign: 'right',
+    marginTop: 4,
   },
   tripTypeContainer: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 15,
+    gap: 8,
   },
   tripTypeButton: {
     flex: 1,
-    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    alignItems: 'center',
+    gap: 6,
   },
   tripTypeText: {
     fontSize: 12,
+    fontWeight: '500',
   },
-  mapPlaceholder: {
-    height: 100,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    justifyContent: 'center',
+  row: {
+    flexDirection: 'row',
+  },
+  dateInput: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  dateText: {
+    fontSize: 16,
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+  },
+  currencySymbol: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  priceInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 12,
   },
   termsText: {
     fontSize: 12,
     textAlign: 'center',
-    marginBottom: 15,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    lineHeight: 16,
   },
   termsLink: {
-    textDecorationLine: 'underline',
+    fontWeight: '500',
   },
   submitButton: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  submitButtonText: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  profileImage: { 
-    width: '100%',
-    height: '100%' 
-  },
-   uploadButton: {
-    width: '100%', height: '100%', 
-    justifyContent: 'center',
-    alignItems: 'center', overflow: 'hidden',
-  },
-  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    justifyContent: 'center',
+    padding: 18,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    gap: 8,
   },
-  icon: {
-    marginRight: 10,
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

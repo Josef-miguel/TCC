@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  Switch, Modal, Image, Alert, Linking
+  Switch, Modal, Image, Alert, Linking, ScrollView, KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,205 +12,374 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { appContext } from '../../../App';
 import { ThemeContext } from '../../context/ThemeContext';
 
-
-
 const CustomizeProfile = ({
   modalVisible,
   setModalVisible,
   navigation,
-  onSave  // callback opcional para enviar os dados pra fora
+  onSave
 }) => {
   const { organizerMode, toggleOrganizer } = useContext(appContext);
   const { userData, setUserData } = useAuth();
-
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
+  
   const [name, setName] = useState(userData?.userInfo?.nome || "");
   const [surname, setSurname] = useState(userData?.userInfo?.surname || "");
   const [description, setDescription] = useState(userData?.userInfo?.desc || "");
   const [isOrganizerMode, setIsOrganizerMode] = useState(userData?.userInfo?.isOrganizer || false);
-  const [imageUri, setImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState(userData?.userInfo?.profileImage || null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  
-// console.log(userData?.userInfo);
-
-const pickImage = async () => {
-  const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-  if (status !== 'granted') {
-    if (!canAskAgain) {
-      // Usuário marcou "não perguntar novamente"
-      Alert.alert(
-        'Permissão necessária',
-        'Você precisa permitir o acesso às fotos nas configurações do app.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Abrir configurações',
-            onPress: () => Linking.openSettings(),
-          },
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Permissão negada',
-        'Precisamos de permissão para acessar suas fotos.'
-      );
+  useEffect(() => {
+    if (userData?.userInfo) {
+      setName(userData.userInfo.nome || "");
+      setSurname(userData.userInfo.surname || "");
+      setDescription(userData.userInfo.desc || "");
+      setIsOrganizerMode(userData.userInfo.isOrganizer || false);
+      setImageUri(userData.userInfo.profileImage || null);
     }
-    return;
-  }
+  }, [userData]);
 
-  try {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.5,
-    });
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+  const pickImage = async () => {
+    const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== 'granted') {
+      if (!canAskAgain) {
+        Alert.alert(
+          'Permissão necessária',
+          'Você precisa permitir o acesso às fotos nas configurações do app.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Abrir configurações',
+              onPress: () => Linking.openSettings(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Permissão negada',
+          'Precisamos de permissão para acessar suas fotos.'
+        );
+      }
+      return;
     }
-  } catch (error) {
-    console.log('Error picking image: ', error);
-  }
-};
 
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+      
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.log('Error picking image: ', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
+    }
+  };
 
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permissão necessária', 'Precisamos de acesso à câmera.');
+      return;
+    }
 
-  // Reúne os dados e fecha o modal
-  async function handleSave () {
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 0.8,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+      
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.log('Error taking photo: ', error);
+      Alert.alert('Erro', 'Não foi possível tirar a foto.');
+    }
+  };
+
+  const showImagePickerOptions = () => {
+    Alert.alert(
+      'Escolher foto de perfil',
+      'Como você gostaria de adicionar uma foto?',
+      [
+        {
+          text: 'Tirar foto',
+          onPress: takePhoto,
+        },
+        {
+          text: 'Escolher da galeria',
+          onPress: pickImage,
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  async function handleSave() {
+    if (isSaving) return;
+    
+    setIsSaving(true);
+    
     const updObj = {
-      nome : name ?? '',
-      surname : surname ?? '',
-      desc : description ?? '',
-      isOrganizer : isOrganizerMode ?? false,
-      profileImage : imageUri ?? ''
+      nome: name?.trim() || '',
+      surname: surname?.trim() || '',
+      desc: description?.trim() || '',
+      isOrganizer: isOrganizerMode || false,
+      profileImage: imageUri || ''
     };
 
-     try {
-      // Use uid direto do contexto (userData.uid) se disponível. fallback para userInfo.uid ou null
+    try {
       const uid = userData?.uid || userData?.userInfo?.uid || null;
       if (!uid) {
-        console.error('UID do usuário indefinido. Não é possível atualizar o perfil. userData:', userData);
+        Alert.alert('Erro', 'Não foi possível identificar o usuário.');
         return;
       }
+      
       const userRef = doc(db, 'user', uid);
       await updateDoc(userRef, updObj);
+      
       setUserData((prev) => ({
-      ...prev,
-      userInfo: {
-        ...prev?.userInfo,
-        ...updObj,
-      },
-      isOrganizer: updObj.isOrganizer,
-    }));
-      console.log('Dados atualizados com sucesso!');
-      console.log("isOrganizer: " + userData?.isOrganizer);
-      toggleOrganizer();
+        ...prev,
+        userInfo: {
+          ...prev?.userInfo,
+          ...updObj,
+        },
+        isOrganizer: updObj.isOrganizer,
+      }));
+      
+      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
+      setModalVisible(false);
+      
     } catch (error) {
       console.error('Erro ao atualizar dados:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as alterações.');
+    } finally {
+      setIsSaving(false);
     }
+  }
 
-    // Exemplo: enviar para a API ou salvar localmente
-    // await api.updateProfile(profileData);
-    // ou AsyncStorage.setItem('@profile', JSON.stringify(profileData));
-
-    // Se quiser notificar o componente pai:
-    // if (onSave) {
-    //   onSave(profileData);
-    // }
-
-    // Fecha o modal
-    setModalVisible(false);
+  const renderProfileImage = () => {
+    if (imageUri) {
+      return (
+        <Image source={{ uri: imageUri }} style={styles.profileImage} />
+      );
+    } else {
+      return (
+        <View style={[styles.profileImagePlaceholder, { backgroundColor: theme?.background }]}>
+          <Ionicons name="person" size={50} color={theme?.textTertiary} />
+        </View>
+      );
+    }
   };
 
   if (!modalVisible) return null;
 
   return (
     <Modal visible={modalVisible} transparent animationType="slide">
-      <View style={[styles.modalOverlay, { backgroundColor: theme?.overlay }]}>
-        <View style={[styles.background, { backgroundColor: theme?.backgroundSecondary }]}>
-          {/* --- Header --- */}
+      <KeyboardAvoidingView 
+        style={[styles.modalOverlay, { backgroundColor: theme?.overlay }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={[styles.container, { backgroundColor: theme?.backgroundSecondary }]}>
+          {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Ionicons name="arrow-back" size={32} color={theme?.primary || "#f37100"} />
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={28} color={theme?.textPrimary} />
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: theme?.primary }]}>Customizar perfil</Text>
+            <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>
+              Editar Perfil
+            </Text>
+            <View style={styles.headerRight} />
           </View>
 
-          {/* --- Upload de Foto --- */}
-          <View style={styles.profilePicContainer}>
-            <TouchableOpacity style={[styles.uploadButton, { backgroundColor: theme?.backgroundDark }]} onPress={pickImage}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.profileImage} />
+          <ScrollView 
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Seção Foto de Perfil */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Foto de Perfil
+              </Text>
+              <View style={styles.profileSection}>
+                <View style={styles.imageContainer}>
+                  {renderProfileImage()}
+                  <TouchableOpacity 
+                    style={[styles.editImageButton, { backgroundColor: theme?.primary }]}
+                    onPress={showImagePickerOptions}
+                  >
+                    <Ionicons name="camera" size={20} color="#FFF" />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.imageButtons}>
+                  <TouchableOpacity 
+                    style={[styles.imageOptionButton, { backgroundColor: theme?.background, borderColor: theme?.border }]}
+                    onPress={takePhoto}
+                  >
+                    <Ionicons name="camera-outline" size={20} color={theme?.primary} />
+                    <Text style={[styles.imageOptionText, { color: theme?.textPrimary }]}>
+                      Tirar foto
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.imageOptionButton, { backgroundColor: theme?.background, borderColor: theme?.border }]}
+                    onPress={pickImage}
+                  >
+                    <Ionicons name="image-outline" size={20} color={theme?.primary} />
+                    <Text style={[styles.imageOptionText, { color: theme?.textPrimary }]}>
+                      Galeria
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Seção Informações Pessoais */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Informações Pessoais
+              </Text>
+              
+              <View style={styles.nameRow}>
+                <View style={styles.nameInputContainer}>
+                  <Text style={[styles.label, { color: theme?.textSecondary }]}>Nome</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: theme?.background, color: theme?.textPrimary, borderColor: theme?.border }]}
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Seu nome"
+                    placeholderTextColor={theme?.textTertiary}
+                  />
+                </View>
+                
+                <View style={styles.nameInputContainer}>
+                  <Text style={[styles.label, { color: theme?.textSecondary }]}>Sobrenome</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: theme?.background, color: theme?.textPrimary, borderColor: theme?.border }]}
+                    value={surname}
+                    onChangeText={setSurname}
+                    placeholder="Seu sobrenome"
+                    placeholderTextColor={theme?.textTertiary}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.label, { color: theme?.textSecondary }]}>Bio</Text>
+                <TextInput
+                  style={[styles.textArea, { backgroundColor: theme?.background, color: theme?.textPrimary, borderColor: theme?.border }]}
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="Conte um pouco sobre você..."
+                  placeholderTextColor={theme?.textTertiary}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  maxLength={200}
+                />
+                <Text style={[styles.charCount, { color: theme?.textTertiary }]}>
+                  {description.length}/200
+                </Text>
+              </View>
+            </View>
+
+            {/* Seção Configurações */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Configurações
+              </Text>
+              
+              <View style={[styles.switchContainer, { backgroundColor: theme?.background, borderColor: theme?.border }]}>
+                <View style={styles.switchTextContainer}>
+                  <Text style={[styles.switchLabel, { color: theme?.textPrimary }]}>
+                    Modo Organizador
+                  </Text>
+                  <Text style={[styles.switchDescription, { color: theme?.textSecondary }]}>
+                    Crie e gerencie seus próprios eventos
+                  </Text>
+                </View>
+                <Switch
+                  value={isOrganizerMode}
+                  onValueChange={setIsOrganizerMode}
+                  thumbColor={isOrganizerMode ? theme?.primary : '#f4f3f4'}
+                  trackColor={{ false: '#767577', true: theme?.primary + '80' }}
+                />
+              </View>
+            </View>
+
+            {/* Seção Configurações de Conta */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Configurações de Conta
+              </Text>
+              
+              <TouchableOpacity
+                style={[styles.menuButton, { backgroundColor: theme?.background, borderColor: theme?.border }]}
+                onPress={() => navigation.navigate('Formapagamento')}
+              >
+                <Ionicons name="card-outline" size={22} color={theme?.primary} />
+                <Text style={[styles.menuButtonText, { color: theme?.textPrimary }]}>
+                  Formas de Pagamento
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color={theme?.textTertiary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.menuButton, { backgroundColor: theme?.background, borderColor: theme?.border }]}
+                onPress={() => navigation.navigate('VerificacaoIdentidade')}
+              >
+                <Ionicons name="shield-checkmark-outline" size={22} color={theme?.primary} />
+                <Text style={[styles.menuButtonText, { color: theme?.textPrimary }]}>
+                  Verificação de Identidade
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color={theme?.textTertiary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Botão Salvar */}
+            <TouchableOpacity
+              style={[
+                styles.saveButton, 
+                { 
+                  backgroundColor: isSaving ? theme?.textTertiary : theme?.primary,
+                  opacity: isSaving ? 0.7 : 1
+                }
+              ]}
+              onPress={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Text style={[styles.saveButtonText, { color: theme?.textInverted }]}>
+                  Salvando...
+                </Text>
               ) : (
-                <Ionicons name="cloud-upload-outline" size={30} color={theme?.primary || "#f37100"} />
+                <>
+                  <Ionicons name="checkmark-circle-outline" size={20} color={theme?.textInverted} />
+                  <Text style={[styles.saveButtonText, { color: theme?.textInverted }]}>
+                    Salvar Alterações
+                  </Text>
+                </>
               )}
             </TouchableOpacity>
-          </View>
-
-          {/* --- Campos de Texto --- */}
-          <Text style={[styles.label, { color: theme?.textPrimary }]}>Nome</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme?.background, borderColor: theme?.primary, color: theme?.textPrimary }]}
-            value={name}
-            onChangeText={setName}
-            placeholder="Digite seu nome"
-            placeholderTextColor={theme?.textTertiary || "#a4a4a4"}
-          />
-
-          <Text style={[styles.label, { color: theme?.textPrimary }]}>Sobrenome</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme?.background, borderColor: theme?.primary, color: theme?.textPrimary }]}
-            value={surname}
-            onChangeText={setSurname}
-            placeholder="Digite seu sobrenome"
-            placeholderTextColor={theme?.textTertiary || "#a4a4a4"}
-          />
-
-          <Text style={[styles.label, { color: theme?.textPrimary }]}>Descrição</Text>
-          <TextInput
-            style={[styles.input, styles.descriptionInput, { backgroundColor: theme?.background, borderColor: theme?.primary, color: theme?.textPrimary }]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Fale um pouco sobre você..."
-            multiline
-            placeholderTextColor={theme?.textTertiary || "#a4a4a4"}
-          />
-
-          {/* --- Switch --- */}
-          <View style={styles.switchContainer}>
-            <Switch
-              value={isOrganizerMode}
-              onValueChange={(value) => setIsOrganizerMode(value)}
-              thumbColor={isOrganizerMode ? (theme?.primary || '#f37100') : '#000'}
-              trackColor={{ false: '#767577', true: '#494949' }}
-            />
-            <Text style={[styles.switchLabel, { color: theme?.textSecondary }]}>Modo organizador</Text>
-          </View>
-
-          {/* --- Botões Extras --- */}
-          <TouchableOpacity
-            style={[styles.button, styles.paymentButton, { backgroundColor: theme?.backgroundDark, borderColor: theme?.primary }]}
-            onPress={() => navigation.navigate('Formapagamento')}
-          >
-            <Text style={[styles.buttonText, { color: theme?.textPrimary }]}>Formas de pagamento</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.verificationButton, { backgroundColor: theme?.backgroundDark, borderColor: theme?.primary }]}
-            onPress={() => navigation.navigate('VerificacaoIdentidade')}
-          >
-            <Text style={[styles.buttonText, { color: theme?.textPrimary }]}>Verificação de identidade</Text>
-          </TouchableOpacity>
-
-          {/* --- Botão Salvar --- */}
-          <TouchableOpacity
-            style={[styles.button, styles.saveButton, { backgroundColor: theme?.primary, borderColor: theme?.primary }]}
-            onPress={handleSave}
-          >
-            <Text style={[styles.buttonText, { color: theme?.textInverted }]}>Salvar</Text>
-          </TouchableOpacity>
+          </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -217,36 +387,184 @@ const pickImage = async () => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  container: {
+    flex: 1,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: 50,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerRight: {
+    width: 36,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 30,
+  },
+  section: {
+    marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  profileSection: {
     alignItems: 'center',
   },
-  background: {
-    width: '90%',
-    borderRadius: 8,
-    padding: 20,
+  imageContainer: {
+    position: 'relative',
+    marginBottom: 16,
   },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center' },
-  profilePicContainer: { alignItems: 'center', marginBottom: 20 },
-  uploadButton: {
-    width: 100, height: 100, borderRadius: 50,
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  profileImagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: 'center',
-    alignItems: 'center', overflow: 'hidden',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
-  profileImage: { width: '100%', height: '100%' },
-  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5 },
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFF',
+  },
+  imageButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  imageOptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+    borderWidth: 1,
+  },
+  imageOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  nameInputContainer: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+  },
   input: {
-    borderWidth: 1, borderRadius: 8,
-    padding: 10, marginBottom: 15
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
   },
-  descriptionInput: { height: 80, textAlignVertical: 'top' },
-  switchContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  switchLabel: { marginLeft: 10, fontSize: 14 },
-  button: { padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 10 },
-  paymentButton: { borderWidth: 1 },
-  verificationButton: { borderWidth: 1 },
-  saveButton: { borderWidth: 1 },
-  buttonText: { fontWeight: 'bold', fontSize: 16 },
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    fontSize: 12,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  switchTextContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  switchLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  switchDescription: {
+    fontSize: 14,
+  },
+  menuButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 12,
+    borderWidth: 1,
+  },
+  menuButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginTop: 8,
+    gap: 8,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default CustomizeProfile;
