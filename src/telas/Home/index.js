@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
-import { 
+import {
   View, 
   Text, 
   StyleSheet, 
@@ -13,7 +13,8 @@ import {
   StatusBar, 
   Platform,
   FlatList,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
@@ -38,6 +39,9 @@ export default function Home({ navigation, route }) {
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('timeline'); // 'timeline' ou 'popular'
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [showPostMenu, setShowPostMenu] = useState(false);
+  const [selectedPostForMenu, setSelectedPostForMenu] = useState(null);
 
   const { width, height } = Dimensions.get("window");
 
@@ -73,7 +77,7 @@ export default function Home({ navigation, route }) {
         favCount: doc.data().favoriteCount || 0
       }));
       
-      // Verifica favoritos do usuário
+      // Verifica favoritos e posts salvos do usuário
       if (auth.currentUser) {
         try {
           const userRef = doc(db, 'user', auth.currentUser.uid);
@@ -82,13 +86,15 @@ export default function Home({ navigation, route }) {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             const favoritePostIds = userData.favoritePosts || [];
+            const savedPostIds = userData.savedPosts || [];
             
             fetchedPosts.forEach(post => {
               post.fav = favoritePostIds.includes(post.id);
+              post.saved = savedPostIds.includes(post.id);
             });
           }
         } catch (error) {
-          console.error('Erro ao verificar favoritos:', error);
+          console.error('Erro ao verificar favoritos e salvos:', error);
         }
       }
       
@@ -147,6 +153,114 @@ export default function Home({ navigation, route }) {
     }
   };
 
+  const toggleSave = async (id) => {
+    if (!auth.currentUser) {
+      console.log('Usuário não autenticado');
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "user", auth.currentUser.uid);
+      const post = posts.find(p => p.id === id);
+      
+      if (post?.saved) {
+        await updateDoc(userRef, {
+          savedPosts: arrayRemove(id)
+        });
+      } else {
+        await updateDoc(userRef, {
+          savedPosts: arrayUnion(id)
+        });
+      }
+      
+      setPosts(prev => prev.map(i => i.id === id ? { ...i, saved: !i.saved } : i));
+    } catch (error) {
+      console.error('Erro ao salvar post:', error);
+    }
+  };
+
+  // Funções do menu de três pontos
+  const handleReportarProblema = () => {
+    setShowPostMenu(false);
+    // Aqui você pode implementar a lógica de reportar problema
+    Alert.alert('Reportar Problema', 'Funcionalidade de reportar problema será implementada em breve.');
+  };
+
+  const handleSalvarPost = async () => {
+    if (!auth.currentUser || !selectedPostForMenu?.id) {
+      console.log("Usuário não autenticado ou evento sem ID");
+      return;
+    }
+
+    try {
+      setShowPostMenu(false);
+      const userRef = doc(db, "user", auth.currentUser.uid);
+      const post = posts.find(p => p.id === selectedPostForMenu.id);
+      
+      if (post?.saved) {
+        await updateDoc(userRef, {
+          savedPosts: arrayRemove(selectedPostForMenu.id)
+        });
+        setPosts(prev => prev.map(i => i.id === selectedPostForMenu.id ? { ...i, saved: false } : i));
+        Alert.alert('Sucesso', 'Post removido dos salvos!');
+      } else {
+        await updateDoc(userRef, {
+          savedPosts: arrayUnion(selectedPostForMenu.id)
+        });
+        setPosts(prev => prev.map(i => i.id === selectedPostForMenu.id ? { ...i, saved: true } : i));
+        Alert.alert('Sucesso', 'Post salvo!');
+      }
+    } catch (error) {
+      console.error("Erro ao salvar/remover post:", error);
+      Alert.alert('Erro', 'Não foi possível salvar o post.');
+    }
+  };
+
+  const handleVisualizarPerfil = () => {
+    setShowPostMenu(false);
+
+    // Attempt to resolve a stable uid for the creator from several legacy/variant fields
+    let targetUserId = selectedPostForMenu?.uid
+      || selectedPostForMenu?.creator?.id
+      || selectedPostForMenu?.creator?.uid
+      || selectedPostForMenu?.userId
+      || selectedPostForMenu?.user?.uid
+      || selectedPostForMenu?.ownerId
+      || null;
+
+    // Defensive: if we have an object instead of string (sometimes creator is a user object), try common properties
+    if (targetUserId && typeof targetUserId !== 'string') {
+      if (typeof targetUserId.uid === 'string') targetUserId = targetUserId.uid;
+      else if (typeof targetUserId.id === 'string') targetUserId = targetUserId.id;
+      else targetUserId = String(targetUserId);
+    }
+
+    // Trim and final validation
+    if (typeof targetUserId === 'string') {
+      targetUserId = targetUserId.trim();
+      if (targetUserId === '') targetUserId = null;
+    }
+
+    if (!targetUserId) {
+      console.warn('Home: Could not resolve creator uid for post', selectedPostForMenu?.id || selectedPostForMenu);
+      Alert.alert('Perfil indisponível', 'Não foi possível encontrar o usuário associado a este post.', [{ text: 'OK' }]);
+      return;
+    }
+
+    // Pass explicit uid and also include any lightweight creator object if available as a convenience
+    const creatorObj = (selectedPostForMenu?.creator && typeof selectedPostForMenu.creator === 'object')
+      ? selectedPostForMenu.creator
+      : (selectedPostForMenu?.user && typeof selectedPostForMenu.user === 'object') ? selectedPostForMenu.user : null;
+
+    console.log('Home: navigating to VisualizarPerfil with uid=', targetUserId, 'creatorObj=', !!creatorObj, 'selectedPostId=', selectedPostForMenu?.id);
+    navigation.navigate('VisualizarPerfil', { uid: targetUserId, user: creatorObj });
+  };
+
+  const openPostMenu = (post) => {
+    setSelectedPostForMenu(post);
+    setShowPostMenu(true);
+  };
+
   const toggleSidebar = () => {
     Animated.timing(sidebarAnimation, {
       toValue: sidebarVisible ? -250 : 30,
@@ -184,7 +298,7 @@ export default function Home({ navigation, route }) {
           </Text>
         </View>
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => openPostMenu(post)}>
         <Ionicons name="ellipsis-horizontal" size={20} color={theme?.textPrimary} />
       </TouchableOpacity>
     </View>
@@ -208,8 +322,12 @@ export default function Home({ navigation, route }) {
           <Ionicons name="paper-plane-outline" size={24} color={theme?.textPrimary} />
         </TouchableOpacity>
       </View>
-      <TouchableOpacity>
-        <Ionicons name="bookmark-outline" size={24} color={theme?.textPrimary} />
+      <TouchableOpacity onPress={() => toggleSave(post.id)}>
+        <Ionicons 
+          name={post.saved ? 'bookmark' : 'bookmark-outline'} 
+          size={24} 
+          color={post.saved ? theme?.primary : theme?.textPrimary} 
+        />
       </TouchableOpacity>
     </View>
   );
@@ -273,41 +391,45 @@ export default function Home({ navigation, route }) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme?.background }]}>
       {/* Header Fixo */}
       <View style={[styles.header, { backgroundColor: theme?.background }]}>
-        <TouchableOpacity onPress={toggleSidebar}>
-          <Ionicons name="menu" size={28} color={theme?.primary} />
-        </TouchableOpacity>
-        
         <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>
           {t('home.title')}
         </Text>
-        
-        <TouchableOpacity onPress={() => navigation.navigate('Notificacoes')}>
-          <View style={{ position: 'relative' }}>
-            <Ionicons name="notifications-outline" size={28} color={theme?.primary} />
-            {typeof totalUnread === 'number' && totalUnread > 0 && (
-              <View style={[styles.notificationBadge, { backgroundColor: '#ff3b30' }]}>
-                <Text style={styles.notificationBadgeText}>
-                  {totalUnread > 99 ? '99+' : totalUnread.toString()}
-                </Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
       </View>
 
-      {/* Barra de Pesquisa */}
+      {/* Barra de Pesquisa com Ícones */}
       <View style={[styles.searchContainer, { backgroundColor: theme?.background }]}>
-        <TextInput
-          style={[styles.searchInput, { 
-            backgroundColor: theme?.backgroundSecondary,
-            color: theme?.textPrimary,
-          }]}
-          placeholder={t('home.searchPlaceholder')}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor={theme?.textTertiary}
-        />
-        <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
+        <View style={styles.searchRow}>
+          <TouchableOpacity onPress={toggleSidebar} style={styles.headerIcon}>
+            <Ionicons name="menu" size={24} color={theme?.primary} />
+          </TouchableOpacity>
+          
+          <View style={styles.searchInputContainer}>
+            <TextInput
+              style={[styles.searchInput, { 
+                backgroundColor: theme?.backgroundSecondary,
+                color: theme?.textPrimary,
+              }]}
+              placeholder={t('home.searchPlaceholder')}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme?.textTertiary}
+            />
+            <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
+          </View>
+          
+          <TouchableOpacity onPress={() => navigation.navigate('Notificacoes')} style={styles.headerIcon}>
+            <View style={{ position: 'relative' }}>
+              <Ionicons name="notifications-outline" size={24} color={theme?.primary} />
+              {typeof totalUnread === 'number' && totalUnread > 0 && (
+                <View style={[styles.notificationBadge, { backgroundColor: '#ff3b30' }]}>
+                  <Text style={styles.notificationBadgeText}>
+                    {totalUnread > 99 ? '99+' : totalUnread.toString()}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
@@ -357,8 +479,7 @@ export default function Home({ navigation, route }) {
           <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>{t('home.agenda')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sidebarItem} onPress={() => {
-          const favoritos = posts.filter(p => p.fav);
-          navigation.navigate('Favoritos', { favoritos });
+          navigation.navigate('Favoritos');
           toggleSidebar();
         }}>
           <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>{t('home.favorites')}</Text>
@@ -399,6 +520,52 @@ export default function Home({ navigation, route }) {
         selectedPost={selectedPost}
         setSelectedPost={setSelectedPost}
       />
+
+      {/* Menu dropdown dos três pontos */}
+      {showPostMenu && selectedPostForMenu && (
+        <View style={styles.menuOverlay}>
+          <TouchableOpacity 
+            style={styles.menuOverlayTouchable}
+            onPress={() => setShowPostMenu(false)}
+            activeOpacity={1}
+          />
+          <View style={[styles.dropdownMenu, { backgroundColor: theme?.backgroundSecondary }]}>
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={handleReportarProblema}
+            >
+              <Ionicons name="flag-outline" size={20} color={theme?.textPrimary} />
+              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
+                Reportar Problema
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={handleSalvarPost}
+            >
+              <Ionicons 
+                name={selectedPostForMenu.saved ? "bookmark" : "bookmark-outline"} 
+                size={20} 
+                color={theme?.textPrimary} 
+              />
+              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
+                {selectedPostForMenu.saved ? 'Remover dos Salvos' : 'Salvar Post'}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={handleVisualizarPerfil}
+            >
+              <Ionicons name="person-outline" size={20} color={theme?.textPrimary} />
+              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
+                Ver Perfil
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -408,11 +575,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
@@ -421,7 +587,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   searchContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerIcon: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  searchInputContainer: {
+    flex: 1,
+    marginHorizontal: 12,
     position: 'relative',
   },
   searchInput: {
@@ -434,8 +615,8 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     position: 'absolute',
-    left: 32,
-    top: 28,
+    left: 12,
+    top: 10,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -448,8 +629,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#f37100',
+    // Removido indicador visual da tab ativa
   },
   tabText: {
     fontSize: 16,
@@ -597,5 +777,46 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  // Estilos do menu dropdown
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuOverlayTouchable: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  dropdownMenu: {
+    borderRadius: 12,
+    padding: 8,
+    minWidth: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  dropdownText: {
+    fontSize: 16,
+    marginLeft: 12,
+    fontWeight: '500',
   },
 });

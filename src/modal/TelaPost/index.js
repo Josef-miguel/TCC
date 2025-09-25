@@ -41,7 +41,6 @@ const PostScreen = ({
   const theme = themeContext?.theme;
   const { t } = useTranslation();
 
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [participationModalVisible, setParticipationModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [starRating, setStarRating] = useState(0);
@@ -50,7 +49,6 @@ const PostScreen = ({
   const [routeCoords, setRouteCoords] = useState((selectedPost?.route && selectedPost.route.coordinates) ? selectedPost.route.coordinates : []);
   const [whoTravels, setWhoTravels] = useState("Outra pessoa");
   const [whoGoes, setWhoGoes] = useState("Jovens 15 a 17 anos (com acompanhante)");
-  const [isSaved, setIsSaved] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageZoomVisible, setImageZoomVisible] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
@@ -108,81 +106,6 @@ const PostScreen = ({
     }
   }, [modalVisible, selectedPost]);
 
-  const handleReportarProblema = () => {
-    setSidebarVisible(false);
-    setReportarProblemaVisible(true);
-  };
-
-  const handleSalvarPost = async () => {
-    if (!auth.currentUser || !selectedPost?.id) {
-      console.log("Usuário não autenticado ou evento sem ID");
-      return;
-    }
-
-    try {
-      setSidebarVisible(false);
-      const userRef = doc(db, "user", auth.currentUser.uid);
-      
-      if (isSaved) {
-        // Remove dos salvos
-        await updateDoc(userRef, {
-          savedPosts: arrayRemove(selectedPost.id)
-        });
-        setIsSaved(false);
-        console.log("Post removido dos salvos!");
-      } else {
-        // Adiciona aos salvos
-        await updateDoc(userRef, {
-          savedPosts: arrayUnion(selectedPost.id)
-        });
-        setIsSaved(true);
-        console.log("Post salvo!");
-      }
-    } catch (error) {
-      console.error("Erro ao salvar/remover post:", error);
-    }
-  };
-
-  const handleVisualizarPerfil = () => {
-    setSidebarVisible(false);
-
-    // Attempt to resolve a stable uid for the creator from several legacy/variant fields
-    let targetUserId = selectedPost?.uid
-      || selectedPost?.creator?.id
-      || selectedPost?.creator?.uid
-      || selectedPost?.userId
-      || selectedPost?.user?.uid
-      || selectedPost?.ownerId
-      || null;
-
-    // Defensive: if we have an object instead of string (sometimes creator is a user object), try common properties
-    if (targetUserId && typeof targetUserId !== 'string') {
-      // e.g. { uid: 'abc' } or { id: 'abc' }
-      if (typeof targetUserId.uid === 'string') targetUserId = targetUserId.uid;
-      else if (typeof targetUserId.id === 'string') targetUserId = targetUserId.id;
-      else targetUserId = String(targetUserId);
-    }
-
-    // Trim and final validation
-    if (typeof targetUserId === 'string') {
-      targetUserId = targetUserId.trim();
-      if (targetUserId === '') targetUserId = null;
-    }
-
-    if (!targetUserId) {
-      console.warn('TelaPost: Could not resolve creator uid for post', selectedPost?.id || selectedPost);
-      Alert.alert('Perfil indisponível', 'Não foi possível encontrar o usuário associado a este post.', [{ text: 'OK' }]);
-      return;
-    }
-
-    // Pass explicit uid and also include any lightweight creator object if available as a convenience
-    const creatorObj = (selectedPost?.creator && typeof selectedPost.creator === 'object')
-      ? selectedPost.creator
-      : (selectedPost?.user && typeof selectedPost.user === 'object') ? selectedPost.user : null;
-
-    console.log('TelaPost: navigating to VisualizarPerfil with uid=', targetUserId, 'creatorObj=', !!creatorObj, 'selectedPostId=', selectedPost?.id);
-    navigation.navigate('VisualizarPerfil', { uid: targetUserId, user: creatorObj });
-  };
 
 
 // Abre chat privado com o organizador usando a coleção 'chats'
@@ -365,7 +288,6 @@ const handleParticipar = async () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const savedPosts = userData.savedPosts || [];
-          setIsSaved(savedPosts.includes(selectedPost.id));
         }
       } catch (error) {
         console.error("Erro ao verificar se post está salvo:", error);
@@ -390,7 +312,6 @@ const handleParticipar = async () => {
       setRouteCoords([]);
       setImageZoomVisible(false);
       setZoomedImage(null);
-      setSidebarVisible(false);
       setParticipationModalVisible(false);
       setChatModalVisible(false);
       setReportarProblemaVisible(false);
@@ -534,52 +455,6 @@ const handleParticipar = async () => {
                 <Ionicons name="arrow-back" size={28} color="#fff" />
               </TouchableOpacity>
 
-              {/* Botão de opções (3 pontos) */}
-              <TouchableOpacity
-                style={styles.optionsButton}
-                onPress={() => setSidebarVisible(!sidebarVisible)}
-              >
-                <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
-              </TouchableOpacity>
-
-              {/* Menu dropdown dos três pontinhos */}
-              {sidebarVisible && (
-                <View style={[styles.dropdownMenu, { backgroundColor: theme?.backgroundSecondary }]}>
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={handleReportarProblema}
-                  >
-                    <Ionicons name="flag-outline" size={20} color={theme?.textPrimary} />
-                    <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                      {t('post.reportProblem')}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={handleSalvarPost}
-                  >
-                    <Ionicons 
-                      name={isSaved ? "bookmark" : "bookmark-outline"} 
-                      size={20} 
-                      color={theme?.textPrimary} 
-                    />
-                    <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                      {isSaved ? t('post.removeFromSaved') : t('post.savePost')}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={handleVisualizarPerfil}
-                  >
-                    <Ionicons name="person-outline" size={20} color={theme?.textPrimary} />
-                    <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                      {t('post.viewProfile')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
             </View>
 
             {/* Rota */}

@@ -8,13 +8,14 @@ import {
   ScrollView,
   Image,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
 import { db } from '../../../services/firebase';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove, deleteDoc } from 'firebase/firestore';
 
 // Fallback theme para quando o contexto não estiver disponível
 const defaultTheme = {
@@ -34,6 +35,15 @@ export default function GerenciarViagem({ modalVisible, setModalVisible, selecte
   const [loading, setLoading] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    price: '',
+    numSlots: '',
+    exit_date: '',
+    return_date: ''
+  });
   
   const navigation = useNavigation();
   
@@ -134,6 +144,103 @@ export default function GerenciarViagem({ modalVisible, setModalVisible, selecte
     setShowMenu(true);
   };
 
+  // Função para excluir o post
+  const handleDeletePost = () => {
+    Alert.alert(
+      'Excluir Viagem',
+      'Tem certeza que deseja excluir esta viagem? Esta ação não pode ser desfeita e todos os participantes serão removidos.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Excluir o post da coleção events
+              await deleteDoc(doc(db, 'events', selectedPost.id));
+              
+              // Remover o evento de todos os usuários que participavam
+              const usersRef = collection(db, 'user');
+              const q = query(usersRef, where('joinedEvents', 'array-contains', selectedPost.id));
+              const querySnapshot = await getDocs(q);
+              
+              const updatePromises = querySnapshot.docs.map(userDoc => {
+                return updateDoc(doc(db, 'user', userDoc.id), {
+                  joinedEvents: arrayRemove(selectedPost.id)
+                });
+              });
+              
+              await Promise.all(updatePromises);
+              
+              Alert.alert('Sucesso', 'Viagem excluída com sucesso!');
+              setModalVisible(false);
+            } catch (error) {
+              console.error('Erro ao excluir viagem:', error);
+              Alert.alert('Erro', 'Não foi possível excluir a viagem.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Função para editar o post
+  const handleEditPost = () => {
+    // Preencher o formulário com os dados atuais
+    setEditForm({
+      title: selectedPost?.title || '',
+      description: selectedPost?.desc || '',
+      price: selectedPost?.price?.toString() || '',
+      numSlots: selectedPost?.numSlots?.toString() || '',
+      exit_date: selectedPost?.exit_date || '',
+      return_date: selectedPost?.return_date || ''
+    });
+    setShowEditModal(true);
+  };
+
+  // Função para salvar as edições
+  const handleSaveEdit = async () => {
+    if (!editForm.title || !editForm.description || !editForm.price || !editForm.numSlots) {
+      Alert.alert('Erro', 'Preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'events', selectedPost.id), {
+        title: editForm.title,
+        desc: editForm.description,
+        price: Number(editForm.price),
+        numSlots: Number(editForm.numSlots),
+        exit_date: editForm.exit_date,
+        return_date: editForm.return_date,
+        updatedAt: new Date().toISOString()
+      });
+
+      Alert.alert('Sucesso', 'Viagem atualizada com sucesso!');
+      setShowEditModal(false);
+      // Recarregar os dados se necessário
+    } catch (error) {
+      console.error('Erro ao atualizar viagem:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar a viagem.');
+    }
+  };
+
+  // Função para cancelar edição
+  const handleCancelEdit = () => {
+    setShowEditModal(false);
+    setEditForm({
+      title: '',
+      description: '',
+      price: '',
+      numSlots: '',
+      exit_date: '',
+      return_date: ''
+    });
+  };
+
   // Calcular vagas disponíveis
   const totalSlots = selectedPost?.numSlots || 0;
   const occupiedSlots = participants.length;
@@ -164,6 +271,16 @@ export default function GerenciarViagem({ modalVisible, setModalVisible, selecte
       color: theme.textPrimary,
       fontWeight: 'bold',
       flex: 1,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    actionButton: {
+      padding: 8,
+      borderRadius: 20,
+      backgroundColor: theme.backgroundDark,
+      marginLeft: 8,
     },
     closeButton: {
       padding: 8,
@@ -323,6 +440,78 @@ export default function GerenciarViagem({ modalVisible, setModalVisible, selecte
       fontSize: 16,
       fontWeight: '600',
     },
+    // Estilos do modal de edição
+    editModal: {
+      backgroundColor: theme.backgroundSecondary,
+      borderRadius: 15,
+      padding: 20,
+      width: '95%',
+      maxHeight: '90%',
+    },
+    editHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    editTitle: {
+      fontSize: 18,
+      color: theme.textPrimary,
+      fontWeight: 'bold',
+    },
+    editForm: {
+      marginBottom: 20,
+    },
+    inputGroup: {
+      marginBottom: 15,
+    },
+    inputLabel: {
+      fontSize: 14,
+      color: theme.textPrimary,
+      fontWeight: '500',
+      marginBottom: 5,
+    },
+    textInput: {
+      backgroundColor: theme.backgroundDark,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      color: theme.textPrimary,
+      borderWidth: 1,
+      borderColor: theme.border || 'transparent',
+    },
+    multilineInput: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    editActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+    },
+    editButton: {
+      flex: 1,
+      padding: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginHorizontal: 5,
+    },
+    saveButton: {
+      backgroundColor: theme.primary,
+    },
+    cancelButton: {
+      backgroundColor: theme.backgroundDark,
+    },
+    editButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    saveButtonText: {
+      color: 'white',
+    },
+    cancelButtonText: {
+      color: theme.textPrimary,
+    },
   });
 
   return (
@@ -332,12 +521,26 @@ export default function GerenciarViagem({ modalVisible, setModalVisible, selecte
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Gerenciar Viagem</Text>
-            <TouchableOpacity
-              onPress={() => setModalVisible(false)}
-              style={styles.closeButton}
-            >
-              <Ionicons name="close" size={24} color={theme.textPrimary} />
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                onPress={handleEditPost}
+                style={styles.actionButton}
+              >
+                <Ionicons name="create-outline" size={20} color={theme.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDeletePost}
+                style={styles.actionButton}
+              >
+                <Ionicons name="trash-outline" size={20} color="red" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={theme.textPrimary} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Informações da Viagem */}
@@ -450,6 +653,114 @@ export default function GerenciarViagem({ modalVisible, setModalVisible, selecte
                   Cancelar
                 </Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Modal de Edição */}
+        {showEditModal && (
+          <View style={styles.menuOverlay}>
+            <View style={styles.editModal}>
+              <View style={styles.editHeader}>
+                <Text style={styles.editTitle}>Editar Viagem</Text>
+                <TouchableOpacity
+                  onPress={handleCancelEdit}
+                  style={styles.closeButton}
+                >
+                  <Ionicons name="close" size={24} color={theme.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.editForm} showsVerticalScrollIndicator={false}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Título da Viagem</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.title}
+                    onChangeText={(text) => setEditForm({...editForm, title: text})}
+                    placeholder="Digite o título da viagem"
+                    placeholderTextColor={theme.textTertiary}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Descrição</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.multilineInput]}
+                    value={editForm.description}
+                    onChangeText={(text) => setEditForm({...editForm, description: text})}
+                    placeholder="Descreva a viagem"
+                    placeholderTextColor={theme.textTertiary}
+                    multiline
+                    numberOfLines={4}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Preço (R$)</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.price}
+                    onChangeText={(text) => setEditForm({...editForm, price: text})}
+                    placeholder="0.00"
+                    placeholderTextColor={theme.textTertiary}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Número de Vagas</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.numSlots}
+                    onChangeText={(text) => setEditForm({...editForm, numSlots: text})}
+                    placeholder="0"
+                    placeholderTextColor={theme.textTertiary}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Data de Saída</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.exit_date}
+                    onChangeText={(text) => setEditForm({...editForm, exit_date: text})}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={theme.textTertiary}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Data de Retorno</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.return_date}
+                    onChangeText={(text) => setEditForm({...editForm, return_date: text})}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={theme.textTertiary}
+                  />
+                </View>
+              </ScrollView>
+
+              <View style={styles.editActions}>
+                <TouchableOpacity
+                  onPress={handleCancelEdit}
+                  style={[styles.editButton, styles.cancelButton]}
+                >
+                  <Text style={[styles.editButtonText, styles.cancelButtonText]}>
+                    Cancelar
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleSaveEdit}
+                  style={[styles.editButton, styles.saveButton]}
+                >
+                  <Text style={[styles.editButtonText, styles.saveButtonText]}>
+                    Salvar
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         )}
