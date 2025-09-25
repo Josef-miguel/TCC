@@ -60,7 +60,9 @@
     "loadingEvents": "Carregando eventos...",
     "popularRecently": "Populares recentemente",
     "noTitle": "Sem título",
-    "noDescription": "Sem descrição disponível"
+    "noDescription": "Sem descrição disponível",
+    "timeline": "Timeline",
+    "popular": "Populares"
     },
     "profile": {
     "profile": "Perfil",
