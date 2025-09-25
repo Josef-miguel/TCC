@@ -21,6 +21,7 @@ import Home from "./src/telas/Home";
 import Agenda from "./src/telas/Agenda";
 import Formapagamento from "./src/telas/Formapagamento";
 import Chat from "./src/telas/Chat";
+import ChatEmGrupo from "./src/telas/ChatEmGrupo";
 import MinhasViagens from "./src/telas/MinhasViagens";
 import Perfil from "./src/telas/Perfil";
 import Avaliacoes from "./src/telas/Avaliacoes";
@@ -222,6 +223,11 @@ export default function App() {
                 <Stack.Screen
                   name="Chat"
                   component={Chat}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="ChatEmGrupo"
+                  component={ChatEmGrupo}
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen

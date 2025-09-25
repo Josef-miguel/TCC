@@ -98,6 +98,7 @@
     "typeComment": "Type a comment...",
     "confirmParticipation": "Confirm participation",
     "chatWithOrganizer": "Chat with organizer",
+    "chatWithGroup": "Chat with group",
     "whoTravels": "Who will travel...",
     "whoGoes": "Who will go?",
     "confirm": "Confirm",
@@ -108,5 +109,10 @@
     "cardName": "Name on card",
     "pay": "Pay",
     "noImages": "No images available"
+    },
+    "chat": {
+    "you": "You",
+    "anonymous": "Anonymous User",
+    "typeMessage": "Type your message..."
     }
     }
