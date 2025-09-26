@@ -229,23 +229,29 @@ a:focus {
     width: 44px;
     height: 44px;
     border: none;
-    border-radius: 50%;
-    background: var(--background-secondary);
+    border-radius: 12px;
+    background: var(--background-hover);
     color: var(--text-primary);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.3s ease;
     box-shadow: var(--shadow-sm);
 }
 
 .theme-toggle:hover {
-    background: var(--background-hover);
-    transform: scale(1.05);
+    background: var(--primary);
+    color: var(--text-inverted);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
 .theme-toggle:focus {
     outline: 2px solid var(--border-focus);
     outline-offset: 2px;
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
 }
 
 .theme-toggle svg {
@@ -296,7 +302,92 @@ header {
     z-index: 1001;
     transition: all var(--transition-normal);
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-    border-radius: 0 0 20px 20px;
+
+}
+
+/* ============================
+   Padronização dos Botões da Navbar
+============================ */
+
+/* Classe base para todos os botões da navbar */
+.navbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: var(--background-hover);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.navbar-btn:hover {
+    background: var(--primary);
+    color: var(--text-inverted);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.navbar-btn:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.navbar-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar-btn svg,
+.navbar-btn ion-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+
+.navbar-btn:hover svg,
+.navbar-btn:hover ion-icon {
+    transform: scale(1.1);
+}
+
+/* Botão específico para links da navbar */
+.navbar-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--background-hover);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.navbar-link:hover {
+    background: var(--primary);
+    color: var(--text-inverted);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.navbar-link:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.navbar-link:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Navbar com espaçamento interno adequado */
@@ -330,9 +421,35 @@ header .container {
 /* Botão de toggle integrado na brand */
 .brand .sidebar-toggle {
     margin-right: 0.5rem;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--background-hover);
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand .sidebar-toggle:hover {
+    background: var(--primary);
+    color: var(--text-inverted);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.brand .sidebar-toggle:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.brand .sidebar-toggle:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
 }
 
 .logo-placeholder {
@@ -422,14 +539,15 @@ header .container {
 /* FIX: Container do nav (tema + perfil) sempre à direita */
 .nav-container {
     margin-left: auto;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 /* FIX: Ordem correta dos ícones (tema antes do perfil) e espaçamentos */
 .nav-container .theme-toggle { order: 1; }
-.nav-container .profile-link { order: 2; }
+.nav-container .filter-link { order: 2; }
+.nav-container .profile-link { order: 3; }
 .profile-link { display: inline-flex; align-items: center; }
 
 .search-bar input::placeholder {
@@ -447,33 +565,42 @@ header .container {
 }
 
 .search-submit-btn {
-    background: none;
+    background: var(--background-hover);
     border: none;
     padding: 0.5rem;
     cursor: pointer;
-    color: var(--text-tertiary);
-    transition: color var(--transition-fast);
-    border-radius: 6px;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    border-radius: 8px;
     margin-left: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 36px;
+    height: 36px;
+    box-shadow: var(--shadow-sm);
 }
 
 .search-submit-btn:hover {
-    color: var(--primary);
-    background: var(--background-hover);
+    color: var(--text-inverted);
+    background: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.search-submit-btn:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.search-submit-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
 }
 
 .search-bar:focus-within .search-submit-btn {
-    color: var(--primary);
-}
-
-/* Navegação modernizada */
-.nav-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    color: var(--text-inverted);
+    background: var(--primary);
 }
 
 /* === MOD: Avatar do perfil na navbar === */
@@ -481,11 +608,32 @@ header .container {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     overflow: hidden;
     background: var(--background-hover);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.profile-link:hover {
+    background: var(--primary);
+    color: var(--text-inverted);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.profile-link:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.profile-link:active {
+    transform: translateY(0);
     box-shadow: var(--shadow-sm);
 }
 
@@ -531,20 +679,29 @@ header .container {
 }
 
 .nav-link {
-    color: var(--text-secondary);
-    padding: 0.2rem rem;
+    color: var(--text-primary);
+    padding: 0.5rem;
     border-radius: 12px;
     font-weight: 500;
     font-size: 0.9rem;
-    transition: all var(--transition-fast);
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--background-hover);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
 }
 
 .nav-link:hover {
-    background: var(--background-hover);
-    color: var(--text-primary);
-    transform: translateY(-1px);
+    background: var(--primary);
+    color: var(--text-inverted);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .nav-link:focus {
@@ -552,12 +709,18 @@ header .container {
     outline-offset: 2px;
 }
 
+.nav-link:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
 /* Navegação mobile */
 @media (max-width: 768px) {
     .nav-container {
-        flex-direction: column;
+        flex-direction: row;
         gap: 0.5rem;
-        width: 100%;
+        width: auto;
+        margin-left: auto;
     }
     
     .search-container {
@@ -565,12 +728,27 @@ header .container {
         margin: 0;
         max-width: 100%;
         order: 2;
+        flex: 1;
     }
     
     .nav-link {
-        width: 100%;
-        text-align: center;
-        padding: 0.75rem 1rem;
+        width: 40px;
+        height: 40px;
+        padding: 0.4rem;
+    }
+    
+    .navbar-btn,
+    .navbar-link,
+    .theme-toggle,
+    .profile-link,
+    .sidebar-toggle {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .search-submit-btn {
+        width: 32px;
+        height: 32px;
     }
 }
 
@@ -933,6 +1111,44 @@ body.sidebar-open .content-with-sidebar {
     transform: rotate(90deg);
 }
 
+/* Tooltip do botão flutuante */
+.floating-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: var(--text-primary);
+    color: var(--text-inverted);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+    pointer-events: none;
+    z-index: 1001;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+}
+
+.floating-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text-primary);
+}
+
+.floating-create-btn:hover .floating-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-12px);
+}
+
 /* Responsividade do botão flutuante */
 @media (max-width: 768px) {
     .floating-create-btn {
@@ -940,6 +1156,11 @@ body.sidebar-open .content-with-sidebar {
         height: 56px;
         bottom: 1.5rem;
         right: 1.5rem;
+    }
+    
+    .floating-tooltip {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
     }
 }
 
@@ -949,6 +1170,16 @@ body.sidebar-open .content-with-sidebar {
         height: 52px;
         bottom: 1rem;
         right: 1rem;
+    }
+    
+    .floating-tooltip {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.5rem;
+        transform: translateX(-50%) translateY(-6px);
+    }
+    
+    .floating-create-btn:hover .floating-tooltip {
+        transform: translateX(-50%) translateY(-10px);
     }
 }
 
@@ -2013,15 +2244,29 @@ table.table.table-sm th, table.table.table-sm td {
     }
     
     .nav-container {
-        flex-direction: column;
-        gap: 0.75rem;
-        width: 100%;
+        flex-direction: row;
+        gap: 0.5rem;
+        width: auto;
     }
     
     .nav-link {
-        width: 100%;
-        text-align: center;
-        padding: 0.75rem 1rem;
+        width: 36px;
+        height: 36px;
+        padding: 0.3rem;
+    }
+    
+    .navbar-btn,
+    .navbar-link,
+    .theme-toggle,
+    .profile-link,
+    .sidebar-toggle {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .search-submit-btn {
+        width: 28px;
+        height: 28px;
     }
     
     .search-bar {

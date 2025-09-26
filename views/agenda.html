@@ -1,20 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-  <!-- Navegação rápida -->
-  <div class="agenda-nav mb-3" style="margin-bottom: 20px;">
-    <a class="btn btn-outline" href="{{ url_for('perfil') }}">Perfil</a>
-    <a class="btn btn-outline" href="{{ url_for('home') }}">Todos os Eventos</a>
+<div class="agenda-container">
+  <!-- Header da Agenda -->
+  <div class="agenda-header">
+    <h1 class="agenda-title">Minha Agenda</h1>   
   </div>
 
-  <h1>Minha Agenda</h1>
-
   <!-- Calendário -->
-  <div id="calendar" class="calendar-card" style="max-width: 900px; margin: 0 auto;"></div>
+  <div class="calendar-wrapper">
+    <div id="calendar" class="calendar-card"></div>
+  </div>
 
   <!-- Container para eventos do dia selecionado -->
-  <div id="agendaPosts" class="events-section mt-3"></div>
+  <div id="agendaPosts" class="events-section"></div>
 </div>
 {% endblock %}
 
@@ -22,31 +21,314 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
 <style>
+  /* Container principal da agenda */
+  .agenda-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  /* Header da agenda */
+  .agenda-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .agenda-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Navegação da agenda */
+  .agenda-nav {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .agenda-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    justify-content: center;
+  }
+
+  .agenda-nav-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Wrapper do calendário */
+  .calendar-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+
+  /* Calendário FullCalendar */
   #calendar {
-    margin: 20px auto;
+    width: 100%;
     max-width: 900px;
+    margin: 0 auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
   }
 
   .fc {
     background: var(--card-background);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+  }
+
+  .fc:hover {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Título do calendário */
+  .fc-toolbar-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    text-align: center;
+  }
+
+  /* Botões do calendário */
+  .fc-button {
+    background: var(--primary) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: var(--text-inverted) !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  .fc-button:hover {
+    background: var(--primary-hover) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-md) !important;
+  }
+
+  .fc-button:focus {
+    outline: 2px solid var(--border-focus) !important;
+    outline-offset: 2px !important;
+  }
+
+  .fc-button-group .fc-button {
+    border-radius: 12px !important;
+    margin: 0 3px !important;
+  }
+
+  /* Cabeçalho dos dias da semana */
+  .fc-col-header-cell {
+    background: var(--background-secondary) !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    padding: 1rem 0.5rem !important;
+    border: none !important;
+    font-size: 0.9rem;
+  }
+
+  /* Dias do calendário */
+  .fc-daygrid-day {
+    transition: all 0.3s ease !important;
+    border: 1px solid var(--border) !important;
+    background: var(--card-background) !important;
+  }
+
+  .fc-daygrid-day:hover {
+    background-color: var(--background-hover) !important;
+    transform: scale(1.02);
+  }
+
+  .fc-daygrid-day-number {
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+    padding: 0.5rem !important;
+    transition: all 0.3s ease !important;
+  }
+
+  /* Dia atual */
+  .fc-day-today {
+    background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 140, 0, 0.05)) !important;
+    position: relative;
+  }
+
+  .fc-day-today::before {
+    content: '';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--card-background);
+  }
+
+  .fc-day-today .fc-daygrid-day-number {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+  }
+
+  /* Eventos */
+  .fc-event {
+    border-radius: 8px !important;
+    border: none !important;
+    padding: 4px 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    background: var(--primary) !important;
+    color: var(--text-inverted) !important;
+    transition: all 0.3s ease !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  .fc-event:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: var(--shadow-md) !important;
+    background: var(--primary-hover) !important;
+  }
+
+  /* Seção de eventos */
+  .events-section {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .events-section h3 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .events-section p {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 2rem;
+    background: var(--background-secondary);
     border-radius: 12px;
-    padding: 10px;
-    box-shadow: 0 6px 15px var(--card-shadow);
+    border: 1px solid var(--border);
   }
 
   #agendaPosts div {
     border: 1px solid var(--border);
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    background: var(--background-secondary);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    background: var(--card-background);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
   }
 
   #agendaPosts div:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-md);
+  }
+
+  #agendaPosts div h3 {
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+
+  #agendaPosts div p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-align: left;
+    font-style: normal;
+    padding: 0;
+    background: none;
+    border: none;
+  }
+
+  #agendaPosts div small {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+  }
+
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .agenda-container {
+      padding: 1rem 0.5rem;
+    }
+
+    .agenda-title {
+      font-size: 2rem;
+    }
+
+    .agenda-nav {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .agenda-nav-btn {
+      width: 200px;
+    }
+
+    .fc {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+
+    .fc-toolbar-title {
+      font-size: 1.4rem;
+    }
+
+    .fc-button {
+      padding: 0.4rem 0.8rem !important;
+      font-size: 0.85rem !important;
+    }
+
+    .fc-col-header-cell {
+      padding: 0.5rem 0.25rem !important;
+      font-size: 0.8rem;
+    }
+
+    .fc-daygrid-day-number {
+      padding: 0.25rem !important;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .agenda-title {
+      font-size: 1.8rem;
+    }
+
+    .fc-toolbar-title {
+      font-size: 1.2rem;
+    }
+
+    .fc-button {
+      padding: 0.3rem 0.6rem !important;
+      font-size: 0.8rem !important;
+    }
   }
 </style>
 
@@ -63,7 +345,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         id: ev.id,
         title: ev.title,
         start: ev.exit_date,
-        end: ev.return_date || ev.exit_date
+        end: ev.return_date || ev.exit_date,
+        backgroundColor: 'var(--primary)',
+        borderColor: 'var(--primary-hover)',
+        textColor: 'var(--text-inverted)'
       }))
     : [];
 
@@ -77,7 +362,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
+    buttonText: {
+      today: 'Hoje',
+      month: 'Mês',
+      week: 'Semana',
+      day: 'Dia'
+    },
+    dayMaxEvents: 3,
+    moreLinkClick: 'popover',
     dateClick: function(info) {
+      // Adicionar efeito visual ao clicar no dia
+      const clickedDay = info.dayEl;
+      clickedDay.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        clickedDay.style.transform = '';
+      }, 150);
+
       fetch(`/agenda_api/${info.dateStr}`)
       .then(res => res.json())
       .then(data => {
@@ -85,23 +385,65 @@ document.addEventListener("DOMContentLoaded", async () => {
         container.innerHTML = "";
 
         if (data.success && data.events.length > 0) {
+          // Adicionar título da seção
+          const title = document.createElement('h3');
+          title.textContent = `Eventos de ${new Date(info.dateStr).toLocaleDateString('pt-BR', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}`;
+          container.appendChild(title);
+
           data.events.forEach(ev => {
             const div = document.createElement("div");
             div.innerHTML = `
               <h3>${ev.title}</h3>
               <p>${ev.desc || ""}</p>
-              <small>Saída: ${ev.exit_date}</small>
+              <small>Saída: ${new Date(ev.exit_date).toLocaleDateString('pt-BR')}</small>
             `;
             container.appendChild(div);
           });
         } else {
-          container.innerHTML = "<p>Nenhum evento nesse dia.</p>";
+          const emptyState = document.createElement('div');
+          emptyState.innerHTML = `
+            <h3>Nenhum evento encontrado</h3>
+            <p>Não há eventos agendados para este dia.</p>
+          `;
+          container.appendChild(emptyState);
         }
+      })
+      .catch(error => {
+        console.error('Erro ao buscar eventos:', error);
+        const container = document.getElementById("agendaPosts");
+        container.innerHTML = `
+          <div>
+            <h3>Erro ao carregar eventos</h3>
+            <p>Ocorreu um erro ao buscar os eventos deste dia. Tente novamente.</p>
+          </div>
+        `;
       });
+    },
+    eventClick: function(info) {
+      // Efeito visual ao clicar no evento
+      info.el.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        info.el.style.transform = '';
+      }, 150);
+    },
+    viewDidMount: function(info) {
+      // Adicionar classe para identificar a visualização atual
+      calendarEl.classList.add(`view-${info.view.type}`);
     }
   });
 
   calendar.render();
+
+  // Adicionar animação de entrada para o calendário
+  setTimeout(() => {
+    calendarEl.style.opacity = '1';
+    calendarEl.style.transform = 'translateY(0)';
+  }, 100);
 });
 </script>
 {% endblock %}
