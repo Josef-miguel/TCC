@@ -562,14 +562,6 @@ export default function Home({ navigation, route }) {
           <Ionicons name="heart-outline" size={22} color={theme?.textSecondary} />
           <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.sidebarItem]} 
-          onPress={() => { navigation.navigate('Salvos'); closeSidebar(); }}
-        >
-          <Ionicons name="bookmark-outline" size={22} color={theme?.textSecondary} />
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Posts Salvos</Text>
-        </TouchableOpacity>
       </View>
     </Animated.View>
   );
@@ -807,7 +799,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 10 : StatusBar.currentHeight + 10,
+    paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight,
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
