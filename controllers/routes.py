@@ -3,11 +3,17 @@ import traceback
 from datetime import datetime
 from firebase_admin import auth, firestore
 import logging
+from models.ai_engine import TravelAIEngine
+from models.ai_models import AIDataManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)  
 
 def init_app(app, db):
+    # Inicializar engine de IA
+    ai_engine = TravelAIEngine(db)
+    ai_data_manager = AIDataManager(db)
+    
     @app.before_request
     def load_logged_in_user():
         uid = session.get('user_uid')
@@ -1103,3 +1109,246 @@ def init_app(app, db):
             logger.exception(f"Erro ao carregar evento para edição: {e}")
             flash('Erro ao carregar evento. Tente novamente.', 'error')
             return redirect(url_for('my_vacations'))
+
+    # ==================== ROTAS DA IA ====================
+    
+    @app.route("/ai_assistant")
+    def ai_assistant():
+        """Página principal do assistente de IA"""
+        if not g.user:
+            return redirect(url_for('login'))
+        
+        try:
+            # Buscar sugestões ativas
+            suggestions = ai_data_manager.get_user_suggestions(g.user['uid'], limit=5)
+            
+            # Buscar insights recentes
+            insights = ai_data_manager.get_user_insights(g.user['uid'], limit=3)
+            
+            # Buscar histórico de chat recente
+            chat_history = ai_data_manager.get_user_chat_history(g.user['uid'], limit=10)
+            
+            return render_template("ai_assistant.html", 
+                                 user=g.user, 
+                                 suggestions=suggestions,
+                                 insights=insights,
+                                 chat_history=chat_history)
+        except Exception as e:
+            logger.exception(f"Erro ao carregar assistente de IA: {e}")
+            flash('Erro ao carregar assistente de IA. Tente novamente.', 'error')
+            return render_template("ai_assistant.html", 
+                                 user=g.user, 
+                                 suggestions=[],
+                                 insights=[],
+                                 chat_history=[])
+    
+    @app.route("/ai_chat", methods=["POST"])
+    def ai_chat():
+        """Endpoint para chat com IA"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            data = request.get_json()
+            message = data.get('message', '').strip()
+            
+            if not message:
+                return jsonify({"success": False, "message": "Mensagem vazia"}), 400
+            
+            # Processar mensagem com IA
+            chat_response = ai_engine.process_chat_message(g.user['uid'], message)
+            
+            return jsonify({
+                "success": True,
+                "response": chat_response.response,
+                "intent": chat_response.intent,
+                "confidence": chat_response.confidence
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro no chat com IA: {e}")
+            return jsonify({"success": False, "message": "Erro ao processar mensagem"}), 500
+    
+    @app.route("/ai_suggestions")
+    def ai_suggestions():
+        """API para buscar sugestões da IA"""
+        if not g.user:
+            return jsonify({"success": False, "suggestions": []}), 401
+        
+        try:
+            limit = int(request.args.get('limit', 10))
+            suggestions = ai_data_manager.get_user_suggestions(g.user['uid'], limit=limit)
+            
+            # Converter para formato JSON serializável
+            suggestions_data = []
+            for suggestion in suggestions:
+                suggestion_dict = suggestion.to_dict()
+                # Converter datetime para string
+                suggestion_dict['created_at'] = suggestion.created_at.isoformat()
+                if suggestion.expires_at:
+                    suggestion_dict['expires_at'] = suggestion.expires_at.isoformat()
+                suggestions_data.append(suggestion_dict)
+            
+            return jsonify({
+                "success": True,
+                "suggestions": suggestions_data
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao buscar sugestões: {e}")
+            return jsonify({"success": False, "suggestions": []}), 500
+    
+    @app.route("/ai_insights")
+    def ai_insights():
+        """API para buscar insights da IA"""
+        if not g.user:
+            return jsonify({"success": False, "insights": []}), 401
+        
+        try:
+            limit = int(request.args.get('limit', 5))
+            insights = ai_data_manager.get_user_insights(g.user['uid'], limit=limit)
+            
+            # Converter para formato JSON serializável
+            insights_data = []
+            for insight in insights:
+                insight_dict = insight.to_dict()
+                insight_dict['created_at'] = insight.created_at.isoformat()
+                insights_data.append(insight_dict)
+            
+            return jsonify({
+                "success": True,
+                "insights": insights_data
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao buscar insights: {e}")
+            return jsonify({"success": False, "insights": []}), 500
+    
+    @app.route("/ai_reminders")
+    def ai_reminders():
+        """API para buscar lembretes da IA"""
+        if not g.user:
+            return jsonify({"success": False, "reminders": []}), 401
+        
+        try:
+            reminders = ai_data_manager.get_pending_reminders(g.user['uid'])
+            
+            # Converter para formato JSON serializável
+            reminders_data = []
+            for reminder in reminders:
+                reminder_dict = reminder.to_dict()
+                reminder_dict['created_at'] = reminder.created_at.isoformat()
+                reminder_dict['reminder_date'] = reminder.reminder_date.isoformat()
+                reminders_data.append(reminder_dict)
+            
+            return jsonify({
+                "success": True,
+                "reminders": reminders_data
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao buscar lembretes: {e}")
+            return jsonify({"success": False, "reminders": []}), 500
+    
+    @app.route("/ai_dismiss_suggestion", methods=["POST"])
+    def ai_dismiss_suggestion():
+        """Marcar sugestão como dispensada"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            data = request.get_json()
+            suggestion_id = data.get('suggestion_id')
+            
+            if not suggestion_id:
+                return jsonify({"success": False, "message": "ID da sugestão não fornecido"}), 400
+            
+            # Atualizar sugestão no Firestore
+            suggestion_ref = db.collection('ai_suggestions').document(suggestion_id)
+            suggestion_doc = suggestion_ref.get()
+            
+            if not suggestion_doc.exists:
+                return jsonify({"success": False, "message": "Sugestão não encontrada"}), 404
+            
+            # Verificar se a sugestão pertence ao usuário
+            suggestion_data = suggestion_doc.to_dict()
+            if suggestion_data.get('user_uid') != g.user['uid']:
+                return jsonify({"success": False, "message": "Acesso negado"}), 403
+            
+            # Marcar como dispensada
+            suggestion_ref.update({
+                'is_dismissed': True,
+                'dismissed_at': firestore.SERVER_TIMESTAMP
+            })
+            
+            return jsonify({"success": True, "message": "Sugestão dispensada"})
+            
+        except Exception as e:
+            logger.exception(f"Erro ao dispensar sugestão: {e}")
+            return jsonify({"success": False, "message": "Erro ao dispensar sugestão"}), 500
+    
+    @app.route("/ai_generate_reminders", methods=["POST"])
+    def ai_generate_reminders():
+        """Gerar lembretes automáticos"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            # Gerar lembretes diários
+            reminders = ai_engine.generate_daily_reminders(g.user['uid'])
+            
+            return jsonify({
+                "success": True,
+                "message": f"{len(reminders)} lembretes gerados",
+                "reminders_count": len(reminders)
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao gerar lembretes: {e}")
+            return jsonify({"success": False, "message": "Erro ao gerar lembretes"}), 500
+    
+    @app.route("/ai_generate_insights", methods=["POST"])
+    def ai_generate_insights():
+        """Gerar insights semanais"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            # Gerar insights semanais
+            insights = ai_engine.generate_weekly_insights(g.user['uid'])
+            
+            return jsonify({
+                "success": True,
+                "message": f"{len(insights)} insights gerados",
+                "insights_count": len(insights)
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao gerar insights: {e}")
+            return jsonify({"success": False, "message": "Erro ao gerar insights"}), 500
+    
+    @app.route("/ai_chat_history")
+    def ai_chat_history():
+        """API para buscar histórico de chat"""
+        if not g.user:
+            return jsonify({"success": False, "messages": []}), 401
+        
+        try:
+            limit = int(request.args.get('limit', 20))
+            chat_history = ai_data_manager.get_user_chat_history(g.user['uid'], limit=limit)
+            
+            # Converter para formato JSON serializável
+            messages_data = []
+            for message in chat_history:
+                message_dict = message.to_dict()
+                message_dict['created_at'] = message.created_at.isoformat()
+                messages_data.append(message_dict)
+            
+            return jsonify({
+                "success": True,
+                "messages": messages_data
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao buscar histórico de chat: {e}")
+            return jsonify({"success": False, "messages": []}), 500

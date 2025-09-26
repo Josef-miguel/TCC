@@ -67,6 +67,11 @@
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
     --transition-slow: 0.5s ease;
+    
+    /* === ANIMAÇÕES IA === */
+    --ai-glow: 0 0 20px rgba(102, 126, 234, 0.4);
+    --ai-pulse: 0 0 0 0 rgba(102, 126, 234, 0.8);
+    --ai-sparkle: 0 0 15px rgba(118, 75, 162, 0.6);
 }
 
 /* Tema Escuro */
@@ -2051,6 +2056,19 @@ p {
 .map-embed:hover {
     border-color: var(--border-highlight);
     box-shadow: var(--shadow-md);
+}
+
+/* Estilos para textos de mapas no tema escuro */
+[data-theme="dark"] .map-embed,
+[data-theme="dark"] .map-embed *,
+[data-theme="dark"] .map-embed iframe,
+[data-theme="dark"] .map-container,
+[data-theme="dark"] .map-container * {
+    color: #000000 !important;
+}
+
+[data-theme="dark"] .map-embed iframe {
+    filter: none !important;
 }
 
 /* Status de participação */
@@ -5033,6 +5051,219 @@ ion-icon.xlarge {
     
     .group-message-time {
         font-size: 0.65rem;
+    }
+}
+
+/* ============================
+   ANIMAÇÕES E EFEITOS IA
+============================ */
+
+/* Animação de entrada para cards da IA */
+@keyframes aiCardEntrance {
+    0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Animação de pulse para elementos da IA */
+@keyframes aiPulse {
+    0% {
+        box-shadow: var(--ai-pulse);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    }
+}
+
+/* Animação de glow para elementos ativos da IA */
+@keyframes aiGlow {
+    0%, 100% {
+        box-shadow: var(--ai-glow);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(102, 126, 234, 0.6);
+    }
+}
+
+/* Animação de sparkle para ícones da IA */
+@keyframes aiSparkle {
+    0%, 100% {
+        filter: drop-shadow(var(--ai-sparkle));
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 15px rgba(118, 75, 162, 0.8));
+        transform: scale(1.1);
+    }
+}
+
+/* Animação de typing para indicador de digitação */
+@keyframes aiTyping {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Animação de sugestão aparecendo */
+@keyframes suggestionSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Animação de insight aparecendo */
+@keyframes insightFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Classes de animação para aplicar */
+.ai-card {
+    animation: aiCardEntrance 0.6s ease-out;
+}
+
+.ai-card:hover {
+    animation: aiGlow 2s ease-in-out infinite;
+}
+
+.ai-pulse {
+    animation: aiPulse 2s infinite;
+}
+
+.ai-sparkle {
+    animation: aiSparkle 3s ease-in-out infinite;
+}
+
+.suggestion-item {
+    animation: suggestionSlideIn 0.5s ease-out;
+}
+
+.insight-item {
+    animation: insightFadeIn 0.7s ease-out;
+}
+
+.typing-dot {
+    animation: aiTyping 1.4s infinite ease-in-out;
+}
+
+/* Efeitos de hover melhorados para elementos da IA */
+.ai-assistant-container .ai-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-xl), var(--ai-glow);
+}
+
+.ai-assistant-container .suggestion-item:hover {
+    transform: translateX(8px);
+    box-shadow: var(--shadow-md), var(--ai-glow);
+}
+
+.ai-assistant-container .insight-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md), var(--ai-sparkle);
+}
+
+/* Animação de loading para botões da IA */
+.ai-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: aiLoading 1.5s infinite;
+}
+
+@keyframes aiLoading {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* Efeito de partículas para elementos especiais da IA */
+.ai-particle-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-particle-effect::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+    animation: aiParticleRotate 10s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes aiParticleRotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsividade para animações */
+@media (prefers-reduced-motion: reduce) {
+    .ai-card,
+    .suggestion-item,
+    .insight-item,
+    .ai-pulse,
+    .ai-sparkle,
+    .ai-glow {
+        animation: none;
+    }
+    
+    .ai-assistant-container .ai-card:hover,
+    .ai-assistant-container .suggestion-item:hover,
+    .ai-assistant-container .insight-item:hover {
+        transform: none;
+    }
+}
+
+/* Melhorias de acessibilidade para animações */
+@media (prefers-reduced-motion: no-preference) {
+    .ai-card {
+        transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    }
+    
+    .suggestion-item,
+    .insight-item {
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
     }
 }
   

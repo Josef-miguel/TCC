@@ -1,28 +1,639 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="favorites-container">
+  <!-- Header da página de favoritos -->
+  <div class="favorites-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <ion-icon name="heart"></ion-icon>
+      </div>
+      <h1 class="favorites-title">Meus Favoritos</h1>
+      <p class="favorites-subtitle">Viagens que você salvou para mais tarde</p>
+    </div>
+  </div>
 
-<h2>Viagens que eu favoritei</h2>
-{% if fav_vacations %}
-<div style="border: 1px solid #fff;">
-    <ul>
-    {% for vacation in fav_vacations %}
-        <li class="vacation-item">
-            <h3>{{ vacation.title }}</h3>
-            <p>{{ vacation.desc }}</p>
-            {% for image in vacation.images %}
-                <img src="{{ image }}">
-            {% endfor %}    
-            <p>Data de Início: {{ vacation.exit_date }}</p>
-            <p>Data de Término: {{ vacation.return_date }}</p>
-        </li>
-    {% endfor %}
-    </ul>
+  <!-- Container principal dos favoritos -->
+  <div class="favorites-content">
+    {% if fav_vacations %}
+      <div class="favorites-grid">
+        {% for vacation in fav_vacations %}
+        <div class="favorite-card">
+          <!-- Imagem de fundo do card -->
+          <div class="card-background">
+            {% if vacation.images %}
+              <img src="{{ vacation.images[0] }}" alt="{{ vacation.title }}" class="background-image">
+            {% else %}
+              <div class="default-background">
+                <ion-icon name="airplane"></ion-icon>
+              </div>
+            {% endif %}
+            
+            <!-- Overlay escuro -->
+            <div class="card-overlay"></div>
+            
+            <!-- Badge de favorito -->
+            <div class="favorite-badge">
+              <ion-icon name="heart"></ion-icon>
+            </div>
+          </div>
+
+          <!-- Conteúdo do card -->
+          <div class="card-content">
+            <!-- Header do card -->
+            <div class="card-header">
+              <span class="card-category">Viagem Favorita</span>
+              <div class="card-actions">
+                <button class="action-btn remove-favorite" title="Remover dos favoritos">
+                  <ion-icon name="heart-dislike"></ion-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Título e descrição -->
+            <div class="card-main">
+              <h3 class="card-title">{{ vacation.title }}</h3>
+              <p class="card-description">{{ vacation.desc }}</p>
+            </div>
+
+            <!-- Informações da viagem -->
+            <div class="card-info">
+              <div class="info-item">
+                <ion-icon name="calendar"></ion-icon>
+                <div class="info-content">
+                  <span class="info-label">Data de Início</span>
+                  <span class="info-value">{{ vacation.exit_date }}</span>
+                </div>
+              </div>
+              
+              <div class="info-item">
+                <ion-icon name="calendar-clear"></ion-icon>
+                <div class="info-content">
+                  <span class="info-label">Data de Retorno</span>
+                  <span class="info-value">{{ vacation.return_date }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Galeria de imagens (se houver mais de uma) -->
+            {% if vacation.images and vacation.images|length > 1 %}
+            <div class="card-gallery">
+              <div class="gallery-preview">
+                {% for image in vacation.images[1:4] %}
+                  <div class="gallery-thumb">
+                    <img src="{{ image }}" alt="Imagem {{ loop.index + 1 }}">
+                  </div>
+                {% endfor %}
+                {% if vacation.images|length > 4 %}
+                  <div class="gallery-more">
+                    <span>+{{ vacation.images|length - 4 }}</span>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Botões de ação -->
+            <div class="card-actions-bottom">
+              <button class="btn btn-primary">
+                <ion-icon name="eye"></ion-icon>
+                Ver Detalhes
+              </button>
+              <button class="btn btn-secondary">
+                <ion-icon name="share"></ion-icon>
+                Compartilhar
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <!-- Estado vazio -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <ion-icon name="heart-outline"></ion-icon>
+        </div>
+        <h3 class="empty-title">Nenhuma viagem favoritada</h3>
+        <p class="empty-description">
+          Você ainda não favoritou nenhuma viagem. Explore as opções disponíveis e salve suas favoritas para acessá-las facilmente depois.
+        </p>
+        <div class="empty-actions">
+          <a href="{{ url_for('home') }}" class="btn btn-primary">
+            <ion-icon name="search"></ion-icon>
+            Explorar Viagens
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
 </div>
-{% else %}
-    <p>Você não favoritou nenhuma viagem.</p>
-{% endif %} 
+{% endblock %}
 
+{% block scripts %}
+<style>
+/* ============================
+   Página de Favoritos
+============================ */
 
+.favorites-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+}
 
+/* Header da página */
+.favorites-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.header-content {
+  position: relative;
+}
+
+.header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  animation: pulse 2s infinite;
+}
+
+.header-icon ion-icon {
+  font-size: 2.5rem;
+  color: var(--text-inverted);
+}
+
+.favorites-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.favorites-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Grid de favoritos */
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* Card de favorito */
+.favorite-card {
+  background: var(--card-background);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.favorite-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-light);
+}
+
+/* Background do card */
+.card-background {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.background-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-normal);
+}
+
+.favorite-card:hover .background-image {
+  transform: scale(1.05);
+}
+
+.default-background {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.default-background ion-icon {
+  font-size: 3rem;
+  color: var(--text-inverted);
+  opacity: 0.7;
+}
+
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+}
+
+/* Badge de favorito */
+.favorite-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.favorite-badge ion-icon {
+  font-size: 1.2rem;
+  color: var(--primary);
+}
+
+/* Conteúdo do card */
+.card-content {
+  padding: 1.5rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.card-category {
+  background: var(--primary-light);
+  color: var(--text-inverted);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  background: var(--background-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+}
+
+.action-btn:hover {
+  background: var(--background-hover);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+.action-btn.remove-favorite:hover {
+  background: var(--error-light);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+/* Conteúdo principal */
+.card-main {
+  margin-bottom: 1.5rem;
+}
+
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.card-description {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-size: 0.95rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Informações da viagem */
+.card-info {
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item ion-icon {
+  font-size: 1.1rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Galeria de imagens */
+.card-gallery {
+  margin-bottom: 1.5rem;
+}
+
+.gallery-preview {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.gallery-thumb {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+}
+
+.gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-more {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background: var(--background-tertiary);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Botões de ação */
+.card-actions-bottom {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.card-actions-bottom .btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.card-actions-bottom .btn-primary {
+  background: var(--primary);
+  color: var(--text-inverted);
+}
+
+.card-actions-bottom .btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.card-actions-bottom .btn-secondary {
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.card-actions-bottom .btn-secondary:hover {
+  background: var(--background-hover);
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Estado vazio */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  background: var(--background-tertiary);
+  border-radius: 50%;
+  margin-bottom: 2rem;
+}
+
+.empty-icon ion-icon {
+  font-size: 3rem;
+  color: var(--text-tertiary);
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.empty-description {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.empty-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+}
+
+/* Animações */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .favorites-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .favorites-header {
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+  }
+
+  .header-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1rem;
+  }
+
+  .header-icon ion-icon {
+    font-size: 2rem;
+  }
+
+  .favorites-title {
+    font-size: 2rem;
+  }
+
+  .favorites-subtitle {
+    font-size: 1rem;
+  }
+
+  .favorites-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .card-background {
+    height: 180px;
+  }
+
+  .card-content {
+    padding: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+  }
+
+  .card-actions-bottom {
+    flex-direction: column;
+  }
+
+  .empty-state {
+    padding: 3rem 1rem;
+  }
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-icon ion-icon {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .favorites-title {
+    font-size: 1.8rem;
+  }
+
+  .card-content {
+    padding: 1rem;
+  }
+
+  .info-item {
+    padding: 0.5rem;
+  }
+
+  .gallery-thumb,
+  .gallery-more {
+    width: 50px;
+    height: 50px;
+  }
+}
+</style>
 {% endblock %}
