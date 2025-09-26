@@ -7,7 +7,6 @@ import {
   TouchableOpacity, 
   Animated, 
   Image, 
-  ScrollView, 
   SafeAreaView, 
   Dimensions, 
   StatusBar, 
@@ -25,6 +24,92 @@ import { db, auth } from '../../../services/firebase';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useNotifications } from '../../context/NotificationContext';
 
+// CONSTANTES PARA IMAGENS PADRÃO
+const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+const DEFAULT_EVENT_IMAGE = 'https://cdn.pixabay.com/photo/2016/11/22/19/08/hills-1850025_1280.jpg';
+
+// FUNÇÃO PARA CONVERTER TIMESTAMP DO FIREBASE
+const formatFirebaseTimestamp = (timestamp) => {
+  if (!timestamp) return 'Data não definida';
+  
+  try {
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString('pt-BR');
+    }
+    
+    if (typeof timestamp === 'string') {
+      return new Date(timestamp).toLocaleDateString('pt-BR');
+    }
+    
+    if (timestamp.seconds && timestamp.nanoseconds) {
+      return new Date(timestamp.seconds * 1000).toLocaleDateString('pt-BR');
+    }
+    
+    return 'Data não definida';
+  } catch (error) {
+    console.error('Erro ao formatar timestamp:', error);
+    return 'Data não definida';
+  }
+};
+
+const formatTripDate = (dateString) => {
+  if (!dateString) return 'Data não definida';
+  
+  try {
+    if (typeof dateString === 'string') {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    }
+    return formatFirebaseTimestamp(dateString);
+  } catch (error) {
+    return 'Data não definida';
+  }
+};
+
+// COMPONENTE PARA IMAGEM COM FALLBACK
+const AvatarImage = ({ source, style }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  return (
+    <Image
+      source={{ uri: imageError ? DEFAULT_AVATAR : (source || DEFAULT_AVATAR) }}
+      style={style}
+      onError={() => setImageError(true)}
+      defaultSource={{ uri: DEFAULT_AVATAR }}
+    />
+  );
+};
+
+// COMPONENTE PARA IMAGEM DO POST COM FALLBACK
+const PostImageWithFallback = ({ post, onPress }) => {
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = post.images && post.images[0] ? post.images[0] : DEFAULT_EVENT_IMAGE;
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: imageError ? DEFAULT_EVENT_IMAGE : imageUrl }}
+          style={styles.postImage}
+          resizeMode="cover"
+          onError={() => setImageError(true)}
+          defaultSource={{ uri: DEFAULT_EVENT_IMAGE }}
+        />
+        <View style={styles.imageOverlay}>
+          <View style={styles.priceTag}>
+            <Text style={styles.priceText}>R$ {post.price || '0'}</Text>
+          </View>
+          {post.favCount > 0 && (
+            <View style={styles.popularBadge}>
+              <Ionicons name="flame" size={14} color="#FFF" />
+              <Text style={styles.popularText}>{post.favCount}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 export default function Home({ navigation, route }) {
   const { t } = useTranslation();
   const themeContext = useContext(ThemeContext);
@@ -32,96 +117,104 @@ export default function Home({ navigation, route }) {
   const { totalUnread } = useNotifications();
   
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const sidebarAnimation = useRef(new Animated.Value(-250)).current;
+  const sidebarAnimation = useRef(new Animated.Value(-Dimensions.get('window').width)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState('timeline'); // 'timeline' ou 'popular'
-  const [savedPosts, setSavedPosts] = useState([]);
+  const [activeTab, setActiveTab] = useState('timeline');
   const [showPostMenu, setShowPostMenu] = useState(false);
   const [selectedPostForMenu, setSelectedPostForMenu] = useState(null);
 
-  const { width, height } = Dimensions.get("window");
+  // FUNÇÃO MELHORADA PARA TOGGLE DO SIDEBAR
+  const toggleSidebar = () => {
+    if (sidebarVisible) {
+      // Fechar sidebar
+      Animated.parallel([
+        Animated.timing(sidebarAnimation, {
+          toValue: -Dimensions.get('window').width,
+          duration: 250,
+          useNativeDriver: true
+        }),
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true
+        })
+      ]).start(() => {
+        setSidebarVisible(false);
+      });
+    } else {
+      // Abrir sidebar
+      setSidebarVisible(true);
+      Animated.parallel([
+        Animated.timing(sidebarAnimation, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true
+        }),
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true
+        })
+      ]).start();
+    }
+  };
 
-  // Filtros para busca
-  const filteredPosts = posts.filter(item =>
-    (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (item.location?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (item.type !== undefined && item.type.toString().includes(searchQuery))
-  );
+  const closeSidebar = () => {
+    if (sidebarVisible) {
+      toggleSidebar();
+    }
+  };
 
-  // Ordenar posts por data (mais recentes primeiro)
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
-    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-    return dateB - dateA;
-  });
-
-  // Posts populares (baseado em favoritos)
-  const popularPosts = [...filteredPosts]
-    .filter(post => post.favCount > 0)
-    .sort((a, b) => (b.favCount || 0) - (a.favCount || 0))
-    .slice(0, 10);
-
-  useEffect(() => {
-    const q = query(collection(db, 'events'));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const fetchedPosts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        fav: false,
-        theme: doc.data().theme || '',
-        favCount: doc.data().favoriteCount || 0
-      }));
-      
-      // Verifica favoritos e posts salvos do usuário
-      if (auth.currentUser) {
-        try {
-          const userRef = doc(db, 'user', auth.currentUser.uid);
-          const userDoc = await getDoc(userRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const favoritePostIds = userData.favoritePosts || [];
-            const savedPostIds = userData.savedPosts || [];
-            
-            fetchedPosts.forEach(post => {
-              post.fav = favoritePostIds.includes(post.id);
-              post.saved = savedPostIds.includes(post.id);
-            });
-          }
-        } catch (error) {
-          console.error('Erro ao verificar favoritos e salvos:', error);
-        }
-      }
-      
-      setPosts(fetchedPosts);
-    }, (error) => {
-      console.error('Erro ao buscar eventos:', error);
-    });
-    
-    return () => unsubscribe();
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Simular recarregamento dos dados
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
   }, []);
 
-  useEffect(() => {
-    if (route.params?.eventId) {
-      const id = route.params.eventId;
-      const ref = doc(db, "events", id);
-      getDoc(ref).then((snap) => {
-        if (snap.exists()) {
-          setSelectedPost({ id: snap.id, ...snap.data() });
-          setModalVisible(true);
-        }
-      });
-    }
-  }, [route.params?.eventId]);
+  const openModal = (post) => {
+    setSelectedPost(post);
+    setModalVisible(true);
+    closeSidebar();
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedPost(null);
+  };
+
+  const openPostMenu = (post) => {
+    setSelectedPostForMenu(post);
+    setShowPostMenu(true);
+    closeSidebar();
+  };
+
+  const closePostMenu = () => {
+    setShowPostMenu(false);
+    setSelectedPostForMenu(null);
+  };
+
+  const processPosts = (postsData) => {
+    return postsData.map(post => ({
+      ...post,
+      formattedDate: formatFirebaseTimestamp(post.date),
+      formattedExitDate: formatTripDate(post.exit_date),
+      formattedReturnDate: formatTripDate(post.return_date),
+      formattedCreatedAt: formatFirebaseTimestamp(post.createdAt),
+      creatorAvatar: post.creatorAvatar || DEFAULT_AVATAR,
+      images: post.images && post.images[0] ? post.images : [DEFAULT_EVENT_IMAGE]
+    }));
+  };
 
   const toggleFav = async (id) => {
     if (!auth.currentUser) {
-      console.log(t('favorites.userNotAuthenticated'));
+      console.log('Usuário não autenticado');
       return;
     }
 
@@ -133,7 +226,6 @@ export default function Home({ navigation, route }) {
         await updateDoc(userRef, {
           favoritePosts: arrayRemove(id)
         });
-        // Atualizar contagem de favoritos no post
         await updateDoc(doc(db, 'events', id), {
           favoriteCount: (post.favCount || 0) - 1
         });
@@ -141,7 +233,6 @@ export default function Home({ navigation, route }) {
         await updateDoc(userRef, {
           favoritePosts: arrayUnion(id)
         });
-        // Atualizar contagem de favoritos no post
         await updateDoc(doc(db, 'events', id), {
           favoriteCount: (post.favCount || 0) + 1
         });
@@ -149,15 +240,13 @@ export default function Home({ navigation, route }) {
       
       setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     } catch (error) {
-      console.error(t('favorites.errorFavoriting'), error);
+      console.error('Erro ao favoritar:', error);
+      Alert.alert('Erro', 'Não foi possível favoritar o post');
     }
   };
 
   const toggleSave = async (id) => {
-    if (!auth.currentUser) {
-      console.log('Usuário não autenticado');
-      return;
-    }
+    if (!auth.currentUser) return;
 
     try {
       const userRef = doc(db, "user", auth.currentUser.uid);
@@ -176,206 +265,313 @@ export default function Home({ navigation, route }) {
       setPosts(prev => prev.map(i => i.id === id ? { ...i, saved: !i.saved } : i));
     } catch (error) {
       console.error('Erro ao salvar post:', error);
+      Alert.alert('Erro', 'Não foi possível salvar o post');
     }
   };
 
-  // Funções do menu de três pontos
   const handleReportarProblema = () => {
-    setShowPostMenu(false);
-    Alert.alert('Reportar Problema', 'Funcionalidade de reportar problema será implementada em breve.');
+    closePostMenu();
+    Alert.alert('Reportar Problema', 'Funcionalidade em desenvolvimento.');
   };
 
   const handleSalvarPost = async () => {
-    if (!auth.currentUser || !selectedPostForMenu?.id) {
-      console.log("Usuário não autenticado ou evento sem ID");
-      return;
-    }
+    if (!auth.currentUser || !selectedPostForMenu?.id) return;
 
     try {
-      setShowPostMenu(false);
-      const userRef = doc(db, "user", auth.currentUser.uid);
-      const post = posts.find(p => p.id === selectedPostForMenu.id);
-      
-      if (post?.saved) {
-        await updateDoc(userRef, {
-          savedPosts: arrayRemove(selectedPostForMenu.id)
-        });
-        setPosts(prev => prev.map(i => i.id === selectedPostForMenu.id ? { ...i, saved: false } : i));
-        Alert.alert('Sucesso', 'Post removido dos salvos!');
-      } else {
-        await updateDoc(userRef, {
-          savedPosts: arrayUnion(selectedPostForMenu.id)
-        });
-        setPosts(prev => prev.map(i => i.id === selectedPostForMenu.id ? { ...i, saved: true } : i));
-        Alert.alert('Sucesso', 'Post salvo!');
-      }
+      closePostMenu();
+      await toggleSave(selectedPostForMenu.id);
     } catch (error) {
       console.error("Erro ao salvar/remover post:", error);
-      Alert.alert('Erro', 'Não foi possível salvar o post.');
     }
   };
 
   const handleVisualizarPerfil = () => {
-    setShowPostMenu(false);
-
-    let targetUserId = selectedPostForMenu?.uid
-      || selectedPostForMenu?.creator?.id
-      || selectedPostForMenu?.creator?.uid
-      || selectedPostForMenu?.userId
-      || selectedPostForMenu?.user?.uid
-      || selectedPostForMenu?.ownerId
-      || null;
-
-    if (targetUserId && typeof targetUserId !== 'string') {
-      if (typeof targetUserId.uid === 'string') targetUserId = targetUserId.uid;
-      else if (typeof targetUserId.id === 'string') targetUserId = targetUserId.id;
-      else targetUserId = String(targetUserId);
-    }
-
-    if (typeof targetUserId === 'string') {
-      targetUserId = targetUserId.trim();
-      if (targetUserId === '') targetUserId = null;
-    }
-
-    if (!targetUserId) {
-      console.warn('Home: Could not resolve creator uid for post', selectedPostForMenu?.id || selectedPostForMenu);
-      Alert.alert('Perfil indisponível', 'Não foi possível encontrar o usuário associado a este post.', [{ text: 'OK' }]);
-      return;
-    }
-
-    const creatorObj = (selectedPostForMenu?.creator && typeof selectedPostForMenu.creator === 'object')
-      ? selectedPostForMenu.creator
-      : (selectedPostForMenu?.user && typeof selectedPostForMenu.user === 'object') ? selectedPostForMenu.user : null;
-
-    console.log('Home: navigating to VisualizarPerfil with uid=', targetUserId, 'creatorObj=', !!creatorObj, 'selectedPostId=', selectedPostForMenu?.id);
-    navigation.navigate('VisualizarPerfil', { uid: targetUserId, user: creatorObj });
+    closePostMenu();
+    Alert.alert('Visualizar Perfil', 'Funcionalidade em desenvolvimento.');
   };
 
-  const openPostMenu = (post) => {
-    setSelectedPostForMenu(post);
-    setShowPostMenu(true);
-  };
+  // Filtros e ordenação
+  const filteredPosts = posts.filter(item =>
+    (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item.location?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+  );
 
-  const toggleSidebar = () => {
-    Animated.timing(sidebarAnimation, {
-      toValue: sidebarVisible ? -250 : 30,
-      duration: 300,
-      useNativeDriver: true
-    }).start();
-    setSidebarVisible(!sidebarVisible);
-  };
+  const sortedPosts = [...filteredPosts].sort((a, b) => {
+    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+    return dateB - dateA;
+  });
 
-  const openModal = (post) => {
-    setSelectedPost(post);
-    setModalVisible(true);
-  };
+  const popularPosts = [...filteredPosts]
+    .filter(post => post.favCount > 0)
+    .sort((a, b) => (b.favCount || 0) - (a.favCount || 0))
+    .slice(0, 10);
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+  // EFFECT PARA BUSCAR POSTS
+  useEffect(() => {
+    const q = query(collection(db, 'events'));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      try {
+        const fetchedPosts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          fav: false,
+          saved: false,
+          theme: doc.data().theme || '',
+          favCount: doc.data().favoriteCount || 0,
+          commentCount: doc.data().commentCount || 0
+        }));
+        
+        if (auth.currentUser) {
+          try {
+            const userRef = doc(db, 'user', auth.currentUser.uid);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              const favoritePostIds = userData.favoritePosts || [];
+              const savedPostIds = userData.savedPosts || [];
+              
+              fetchedPosts.forEach(post => {
+                post.fav = favoritePostIds.includes(post.id);
+                post.saved = savedPostIds.includes(post.id);
+              });
+            }
+          } catch (error) {
+            console.error('Erro ao verificar favoritos e salvos:', error);
+          }
+        }
+        
+        setPosts(processPosts(fetchedPosts));
+      } catch (error) {
+        console.error('Erro ao buscar posts:', error);
+        Alert.alert('Erro', 'Não foi possível carregar os posts');
+      }
+    });
+    
+    return () => unsubscribe();
   }, []);
 
-  // Componente de cabeçalho do post (estilo Instagram)
+  // EFFECT PARA ABRIR POST ESPECÍFICO
+  useEffect(() => {
+    if (route.params?.eventId) {
+      const id = route.params.eventId;
+      const ref = doc(db, "events", id);
+      getDoc(ref).then((snap) => {
+        if (snap.exists()) {
+          const postData = { id: snap.id, ...snap.data() };
+          setSelectedPost(processPosts([postData])[0]);
+          setModalVisible(true);
+        }
+      }).catch(error => {
+        console.error('Erro ao abrir post:', error);
+      });
+    }
+  }, [route.params?.eventId]);
+
+  // ========== COMPONENTES DE CARD ==========
+  const TripTypeBadge = ({ type }) => {
+    const typeConfig = {
+      1: { label: 'VIAGEM', color: '#10b981', icon: 'airplane' },
+      2: { label: 'EXCURSÃO', color: '#f59e0b', icon: 'bus' },
+      3: { label: 'SHOW', color: '#ef4444', icon: 'musical-notes' }
+    };
+    
+    const config = typeConfig[type] || typeConfig[1];
+    
+    return (
+      <View style={[styles.typeBadge, { backgroundColor: config.color + '20' }]}>
+        <Ionicons name={config.icon} size={12} color={config.color} />
+        <Text style={[styles.typeBadgeText, { color: config.color }]}>
+          {config.label}
+        </Text>
+      </View>
+    );
+  };
+
   const PostHeader = ({ post }) => (
-    <View style={[styles.postHeader, { borderBottomColor: theme?.border }]}>
+    <View style={[styles.postHeader, { backgroundColor: theme?.background }]}>
       <View style={styles.headerLeft}>
-        <Image
-          source={{ uri: post.creatorAvatar || 'https://via.placeholder.com/40' }}
+        <AvatarImage
+          source={post.creatorAvatar}
           style={styles.avatar}
         />
-        <View>
+        <View style={styles.userInfo}>
           <Text style={[styles.username, { color: theme?.textPrimary }]}>
             {post.creatorName || 'Organizador'}
           </Text>
           <Text style={[styles.postTime, { color: theme?.textTertiary }]}>
-            {post.date ? new Date(post.date).toLocaleDateString('pt-BR') : 'Data não definida'}
+            {post.formattedDate || 'Em breve'}
           </Text>
         </View>
       </View>
-      <TouchableOpacity onPress={() => openPostMenu(post)}>
-        <Ionicons name="ellipsis-horizontal" size={20} color={theme?.textPrimary} />
-      </TouchableOpacity>
+      <View style={styles.headerRight}>
+        <TripTypeBadge type={post.type} />
+        <TouchableOpacity onPress={() => openPostMenu(post)} style={styles.menuButton}>
+          <Ionicons name="ellipsis-horizontal" size={20} color={theme?.textTertiary} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
-  // Componente de ações do post (curtir, comentar, compartilhar)
   const PostActions = ({ post }) => (
-    <View style={styles.postActions}>
+    <View style={[styles.postActions, { backgroundColor: theme?.background }]}>
       <View style={styles.actionsLeft}>
-        <TouchableOpacity onPress={() => toggleFav(post.id)} style={styles.actionButton}>
+        <TouchableOpacity 
+          onPress={() => toggleFav(post.id)} 
+          style={[styles.actionButton, styles.favButton]}
+        >
           <Ionicons 
             name={post.fav ? 'heart' : 'heart-outline'} 
-            size={26} 
-            color={post.fav ? '#ff3040' : theme?.textPrimary} 
+            size={24} 
+            color={post.fav ? '#ff3040' : theme?.textTertiary} 
           />
+          <Text style={[
+            styles.actionCount,
+            { color: post.fav ? '#ff3040' : theme?.textTertiary }
+          ]}>
+            {post.favCount || 0}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => openModal(post)}>
-          <Ionicons name="chatbubble-outline" size={24} color={theme?.textPrimary} />
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.commentButton]}
+          onPress={() => openModal(post)}
+        >
+          <Ionicons name="chatbubble-outline" size={22} color={theme?.textTertiary} />
+          <Text style={[styles.actionCount, { color: theme?.textTertiary }]}>
+            {post.commentCount || 0}
+          </Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={() => toggleSave(post.id)}>
+      
+      <TouchableOpacity 
+        onPress={() => toggleSave(post.id)}
+        style={styles.saveButton}
+      >
         <Ionicons 
           name={post.saved ? 'bookmark' : 'bookmark-outline'} 
-          size={24} 
-          color={post.saved ? theme?.primary : theme?.textPrimary} 
+          size={22} 
+          color={post.saved ? theme?.primary : theme?.textTertiary} 
         />
       </TouchableOpacity>
     </View>
   );
 
-  // Componente de informações do evento
   const PostInfo = ({ post }) => (
-    <View style={styles.postInfo}>
+    <View style={[styles.postInfo, { backgroundColor: theme?.background }]}>
       <Text style={[styles.postTitle, { color: theme?.textPrimary }]}>
-        {post.title || t('home.noTitle')}
+        {post.title || 'Viagem incrível!'}
       </Text>
       
       <View style={styles.eventDetails}>
-        {post.location && (
+        <View style={styles.detailRow}>
           <View style={styles.detailItem}>
-            <Ionicons name="location-outline" size={16} color={theme?.textTertiary} />
-            <Text style={[styles.detailText, { color: theme?.textSecondary }]}>{post.location}</Text>
+            <Ionicons name="location-outline" size={16} color={theme?.primary} />
+            <Text style={[styles.detailText, { color: theme?.textSecondary }]} numberOfLines={1}>
+              {post.location || 'Local a definir'}
+            </Text>
           </View>
-        )}
+          
+          <View style={styles.detailItem}>
+            <Ionicons name="people-outline" size={16} color={theme?.primary} />
+            <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
+              {post.numSlots || 0} vagas
+            </Text>
+          </View>
+        </View>
         
-        {post.price && (
+        <View style={styles.detailRow}>
           <View style={styles.detailItem}>
-            <Ionicons name="pricetag-outline" size={16} color={theme?.textTertiary} />
-            <Text style={[styles.detailText, { color: theme?.primary }]}>R$ {post.price}</Text>
+            <Ionicons name="calendar-outline" size={16} color={theme?.primary} />
+            <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
+              {post.formattedExitDate || 'Data não definida'}
+            </Text>
           </View>
-        )}
-        
-        {post.date && (
-          <View style={styles.detailItem}>
-            <Ionicons name="calendar-outline" size={16} color={theme?.textTertiary} />
-            <Text style={[styles.detailText, { color: theme?.textSecondary }]}>{post.exit_date}</Text>
-          </View>
-        )}
+          
+          {post.formattedReturnDate && post.formattedReturnDate !== 'Data não definida' && (
+            <View style={styles.detailItem}>
+              <Ionicons name="arrow-redo-outline" size={16} color={theme?.primary} />
+              <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
+                {post.formattedReturnDate}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
 
-      <Text style={[styles.postDescription, { color: theme?.textSecondary }]} numberOfLines={3}>
-        {post.desc || t('home.noDescription')}
+      <Text style={[styles.postDescription, { color: theme?.textSecondary }]} numberOfLines={2}>
+        {post.desc || 'Uma experiência única te aguarda! Não perca essa oportunidade.'}
       </Text>
+      
+      <TouchableOpacity 
+        style={styles.viewDetailsButton}
+        onPress={() => openModal(post)}
+      >
+        <Text style={[styles.viewDetailsText, { color: theme?.primary }]}>
+          Ver detalhes completos
+        </Text>
+        <Ionicons name="arrow-forward" size={16} color={theme?.primary} />
+      </TouchableOpacity>
     </View>
   );
 
-  // Item de post individual
   const renderPostItem = ({ item }) => (
-    <View style={[styles.postContainer, { backgroundColor: theme?.cardBackground }]}>
+    <View style={[styles.postCard, { 
+      backgroundColor: theme?.cardBackground || theme?.background,
+      shadowColor: theme?.mode === 'dark' ? '#000' : 'rgba(0,0,0,0.1)'
+    }]}>
       <PostHeader post={item} />
-      
-      {/* Carrossel de imagens */}
-      <TouchableOpacity onPress={() => openModal(item)} activeOpacity={0.9}>
-        <Image
-          source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/400' }}
-          style={styles.postImage}
-          resizeMode="cover"
-        />
-      </TouchableOpacity>
-      
+      <PostImageWithFallback post={item} onPress={() => openModal(item)} />
       <PostActions post={item} />
       <PostInfo post={item} />
     </View>
+  );
+
+  const SidebarContent = () => (
+    <Animated.View style={[styles.sidebar, { 
+      backgroundColor: theme?.backgroundDark || theme?.background,
+      transform: [{ translateX: sidebarAnimation }],
+      shadowColor: theme?.mode === 'dark' ? '#fff' : '#000',
+      shadowOffset: { width: 2, height: 0 },
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+      elevation: 20,
+    }]}>
+      <View style={styles.sidebarHeader}>
+        <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>Menu</Text>
+        <TouchableOpacity onPress={closeSidebar} style={styles.closeButton}>
+          <Ionicons name="close" size={24} color={theme?.textPrimary} />
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.sidebarContent}>
+        <TouchableOpacity 
+          style={[styles.sidebarItem]} 
+          onPress={() => { navigation.navigate('Agenda'); closeSidebar(); }}
+        >
+          <Ionicons name="calendar-outline" size={22} color={theme?.textSecondary} />
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Minha Agenda</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.sidebarItem]} 
+          onPress={() => { navigation.navigate('Favoritos'); closeSidebar(); }}
+        >
+          <Ionicons name="heart-outline" size={22} color={theme?.textSecondary} />
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.sidebarItem]} 
+          onPress={() => { navigation.navigate('Salvos'); closeSidebar(); }}
+        >
+          <Ionicons name="bookmark-outline" size={22} color={theme?.textSecondary} />
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Posts Salvos</Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
   );
 
   return (
@@ -385,7 +581,28 @@ export default function Home({ navigation, route }) {
         backgroundColor={theme?.background} 
       />
       
-      {/* Header Compacto */}
+      {/* Overlay animado para o sidebar */}
+      {sidebarVisible && (
+        <Animated.View 
+          style={[
+            styles.overlay, 
+            { 
+              opacity: overlayOpacity,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          ]} 
+        >
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill} 
+            onPress={closeSidebar} 
+            activeOpacity={1} 
+          />
+        </Animated.View>
+      )}
+      
+      <SidebarContent />
+
+      {/* Header Principal */}
       <View style={[styles.header, { backgroundColor: theme?.background }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={toggleSidebar} style={styles.menuButton}>
@@ -399,7 +616,7 @@ export default function Home({ navigation, route }) {
           </View>
           
           <TouchableOpacity 
-            onPress={() => navigation.navigate('Notificacoes')} 
+            onPress={() => { navigation.navigate('Notificacoes'); closeSidebar(); }} 
             style={styles.notificationButton}
           >
             <View style={{ position: 'relative' }}>
@@ -407,7 +624,7 @@ export default function Home({ navigation, route }) {
               {typeof totalUnread === 'number' && totalUnread > 0 && (
                 <View style={[styles.notificationBadge, { backgroundColor: '#ff3b30' }]}>
                   <Text style={styles.notificationBadgeText}>
-                    {totalUnread > 99 ? '99+' : totalUnread.toString()}
+                    {totalUnread > 99 ? '99+' : totalUnread}
                   </Text>
                 </View>
               )}
@@ -415,14 +632,11 @@ export default function Home({ navigation, route }) {
           </TouchableOpacity>
         </View>
         
-        {/* Barra de Pesquisa Integrada */}
         <View style={[styles.searchContainer, { backgroundColor: theme?.background }]}>
           <View style={[styles.searchInputContainer, { backgroundColor: theme?.backgroundSecondary }]}>
             <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
             <TextInput
-              style={[styles.searchInput, { 
-                color: theme?.textPrimary,
-              }]}
+              style={[styles.searchInput, { color: theme?.textPrimary }]}
               placeholder="Buscar excursões..."
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -437,7 +651,7 @@ export default function Home({ navigation, route }) {
         </View>
       </View>
 
-      {/* Tabs Estilo Instagram */}
+      {/* Abas */}
       <View style={[styles.tabContainer, { backgroundColor: theme?.background }]}>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'timeline' && styles.activeTab]}
@@ -468,49 +682,7 @@ export default function Home({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
-      {/* Sidebar */}
-      {sidebarVisible && (
-        <TouchableOpacity 
-          style={[styles.overlay, { backgroundColor: theme?.overlay }]} 
-          onPress={toggleSidebar} 
-          activeOpacity={1} 
-        />
-      )}
-
-      <Animated.View style={[styles.sidebar, { 
-        backgroundColor: theme?.backgroundDark,
-        transform: [{ translateX: sidebarAnimation }] 
-      }]}>
-        <View style={styles.sidebarHeader}>
-          <Text style={[styles.sidebarTitle, { color: theme?.textPrimary }]}>Menu</Text>
-          <TouchableOpacity onPress={toggleSidebar}>
-            <Ionicons name="close" size={24} color={theme?.textPrimary} />
-          </TouchableOpacity>
-        </View>
-        
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => { navigation.navigate('Agenda'); toggleSidebar(); }}>
-          <Ionicons name="calendar-outline" size={22} color={theme?.textSecondary} />
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Minha Agenda</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => {
-          navigation.navigate('Favoritos');
-          toggleSidebar();
-        }}>
-          <Ionicons name="heart-outline" size={22} color={theme?.textSecondary} />
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => {
-          navigation.navigate('Salvos');
-          toggleSidebar();
-        }}>
-          <Ionicons name="bookmark-outline" size={22} color={theme?.textSecondary} />
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Posts Salvos</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Timeline de Posts */}
+      {/* Lista de Posts */}
       <FlatList
         data={activeTab === 'timeline' ? sortedPosts : popularPosts}
         renderItem={renderPostItem}
@@ -538,6 +710,7 @@ export default function Home({ navigation, route }) {
         contentContainerStyle={styles.listContent}
       />
 
+      {/* Modal do Post */}
       <TelaPost
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
@@ -545,29 +718,21 @@ export default function Home({ navigation, route }) {
         setSelectedPost={setSelectedPost}
       />
 
-      {/* Menu dropdown dos três pontos */}
+      {/* Menu de Opções do Post */}
       {showPostMenu && selectedPostForMenu && (
         <View style={styles.menuOverlay}>
           <TouchableOpacity 
             style={styles.menuOverlayTouchable}
-            onPress={() => setShowPostMenu(false)}
+            onPress={closePostMenu}
             activeOpacity={1}
           />
           <View style={[styles.dropdownMenu, { backgroundColor: theme?.backgroundSecondary }]}>
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={handleReportarProblema}
-            >
+            <TouchableOpacity style={styles.dropdownItem} onPress={handleReportarProblema}>
               <Ionicons name="flag-outline" size={20} color={theme?.textPrimary} />
-              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                Reportar Problema
-              </Text>
+              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>Reportar Problema</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={handleSalvarPost}
-            >
+            <TouchableOpacity style={styles.dropdownItem} onPress={handleSalvarPost}>
               <Ionicons 
                 name={selectedPostForMenu.saved ? "bookmark" : "bookmark-outline"} 
                 size={20} 
@@ -578,14 +743,9 @@ export default function Home({ navigation, route }) {
               </Text>
             </TouchableOpacity>
             
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={handleVisualizarPerfil}
-            >
+            <TouchableOpacity style={styles.dropdownItem} onPress={handleVisualizarPerfil}>
               <Ionicons name="person-outline" size={20} color={theme?.textPrimary} />
-              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>
-                Ver Perfil
-              </Text>
+              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>Ver Perfil</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -598,12 +758,61 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 99,
+  },
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: Dimensions.get('window').width * 0.8,
+    maxWidth: 300,
+    height: '100%',
+    padding: 20,
+    zIndex: 100,
+  },
+  sidebarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+    marginTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 20,
+  },
+  sidebarContent: {
+    flex: 1,
+  },
+  sidebarTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+  },
+  sidebarText: {
+    fontSize: 16,
+    marginLeft: 12,
+    fontWeight: '500',
+  },
+  closeButton: {
+    padding: 4,
+  },
   header: {
     paddingTop: Platform.OS === 'ios' ? 10 : StatusBar.currentHeight + 10,
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
+    zIndex: 10,
   },
   headerContent: {
     flexDirection: 'row',
@@ -652,6 +861,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
+    zIndex: 10,
   },
   tab: {
     flex: 1,
@@ -673,80 +883,170 @@ const styles = StyleSheet.create({
     width: '40%',
     borderRadius: 2,
   },
-  listContent: {
-    paddingBottom: 20,
-  },
-  postContainer: {
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
-    paddingBottom: 16,
+  postCard: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    borderBottomWidth: 1,
+    padding: 16,
+    paddingBottom: 12,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 12,
     marginRight: 12,
   },
+  userInfo: {
+    flex: 1,
+  },
   username: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
   },
   postTime: {
     fontSize: 12,
+    opacity: 0.7,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   postImage: {
     width: '100%',
-    height: 400,
+    height: 200,
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  priceTag: {
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  priceText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  popularBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  popularText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   postActions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   actionsLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: 16,
   },
+  actionCount: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
   postInfo: {
-    paddingHorizontal: 12,
+    padding: 16,
   },
   postTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 12,
+    lineHeight: 24,
   },
   eventDetails: {
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    flex: 1,
   },
   detailText: {
-    fontSize: 14,
+    fontSize: 13,
     marginLeft: 6,
+    flex: 1,
   },
   postDescription: {
     fontSize: 14,
     lineHeight: 20,
+    marginBottom: 16,
+  },
+  viewDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+  },
+  viewDetailsText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  listContent: {
+    paddingVertical: 8,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -764,48 +1064,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
-  },
-  sidebar: {
-    position: 'absolute',
-    top: 0,
-    left: -30,
-    width: 280,
-    height: '100%',
-    padding: 20,
-    zIndex: 100,
-    elevation: 5,
-  },
-  sidebarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-    marginTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 20,
-  },
-  sidebarTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  sidebarItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderRadius: 8,
-    marginBottom: 4,
-    paddingHorizontal: 12,
-  },
-  sidebarText: {
-    fontSize: 16,
-    marginLeft: 12,
-    fontWeight: '500',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 99,
   },
   notificationBadge: {
     position: 'absolute',
