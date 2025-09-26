@@ -207,9 +207,18 @@ def init_app(app, db):
                 "created_at": firestore.SERVER_TIMESTAMP,
                 "uid" : g.user['uid'] if g.user else None
             }
+            
+            # Log para debug
+            print(f"Criando evento com UID: {g.user['uid'] if g.user else None}")
+            logger.info(f"Criando evento com UID: {g.user['uid'] if g.user else None}")
+            
             # Salva o evento no Firestore
             event_ref = db.collection("events").add(event)
             event_id = event_ref[1].id  # O ID do documento está na posição [1]
+            
+            # Log para confirmar criação
+            print(f"Evento criado com ID: {event_id}, UID: {event.get('uid')}")
+            logger.info(f"Evento criado com ID: {event_id}, UID: {event.get('uid')}")
 
             # Cria grupo de chat vinculado ao evento
             try:
@@ -559,135 +568,91 @@ def init_app(app, db):
             joined_vacations = []
             my_vacations = []
             
-            # Buscar viagens criadas pelo usuário
+            # NOVA LÓGICA SIMPLIFICADA: Buscar todas as viagens e separar as criadas das participadas
             try:
-                print(f"Buscando viagens criadas para UID: {g.user['uid']}")
-                logger.info(f"Buscando viagens criadas para UID: {g.user['uid']}")
+                print("=== NOVA LÓGICA: Buscando todas as viagens do usuário ===")
                 
-                # Primeiro, tentar com ordenação
+                # Primeiro, buscar viagens criadas pelo usuário (onde uid = user_uid)
+                print(f"Buscando viagens CRIADAS para UID: {g.user['uid']}")
                 try:
-                    print("Tentando busca com ordenação...")
-                    vacations_ref = db.collection("events")\
-                                      .where("uid", "==", g.user["uid"])\
-                                      .order_by("created_at", direction=firestore.Query.DESCENDING)\
-                                      .stream()
-                except Exception as order_error:
-                    print(f"Erro ao ordenar por created_at: {order_error}")
-                    logger.warning(f"Erro ao ordenar por created_at: {order_error}")
-                    # Se falhar, buscar sem ordenação
-                    print("Tentando busca sem ordenação...")
-                    vacations_ref = db.collection("events")\
-                                      .where("uid", "==", g.user["uid"])\
-                                      .stream()
-                
-                doc_count = 0
-                for doc in vacations_ref:
-                    doc_count += 1
-                    try:
-                        vac_data = doc.to_dict()
-                        vac_data["id"] = doc.id
-                        
-                        print(f"Documento encontrado - ID: {doc.id}, UID: {vac_data.get('uid')}, Título: {vac_data.get('title', 'Sem título')}")
-                        logger.info(f"Documento encontrado - ID: {doc.id}, UID: {vac_data.get('uid')}, Título: {vac_data.get('title', 'Sem título')}")
-                        
-                        # Verificação adicional para garantir que o UID corresponde
-                        if vac_data.get('uid') != g.user['uid']:
-                            print(f"UID não corresponde! Documento UID: {vac_data.get('uid')}, Usuário UID: {g.user['uid']}")
-                            logger.warning(f"UID não corresponde! Documento UID: {vac_data.get('uid')}, Usuário UID: {g.user['uid']}")
-                            continue
-                        
-                        # Adicionar informação sobre expiração
-                        return_date = vac_data.get('return_date')
-                        if return_date:
-                            if isinstance(return_date, datetime):
-                                vac_data['is_expired'] = return_date < datetime.now()
-                            elif hasattr(return_date, 'timestamp'):
-                                vac_data['is_expired'] = return_date.timestamp() < datetime.now().timestamp()
-                            else:
-                                vac_data['is_expired'] = False
-                        else:
-                            vac_data['is_expired'] = False
-                        
-                        my_vacations.append(vac_data)
-                        logger.info(f"Viagem criada adicionada: {vac_data.get('title', 'Sem título')}")
-                        
-                    except Exception as doc_error:
-                        logger.exception(f"Erro ao processar documento de viagem criada: {doc_error}")
-                        continue
-                
-                print(f"Total de documentos encontrados na query: {doc_count}")
-                print(f"Total de viagens criadas processadas: {len(my_vacations)}")
-                logger.info(f"Total de documentos encontrados na query: {doc_count}")
-                logger.info(f"Total de viagens criadas processadas: {len(my_vacations)}")
-                
-                # Se não encontrou nenhuma viagem, tentar busca alternativa
-                if len(my_vacations) == 0:
-                    print("Nenhuma viagem encontrada na primeira busca. Tentando busca alternativa...")
-                    logger.info("Nenhuma viagem encontrada na primeira busca. Tentando busca alternativa...")
-                    try:
-                        # Buscar todos os eventos e filtrar manualmente
-                        all_events_ref = db.collection("events").stream()
-                        alternative_count = 0
-                        
-                        for doc in all_events_ref:
-                            try:
-                                event_data = doc.to_dict()
-                                if event_data.get('uid') == g.user['uid']:
-                                    alternative_count += 1
-                                    event_data["id"] = doc.id
-                                    
-                                    # Adicionar informação sobre expiração
-                                    return_date = event_data.get('return_date')
-                                    if return_date:
-                                        if isinstance(return_date, datetime):
-                                            event_data['is_expired'] = return_date < datetime.now()
-                                        elif hasattr(return_date, 'timestamp'):
-                                            event_data['is_expired'] = return_date.timestamp() < datetime.now().timestamp()
-                                        else:
-                                            event_data['is_expired'] = False
-                                    else:
-                                        event_data['is_expired'] = False
-                                    
-                                    my_vacations.append(event_data)
-                                    logger.info(f"Viagem encontrada na busca alternativa: {event_data.get('title', 'Sem título')}")
-                            except Exception as alt_error:
-                                logger.exception(f"Erro na busca alternativa: {alt_error}")
-                                continue
-                        
-                        logger.info(f"Busca alternativa encontrou {alternative_count} viagens")
-                    except Exception as alt_search_error:
-                        logger.exception(f"Erro na busca alternativa: {alt_search_error}")
-                        
-            except Exception as created_error:
-                logger.exception(f"Erro ao buscar viagens criadas: {created_error}")
-                # Continua mesmo se houver erro nas viagens criadas
-            
-            # Buscar viagens que participa
-            if joined_events:
-                try:
-                    # Firestore permite até 10 elementos no 'in'
-                    chunks = [joined_events[i:i+10] for i in range(0, len(joined_events), 10)]
-                    for chunk in chunks:
+                    created_events_ref = db.collection("events")\
+                                           .where("uid", "==", g.user["uid"])\
+                                           .stream()
+                    
+                    for doc in created_events_ref:
                         try:
-                            joined_query = db.collection("events").where("__name__", "in", chunk).stream()
-                            for doc in joined_query:
-                                try:
-                                    data = doc.to_dict()
-                                    data["id"] = doc.id
-                                    joined_vacations.append(data)
-                                    logger.info(f"Viagem participada carregada: {data.get('title', 'Sem título')}")
-                                except Exception as doc_error:
-                                    logger.exception(f"Erro ao processar documento de viagem participada: {doc_error}")
-                                    continue
-                        except Exception as chunk_error:
-                            logger.exception(f"Erro ao processar chunk de eventos: {chunk_error}")
+                            event_data = doc.to_dict()
+                            event_data["id"] = doc.id
+                            
+                            print(f"Viagem CRIADA encontrada - ID: {doc.id}, Título: {event_data.get('title', 'Sem título')}")
+                            
+                            # Processar data de expiração
+                            return_date = event_data.get('return_date')
+                            try:
+                                if return_date and isinstance(return_date, datetime):
+                                    # Remove timezone info para comparação
+                                    if return_date.tzinfo is not None:
+                                        return_date = return_date.replace(tzinfo=None)
+                                    event_data['is_expired'] = return_date < datetime.now()
+                                else:
+                                    event_data['is_expired'] = False
+                            except Exception:
+                                event_data['is_expired'] = False
+                            
+                            # Marcar como viagem criada pelo usuário
+                            event_data['is_creator'] = True
+                            my_vacations.append(event_data)
+                            
+                        except Exception as doc_error:
+                            logger.exception(f"Erro ao processar viagem criada: {doc_error}")
                             continue
-                except Exception as joined_error:
-                    logger.exception(f"Erro ao buscar viagens participadas: {joined_error}")
-                    # Continua mesmo se houver erro nas viagens participadas
+                
+                except Exception as created_error:
+                    logger.exception(f"Erro ao buscar viagens criadas: {created_error}")
+                
+                print(f"Total de viagens CRIADAS encontradas: {len(my_vacations)}")
+                
+                # Segundo, buscar viagens onde o usuário participa (usando joinedEvents)
+                if joined_events:
+                    print(f"Buscando viagens PARTICIPADAS: {len(joined_events)} eventos")
+                    try:
+                        # Firestore permite até 10 elementos no 'in'
+                        chunks = [joined_events[i:i+10] for i in range(0, len(joined_events), 10)]
+                        for chunk in chunks:
+                            try:
+                                joined_query = db.collection("events").where("__name__", "in", chunk).stream()
+                                for doc in joined_query:
+                                    try:
+                                        event_data = doc.to_dict()
+                                        event_data["id"] = doc.id
+                                        
+                                        # Só adicionar se NÃO for uma viagem criada pelo usuário
+                                        if event_data.get('uid') != g.user['uid']:
+                                            print(f"Viagem PARTICIPADA encontrada - ID: {doc.id}, Título: {event_data.get('title', 'Sem título')}")
+                                            event_data['is_creator'] = False
+                                            joined_vacations.append(event_data)
+                                        else:
+                                            print(f"Ignorando viagem {doc.id} - usuário é o criador")
+                                            
+                                    except Exception as doc_error:
+                                        logger.exception(f"Erro ao processar viagem participada: {doc_error}")
+                                        continue
+                            except Exception as chunk_error:
+                                logger.exception(f"Erro ao processar chunk de eventos: {chunk_error}")
+                                continue
+                    except Exception as joined_error:
+                        logger.exception(f"Erro ao buscar viagens participadas: {joined_error}")
+                
+                print(f"Total de viagens PARTICIPADAS encontradas: {len(joined_vacations)}")
+                        
+            except Exception as general_error:
+                logger.exception(f"Erro geral ao buscar viagens: {general_error}")
+                flash("Erro ao carregar suas viagens. Tente novamente.", "error")
+                return render_template("minhas_viagens.html", user=g.user, my_vacations=[], joined_vacations=[])
             
-            print(f"Total de viagens criadas: {len(my_vacations)}")
-            print(f"Total de viagens participadas: {len(joined_vacations)}")
+            print(f"=== RESULTADO FINAL ===")
+            print(f"Total de viagens CRIADAS: {len(my_vacations)}")
+            print(f"Total de viagens PARTICIPADAS: {len(joined_vacations)}")
             logger.info(f"Total de viagens criadas: {len(my_vacations)}")
             logger.info(f"Total de viagens participadas: {len(joined_vacations)}")
             
@@ -889,6 +854,31 @@ def init_app(app, db):
     def search():
         """Rota para a página de pesquisa"""
         return render_template("search.html", user=g.user)
+
+    @app.route("/debug_events")
+    def debug_events():
+        """Rota de debug para verificar eventos no banco"""
+        if not g.user:
+            return jsonify({"error": "Usuário não logado"}), 401
+        
+        try:
+            events = []
+            all_events = db.collection("events").stream()
+            
+            for doc in all_events:
+                event_data = doc.to_dict()
+                event_data["id"] = doc.id
+                events.append(event_data)
+            
+            return jsonify({
+                "success": True,
+                "user_uid": g.user.get('uid'),
+                "total_events": len(events),
+                "events": events
+            })
+        except Exception as e:
+            logger.exception(f"Erro no debug: {e}")
+            return jsonify({"error": str(e)}), 500
 
     @app.route("/search_api", methods=["GET"])
     def search_api():
