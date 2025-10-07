@@ -13,7 +13,9 @@ import {
   Platform,
   FlatList,
   RefreshControl,
-  Alert
+  Alert,
+  ScrollView,
+  Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
@@ -152,6 +154,9 @@ export default function Home({ navigation, route }) {
   const [activeTab, setActiveTab] = useState('timeline');
   const [showPostMenu, setShowPostMenu] = useState(false);
   const [selectedPostForMenu, setSelectedPostForMenu] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
 
   // FUNÇÃO SIMPLIFICADA PARA TOGGLE DO SIDEBAR
   const toggleSidebar = () => {
@@ -358,12 +363,44 @@ export default function Home({ navigation, route }) {
     }
   };
 
+  // Funções para gerenciar filtros de tags
+  const toggleTagFilter = (tag) => {
+    setSelectedTags(prev => {
+      if (prev.includes(tag)) {
+        return prev.filter(t => t !== tag);
+      } else {
+        return [...prev, tag];
+      }
+    });
+  };
+
+  const clearAllFilters = () => {
+    setSelectedTags([]);
+  };
+
+  const applyFilters = () => {
+    setFilterModalVisible(false);
+  };
+
   // Filtros e ordenação
-  const filteredPosts = posts.filter(item =>
-    (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (item.location?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-  );
+  const filteredPosts = posts.filter(item => {
+    // Filtro por texto de busca
+    const matchesSearch = searchQuery === '' || 
+      (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (item.location?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (item.desc?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    
+    // Filtro por tags selecionadas
+    const matchesTags = selectedTags.length === 0 || 
+      (item.tags && item.tags.some(tag => 
+        selectedTags.some(selectedTag => 
+          tag.toLowerCase() === selectedTag.toLowerCase()
+        )
+      ));
+    
+    return matchesSearch && matchesTags;
+  });
 
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
@@ -375,6 +412,21 @@ export default function Home({ navigation, route }) {
     .filter(post => post.favCount > 0)
     .sort((a, b) => (b.favCount || 0) - (a.favCount || 0))
     .slice(0, 10);
+
+  // EFFECT PARA EXTRAIR TAGS ÚNICAS
+  useEffect(() => {
+    const allTags = [];
+    posts.forEach(post => {
+      if (post.tags && Array.isArray(post.tags)) {
+        post.tags.forEach(tag => {
+          if (!allTags.includes(tag)) {
+            allTags.push(tag);
+          }
+        });
+      }
+    });
+    setAvailableTags(allTags.sort());
+  }, [posts]);
 
   // EFFECT PARA BUSCAR POSTS
   useEffect(() => {
@@ -648,14 +700,6 @@ export default function Home({ navigation, route }) {
           <Ionicons name="heart-outline" size={22} color={theme?.textSecondary} />
           <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.sidebarItem]} 
-          onPress={() => { navigation.navigate('Salvos'); closeSidebar(); }}
-        >
-          <Ionicons name="bookmark-outline" size={22} color={theme?.textSecondary} />
-          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Posts Salvos</Text>
-        </TouchableOpacity>
       </View>
     </Animated.View>
   );
@@ -698,20 +742,38 @@ export default function Home({ navigation, route }) {
         </View>
         
         <View style={[styles.searchContainer, { backgroundColor: theme?.background }]}>
-          <View style={[styles.searchInputContainer, { backgroundColor: theme?.backgroundSecondary }]}>
-            <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
-            <TextInput
-              style={[styles.searchInput, { color: theme?.textPrimary }]}
-              placeholder="Buscar excursões..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={theme?.textTertiary}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
-              </TouchableOpacity>
-            )}
+          <View style={styles.searchRow}>
+            <View style={[styles.searchInputContainer, { backgroundColor: theme?.backgroundSecondary }]}>
+              <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
+              <TextInput
+                style={[styles.searchInput, { color: theme?.textPrimary }]}
+                placeholder="Buscar excursões..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor={theme?.textTertiary}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {/* Botão de Filtro */}
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                { backgroundColor: selectedTags.length > 0 ? theme?.primary : theme?.backgroundSecondary },
+                { borderColor: theme?.primary }
+              ]}
+              onPress={() => setFilterModalVisible(true)}
+            >
+              <Ionicons 
+                name="filter" 
+                size={20} 
+                color={selectedTags.length > 0 ? 'white' : theme?.primary} 
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -802,6 +864,77 @@ export default function Home({ navigation, route }) {
         selectedPost={selectedPost}
         setSelectedPost={setSelectedPost}
       />
+
+      {/* Modal de Filtros */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={filterModalVisible}
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.filterModal}>
+            <View style={[styles.filterModalContent, { backgroundColor: theme?.cardBackground }]}>
+              <View style={styles.filterModalHeader}>
+                <Text style={[styles.filterModalTitle, { color: theme?.textPrimary }]}>
+                  Filtrar por Tags
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => setFilterModalVisible(false)}
+                  style={styles.closeModalButton}
+                >
+                  <Ionicons name="close" size={24} color={theme?.textPrimary} />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.filterModalScrollContent} showsVerticalScrollIndicator={false}>
+                {availableTags.map((tag, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.filterOption}
+                    onPress={() => toggleTagFilter(tag)}
+                  >
+                    <View style={styles.filterOptionLeft}>
+                      <View style={[
+                        styles.checkbox,
+                        { borderColor: theme?.primary },
+                        selectedTags.includes(tag) && { backgroundColor: theme?.primary }
+                      ]}>
+                        {selectedTags.includes(tag) && (
+                          <Ionicons name="checkmark" size={16} color="white" />
+                        )}
+                      </View>
+                      <Text style={[styles.filterOptionText, { color: theme?.textPrimary }]}>
+                        #{tag}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              
+              <View style={styles.filterModalFooter}>
+                <TouchableOpacity
+                  style={[styles.clearFiltersButton, { borderColor: theme?.primary }]}
+                  onPress={clearAllFilters}
+                >
+                  <Text style={[styles.clearFiltersText, { color: theme?.primary }]}>
+                    Limpar Filtros
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.applyFiltersButton, { backgroundColor: theme?.primary }]}
+                  onPress={applyFilters}
+                >
+                  <Text style={styles.applyFiltersText}>
+                    Aplicar Filtros
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Menu de Opções do Post */}
       {showPostMenu && selectedPostForMenu && (
@@ -925,6 +1058,11 @@ const styles = StyleSheet.create({
   searchContainer: {
     marginTop: 4,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -933,6 +1071,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
+    flex: 1,
   },
   searchIcon: {
     marginRight: 8,
@@ -941,6 +1080,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     height: '100%',
+  },
+  filterButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -1221,6 +1368,98 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontWeight: '500',
   },
+  
+  // Estilos para Modal de Filtros
+  filterModal: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterModalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    borderRadius: 20,
+    padding: 24,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  filterModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  filterModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  closeModalButton: {
+    padding: 4,
+  },
+  filterModalScrollContent: {
+    maxHeight: 400,
+    marginBottom: 20,
+  },
+  filterOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  filterOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  filterModalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  clearFiltersButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  clearFiltersText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  applyFiltersButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  applyFiltersText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
   // Estilos para Tags
   tagsContainer: {
     flexDirection: 'row',
