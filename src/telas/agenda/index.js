@@ -1,5 +1,14 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Modal } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
+  Image, 
+  Modal,
+  Platform // IMPORTACAO ADICIONADA
+} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -425,21 +434,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header:{
-    marginBottom: 30,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 40 : 20, // Espaçamento mínimo
+    paddingBottom: 12,
   },
-  headerText:{
+  headerText: {
     fontSize: 18, 
     fontWeight: 'bold', 
     flex: 1, 
     textAlign: 'center'
   },
-  flecha: {
-    marginTop: 70,
-  },
-     calendar: {
-     flex: 3,
-     borderBottomWidth: 1,
+  
+  calendar: {
+    flex: 3,
+    borderBottomWidth: 1,
    },
   // Estilos para a lista de eventos
      eventsListContainer: {
