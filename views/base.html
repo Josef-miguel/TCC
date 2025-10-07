@@ -115,18 +115,10 @@
         <ion-icon name="chatbubbles-outline"></ion-icon>
         <span>Meus Chats</span>
       </a>
-      <a href="{{ url_for('ai_assistant') }}" class="sidebar-link">
-        <ion-icon name="sparkles-outline"></ion-icon>
-        <span>Assistente IA</span>
-      </a>
       <a href="{{ url_for('perfil') }}" class="sidebar-link">
         <ion-icon name="person-outline"></ion-icon>
         <span>Perfil</span>
       </a>
-      <!-- <a href="{{ url_for('new_event') }}" class="sidebar-link">
-        <ion-icon name="list-outline"></ion-icon>
-        <span>Eventos</span>
-      </a> -->
     </nav>
   </aside>
 
@@ -138,9 +130,6 @@
     <span class="floating-tooltip">Novo Evento</span>
   </a>
 
-  <footer>
-    <!-- rodapé se quiser -->
-  </footer>
 
   <!-- espaço para scripts que cada template pode injetar -->
   {% block scripts %}{% endblock %}

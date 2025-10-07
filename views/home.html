@@ -15,107 +15,163 @@
     <h1 class="mb-3">Discover</h1>
     
     {% for event in events %}
-    <div class="post-card">
-      <!-- Imagem de fundo do post -->
-      <div class="post-background">
-        {% if event.images %}
-          <img src="{{ event.images[0] }}" alt="Imagem do evento" class="background-image">
-        {% else %}
-          <div class="default-background"></div>
-        {% endif %}
-        
-        <!-- Overlay escuro -->
-        <div class="post-overlay"></div>
-        
-        <!-- Conteúdo sobreposto -->
-        <div class="post-content">
-          <!-- Header/Categoria -->
-          <div class="post-header">
-            <span class="post-category">Discover</span>
-            <span class="post-type">Gastronômico</span>
-          </div>
-
-          <!-- Destino com Rating -->
-          <div class="post-destination">
-            <h2 class="post-title">{{ event.title }}</h2>
-            <div class="post-rating">
-              <span class="stars">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-              </span>
-              <span class="rating-value">4.9</span>
-            </div>
-          </div>
-
-          <!-- Resumo da Viagem -->
-          <div class="post-summary">
-            <div class="summary-item">
-              <span class="label">Duração:</span>
-              <span class="value">{{ event.exit_date }} - {{ event.return_date }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="label">Custo:</span>
-              <span class="value">R$ {{ event.price }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="label">Vagas:</span>
-              <span class="value">{{ event.numSlots }}</span>
-            </div>
-          </div>
-
-          <!-- Perfil do Autor -->
-          <div class="post-author">
-            <span class="author-handle">@{{ event.organizer.name if event.organizer else 'organizador' }}</span>
-            <span class="author-role">Organizador</span>
-          </div>
-
-          <!-- Descrição -->
-          <div class="post-description">
-            <p class="description-text">{{ event.desc }}</p>
-            <div class="post-hashtags">
-              <span class="hashtag">#viagem</span>
-              <span class="hashtag">#aventura</span>
-              <span class="hashtag">#descobrir</span>
-            </div>
-          </div>
-
-          <!-- Tags de Conteúdo -->
-          <div class="post-content-tags">
-            {% if event.tags %}
-              {% for tag in event.tags %}
-                <span class="content-tag">#{{ tag }}</span>
-              {% endfor %}
+    <div class="simple-post">
+      <!-- Header com Organizador e Rating -->
+      <div class="post-header">
+        <div class="organizer-section">
+          <div class="organizer-avatar">
+            {% if event.organizer and event.organizer.profile_picture %}
+              <img src="{{ event.organizer.profile_picture }}" alt="Avatar">
             {% else %}
-              <span class="content-tag">#viagem</span>
+              <div class="avatar-placeholder">
+                {% if event.organizer and event.organizer.name %}
+                  {{ event.organizer.name[0].upper() }}
+                {% else %}
+                  O
+                {% endif %}
+              </div>
             {% endif %}
           </div>
-
-          <!-- Métricas de Engajamento -->
-          <div class="post-metrics">
-            <div class="metric">
-              <span class="metric-icon"><ion-icon name="heart"></ion-icon></span>
-              <span class="metric-value">9.9K</span>
-            </div>
-            <div class="metric">
-              <span class="metric-icon"><ion-icon name="save"></ion-icon></span>
-              <span class="metric-value">2.3K</span>
-            </div>
-            <div class="metric">
-              <span class="metric-icon"><ion-icon name="share"></ion-icon></span>
-              <span class="metric-value">567</span>
-            </div>
-          </div>
-
-          <!-- Botões de Ação -->
-          <div class="post-actions">
-            <button class="action-btn primary">Rota</button>
-            <button class="action-btn secondary">Planejar</button>
-            <button class="action-btn icon"><ion-icon name="location"></ion-icon></button>
+          <div class="organizer-info">
+            <h3 class="organizer-name">
+              {% if event.organizer and event.organizer.name %}
+                {{ event.organizer.name }}
+              {% else %}
+                Organizador
+              {% endif %}
+            </h3>
+            <span class="organizer-role">Organizador</span>
           </div>
         </div>
+        <div class="rating-section">
+          <div class="stars" id="stars-{{ event.id }}">
+            <ion-icon name="star-outline" id="star1-{{ event.id }}"></ion-icon>
+            <ion-icon name="star-outline" id="star2-{{ event.id }}"></ion-icon>
+            <ion-icon name="star-outline" id="star3-{{ event.id }}"></ion-icon>
+            <ion-icon name="star-outline" id="star4-{{ event.id }}"></ion-icon>
+            <ion-icon name="star-outline" id="star5-{{ event.id }}"></ion-icon>
+          </div>
+          <span class="rating-value" id="rating-value-{{ event.id }}">0.0</span>
+          <span class="rating-count" id="rating-count-{{ event.id }}">(0)</span>
+        </div>
+      </div>
+
+      <!-- Título -->
+      <div class="post-title-section">
+        <h2 class="post-title">
+          {% if event.title %}
+            {{ event.title }}
+          {% else %}
+            Viagem sem título
+          {% endif %}
+        </h2>
+      </div>
+
+      <!-- Imagem -->
+      <div class="post-image">
+        {% if event.images %}
+          <img src="{{ event.images[0] }}" alt="Imagem da viagem">
+        {% else %}
+          <div class="default-image">
+            <ion-icon name="camera-outline"></ion-icon>
+            <span>Sem imagem</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Informações da Viagem -->
+      <div class="trip-info">
+        <div class="info-row">
+          <div class="info-item">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <div class="info-text">
+              <span class="info-label">Saída</span>
+              <span class="info-value">
+                {% if event.exit_date %}
+                  {{ event.exit_date.strftime('%d/%m/%Y') }}
+                {% else %}
+                  Não definida
+                {% endif %}
+              </span>
+            </div>
+          </div>
+          <div class="info-item">
+            <ion-icon name="return-up-back-outline"></ion-icon>
+            <div class="info-text">
+              <span class="info-label">Retorno</span>
+              <span class="info-value">
+                {% if event.return_date %}
+                  {{ event.return_date.strftime('%d/%m/%Y') }}
+                {% else %}
+                  Não definida
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-row">
+          <div class="info-item">
+            <ion-icon name="cash-outline"></ion-icon>
+            <div class="info-text">
+              <span class="info-label">Custo</span>
+              <span class="info-value">
+                {% if event.price %}
+                  R$ {{ event.price }}
+                {% else %}
+                  Não informado
+                {% endif %}
+              </span>
+            </div>
+          </div>
+          <div class="info-item">
+            <ion-icon name="people-outline"></ion-icon>
+            <div class="info-text">
+              <span class="info-label">Vagas</span>
+              <span class="info-value">
+                {% if event.numSlots %}
+                  {{ event.numSlots }} disponíveis
+                {% else %}
+                  Não informadas
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      {% if event.tags %}
+      <div class="post-tags">
+        {% for tag in event.tags %}
+          <span class="tag">#{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Descrição -->
+      <div class="post-description">
+        {% if event.desc %}
+          {% set desc_length = event.desc|length %}
+          <p class="description-text" id="desc-{{ event.id }}">
+            {% if desc_length > 150 %}
+              {{ event.desc[:150] }}...
+            {% else %}
+              {{ event.desc }}
+            {% endif %}
+          </p>
+          {% if desc_length > 150 %}
+          <button class="expand-btn" onclick="toggleDescription('{{ event.id }}')">
+            <span class="expand-text">mais</span>
+            <ion-icon name="chevron-down-outline"></ion-icon>
+          </button>
+          <div class="full-description" id="full-desc-{{ event.id }}" style="display: none;">
+            {{ event.desc }}
+          </div>
+          {% endif %}
+        {% else %}
+          <p class="description-text">Nenhuma descrição disponível.</p>
+        {% endif %}
       </div>
 
       <!-- Mapa -->
@@ -123,6 +179,87 @@
         <div class="map map-embed"
              id="map-{{ loop.index }}"
              data-route='{{ event.route | default({}) | tojson | safe }}'>
+        </div>
+      </div>
+
+      
+      <!-- Botões de Ação -->
+      <div class="post-actions">
+        <button class="action-btn favorite-btn" data-event-id="{{ event.id }}" id="favorite-btn-{{ event.id }}">
+          <ion-icon name="heart-outline" id="heart-icon-{{ event.id }}"></ion-icon>
+          <span id="favorite-text-{{ event.id }}">Favoritar</span>
+        </button>
+        <button class="action-btn comment-toggle" data-event-id="{{ event.id }}">
+          <ion-icon name="chatbubble-outline"></ion-icon>
+          <span>Comentar</span>
+          <span class="comment-count" id="comment-count-{{ event.id }}">(0)</span>
+        </button>
+        <button class="action-btn share-btn">
+          <ion-icon name="share-outline"></ion-icon>
+          <span>Compartilhar</span>
+        </button>
+      </div>
+
+      <!-- Seção de Comentários -->
+      <div class="comments-section" id="comments-section-{{ event.id }}" style="display: none;">
+        <div class="comments-header">
+          <h3 class="comments-title">
+            <ion-icon name="chatbubble"></ion-icon>
+            Comentários
+          </h3>
+          <button class="comments-close" data-event-id="{{ event.id }}">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Formulário para nova avaliação -->
+        <div class="comment-form">
+          <div class="rating-section">
+            <label class="rating-label">Sua avaliação:</label>
+            <div class="star-rating" id="star-rating-{{ event.id }}">
+              <input type="radio" name="rating-{{ event.id }}" value="5" id="star5-{{ event.id }}" checked>
+              <label for="star5-{{ event.id }}"><ion-icon name="star"></ion-icon></label>
+              <input type="radio" name="rating-{{ event.id }}" value="4" id="star4-{{ event.id }}">
+              <label for="star4-{{ event.id }}"><ion-icon name="star"></ion-icon></label>
+              <input type="radio" name="rating-{{ event.id }}" value="3" id="star3-{{ event.id }}">
+              <label for="star3-{{ event.id }}"><ion-icon name="star"></ion-icon></label>
+              <input type="radio" name="rating-{{ event.id }}" value="2" id="star2-{{ event.id }}">
+              <label for="star2-{{ event.id }}"><ion-icon name="star"></ion-icon></label>
+              <input type="radio" name="rating-{{ event.id }}" value="1" id="star1-{{ event.id }}">
+              <label for="star1-{{ event.id }}"><ion-icon name="star"></ion-icon></label>
+            </div>
+          </div>
+          <div class="comment-input-group">
+            <textarea 
+              class="comment-input" 
+              id="comment-input-{{ event.id }}"
+              placeholder="Escreva sua avaliação..."
+              rows="3"
+              maxlength="500"></textarea>
+            <button class="comment-submit-btn" data-event-id="{{ event.id }}">
+              <ion-icon name="send"></ion-icon>
+              Avaliar
+            </button>
+          </div>
+          <div class="comment-char-count">
+            <span id="char-count-{{ event.id }}">0</span>/500 caracteres
+          </div>
+        </div>
+
+        <!-- Lista de Comentários -->
+        <div class="comments-list" id="comments-list-{{ event.id }}">
+          <div class="comments-loading" id="comments-loading-{{ event.id }}">
+            <div class="loading-spinner"></div>
+            <span>Carregando comentários...</span>
+          </div>
+        </div>
+
+        <!-- Paginação -->
+        <div class="comments-pagination" id="comments-pagination-{{ event.id }}" style="display: none;">
+          <button class="pagination-btn" id="load-more-{{ event.id }}" data-event-id="{{ event.id }}">
+            <ion-icon name="chevron-down"></ion-icon>
+            Carregar mais comentários
+          </button>
         </div>
       </div>
 
@@ -216,6 +353,594 @@ document.addEventListener("DOMContentLoaded", () => {
     // força o redimensionamento
     setTimeout(() => map.invalidateSize(), 500);
   });
+
+  // ==================== SISTEMA DE COMENTÁRIOS ====================
+  
+  // Estado global dos comentários
+  const commentsState = {};
+  
+  // Função para inicializar comentários
+  function initializeComments() {
+    // Adicionar event listeners para todos os botões de comentários
+    document.querySelectorAll('.comment-toggle').forEach(btn => {
+      const eventId = btn.dataset.eventId;
+      
+      btn.addEventListener('click', () => toggleComments(eventId));
+      
+      // Carregar contagem inicial de comentários
+      loadCommentsCount(eventId);
+      
+      // Inicializar estado
+      commentsState[eventId] = {
+        page: 1,
+        hasMore: true,
+        loading: false
+      };
+    });
+    
+    // Adicionar event listeners para botões de fechar
+    document.querySelectorAll('.comments-close').forEach(btn => {
+      const eventId = btn.dataset.eventId;
+      btn.addEventListener('click', () => closeComments(eventId));
+    });
+    
+    // Adicionar event listeners para botões de enviar comentário
+    document.querySelectorAll('.comment-submit-btn').forEach(btn => {
+      const eventId = btn.dataset.eventId;
+      btn.addEventListener('click', () => submitComment(eventId));
+    });
+    
+    // Adicionar event listeners para contadores de caracteres
+    document.querySelectorAll('.comment-input').forEach(input => {
+      const eventId = input.id.replace('comment-input-', '');
+      input.addEventListener('input', () => updateCharCount(eventId));
+      
+      // Permitir envio com Enter + Ctrl
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.ctrlKey) {
+          e.preventDefault();
+          submitComment(eventId);
+        }
+      });
+    });
+    
+    // Adicionar event listeners para botões "Carregar mais"
+    document.querySelectorAll('[id^="load-more-"]').forEach(btn => {
+      const eventId = btn.dataset.eventId;
+      btn.addEventListener('click', () => loadMoreComments(eventId));
+    });
+  }
+  
+  // Função para alternar seção de comentários
+  function toggleComments(eventId) {
+    const section = document.getElementById(`comments-section-${eventId}`);
+    const isActive = section.classList.contains('active');
+    
+    if (isActive) {
+      closeComments(eventId);
+    } else {
+      openComments(eventId);
+    }
+  }
+  
+  // Função para abrir comentários
+  function openComments(eventId) {
+    const section = document.getElementById(`comments-section-${eventId}`);
+    section.style.display = 'block';
+    
+    // Pequeno delay para permitir a transição
+    setTimeout(() => {
+      section.classList.add('active');
+    }, 10);
+    
+    // Carregar comentários se ainda não foram carregados
+    if (!commentsState[eventId].loaded) {
+      loadComments(eventId);
+    }
+  }
+  
+  // Função para fechar comentários
+  function closeComments(eventId) {
+    const section = document.getElementById(`comments-section-${eventId}`);
+    section.classList.remove('active');
+    
+    // Ocultar após a transição
+    setTimeout(() => {
+      section.style.display = 'none';
+    }, 400);
+  }
+  
+  // Função para carregar contagem de comentários
+  async function loadCommentsCount(eventId) {
+    try {
+      const response = await fetch(`/api/comments/${eventId}/count`);
+      const data = await response.json();
+      
+      if (data.success) {
+        document.getElementById(`comment-count-${eventId}`).textContent = data.count;
+      }
+    } catch (error) {
+      console.error('Erro ao carregar contagem de comentários:', error);
+    }
+  }
+  
+  // Função para carregar comentários
+  async function loadComments(eventId, page = 1) {
+    if (commentsState[eventId].loading) return;
+    
+    commentsState[eventId].loading = true;
+    
+    const loadingElement = document.getElementById(`comments-loading-${eventId}`);
+    const listElement = document.getElementById(`comments-list-${eventId}`);
+    
+    if (page === 1) {
+      loadingElement.style.display = 'flex';
+    }
+    
+    try {
+      const response = await fetch(`/api/comments/${eventId}?page=${page}&limit=10`);
+      const data = await response.json();
+      
+      if (data.success) {
+        if (page === 1) {
+          // Primeira carga - substituir conteúdo
+          listElement.innerHTML = '';
+          loadingElement.style.display = 'none';
+        }
+        
+        if (data.comments.length === 0 && page === 1) {
+          // Nenhum comentário encontrado
+          listElement.innerHTML = `
+            <div class="comments-empty">
+              <ion-icon name="chatbubble-outline"></ion-icon>
+              <h4>Nenhum comentário ainda</h4>
+              <p>Seja o primeiro a comentar sobre esta viagem!</p>
+            </div>
+          `;
+        } else {
+          // Adicionar comentários
+          data.comments.forEach(comment => {
+            listElement.appendChild(createCommentElement(comment));
+          });
+        }
+        
+        // Atualizar estado de paginação
+        commentsState[eventId].page = page;
+        commentsState[eventId].hasMore = data.has_more;
+        commentsState[eventId].loaded = true;
+        
+        // Mostrar/ocultar botão "Carregar mais"
+        const paginationElement = document.getElementById(`comments-pagination-${eventId}`);
+        const loadMoreBtn = document.getElementById(`load-more-${eventId}`);
+        
+        if (data.has_more) {
+          paginationElement.style.display = 'block';
+          loadMoreBtn.disabled = false;
+        } else {
+          paginationElement.style.display = 'none';
+        }
+      } else {
+        throw new Error(data.message || 'Erro ao carregar comentários');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar comentários:', error);
+      
+      if (page === 1) {
+        loadingElement.style.display = 'none';
+        listElement.innerHTML = `
+          <div class="comments-empty">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <h4>Erro ao carregar comentários</h4>
+            <p>Tente novamente mais tarde.</p>
+          </div>
+        `;
+      }
+    } finally {
+      commentsState[eventId].loading = false;
+    }
+  }
+  
+  // Função para carregar mais comentários
+  function loadMoreComments(eventId) {
+    const nextPage = commentsState[eventId].page + 1;
+    loadComments(eventId, nextPage);
+  }
+  
+  // Função para criar elemento de comentário
+  function createCommentElement(comment) {
+    const div = document.createElement('div');
+    div.className = 'comment-item';
+    
+    // Criar avatar com inicial do nome
+    const initial = comment.author_name.charAt(0).toUpperCase();
+    
+    // Criar estrelas da avaliação
+    const nota = comment.nota || 5;
+    const starsHtml = Array.from({length: 5}, (_, i) => {
+      const filled = i < nota ? 'star' : 'star-outline';
+      return `<ion-icon name="${filled}"></ion-icon>`;
+    }).join('');
+    
+    div.innerHTML = `
+      <div class="comment-header">
+        <div class="comment-author">
+          <div class="comment-avatar">${initial}</div>
+          <div class="comment-author-info">
+            <div class="comment-author-name">${comment.author_name}</div>
+            <div class="comment-date">${comment.data_criacao_formatted}</div>
+          </div>
+        </div>
+        <div class="comment-rating">
+          <div class="stars">${starsHtml}</div>
+        </div>
+      </div>
+      <p class="comment-text">${comment.texto}</p>
+    `;
+    
+    return div;
+  }
+  
+  // Função para atualizar contador de caracteres
+  function updateCharCount(eventId) {
+    const input = document.getElementById(`comment-input-${eventId}`);
+    const counter = document.getElementById(`char-count-${eventId}`);
+    const submitBtn = document.querySelector(`[data-event-id="${eventId}"].comment-submit-btn`);
+    
+    const length = input.value.length;
+    counter.textContent = length;
+    
+    // Atualizar classes do contador
+    counter.parentElement.classList.remove('warning', 'error');
+    if (length > 400) {
+      counter.parentElement.classList.add('warning');
+    }
+    if (length > 500) {
+      counter.parentElement.classList.add('error');
+    }
+    
+    // Habilitar/desabilitar botão
+    submitBtn.disabled = length === 0 || length > 500;
+  }
+  
+  // Função para enviar avaliação
+  async function submitComment(eventId) {
+    const input = document.getElementById(`comment-input-${eventId}`);
+    const submitBtn = document.querySelector(`[data-event-id="${eventId}"].comment-submit-btn`);
+    const texto = input.value.trim();
+    
+    // Obter a nota selecionada
+    const ratingInput = document.querySelector(`input[name="rating-${eventId}"]:checked`);
+    const nota = ratingInput ? parseInt(ratingInput.value) : 5;
+    
+    if (!texto || texto.length > 500) return;
+    
+    // Desabilitar formulário durante envio
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<ion-icon name="hourglass"></ion-icon> Enviando...';
+    
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_id: eventId,
+          texto: texto,
+          nota: nota
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Limpar formulário
+        input.value = '';
+        updateCharCount(eventId);
+        
+        // Resetar avaliação para 5 estrelas
+        const star5 = document.getElementById(`star5-${eventId}`);
+        if (star5) star5.checked = true;
+        
+        // Adicionar nova avaliação no topo da lista
+        const listElement = document.getElementById(`comments-list-${eventId}`);
+        const emptyState = listElement.querySelector('.comments-empty');
+        if (emptyState) {
+          emptyState.remove();
+        }
+        
+        const newCommentElement = createCommentElement(data.comment);
+        listElement.insertBefore(newCommentElement, listElement.firstChild);
+        
+        // Atualizar contagem
+        loadCommentsCount(eventId);
+        
+        // Atualizar avaliação do evento
+        refreshEventRating(eventId);
+        
+        // Mostrar feedback visual
+        showCommentFeedback('Avaliação enviada com sucesso!', 'success');
+      } else {
+        throw new Error(data.message || 'Erro ao enviar avaliação');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar avaliação:', error);
+      showCommentFeedback(error.message || 'Erro ao enviar avaliação. Tente novamente.', 'error');
+    } finally {
+      // Reabilitar formulário
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<ion-icon name="send"></ion-icon> Avaliar';
+    }
+  }
+  
+  // Função para mostrar feedback
+  function showCommentFeedback(message, type) {
+    // Criar elemento de feedback
+    const feedback = document.createElement('div');
+    feedback.className = `comment-feedback ${type}`;
+    feedback.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      z-index: 10000;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      ${type === 'success' ? 'background: var(--success);' : 'background: var(--error);'}
+    `;
+    feedback.textContent = message;
+    
+    document.body.appendChild(feedback);
+    
+    // Animar entrada
+    setTimeout(() => {
+      feedback.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+      feedback.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        document.body.removeChild(feedback);
+      }, 300);
+    }, 3000);
+  }
+  
+  // Inicializar sistema de comentários
+  initializeComments();
 });
+
+// Função para expandir/contrair descrição
+function toggleDescription(eventId) {
+  const shortDesc = document.getElementById(`desc-${eventId}`);
+  const fullDesc = document.getElementById(`full-desc-${eventId}`);
+  const expandBtn = document.querySelector(`[onclick="toggleDescription('${eventId}')"]`);
+  const expandText = expandBtn.querySelector('.expand-text');
+  const chevronIcon = expandBtn.querySelector('ion-icon');
+  
+  if (fullDesc.style.display === 'none') {
+    // Expandir
+    shortDesc.style.display = 'none';
+    fullDesc.style.display = 'block';
+    expandText.textContent = 'menos';
+    chevronIcon.name = 'chevron-up-outline';
+  } else {
+    // Contrair
+    shortDesc.style.display = 'block';
+    fullDesc.style.display = 'none';
+    expandText.textContent = 'mais';
+    chevronIcon.name = 'chevron-down-outline';
+  }
+}
+
+// ==================== SISTEMA DE FAVORITOS ====================
+
+// Estado global dos favoritos
+const favoritesState = {};
+
+// Função para inicializar favoritos
+function initializeFavorites() {
+  // Adicionar event listeners para todos os botões de favoritos
+  document.querySelectorAll('.favorite-btn').forEach(btn => {
+    const eventId = btn.dataset.eventId;
+    
+    btn.addEventListener('click', () => toggleFavorite(eventId));
+    
+    // Carregar status inicial do favorito
+    loadFavoriteStatus(eventId);
+    
+    // Inicializar estado
+    favoritesState[eventId] = {
+      is_favorited: false,
+      loading: false
+    };
+  });
+}
+
+// Função para carregar status do favorito
+async function loadFavoriteStatus(eventId) {
+  try {
+    const response = await fetch(`/api/favorites/${eventId}/status`);
+    const data = await response.json();
+    
+    if (data.success) {
+      updateFavoriteUI(eventId, data.is_favorited);
+      favoritesState[eventId].is_favorited = data.is_favorited;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar status do favorito:', error);
+  }
+}
+
+// Função para alternar favorito
+async function toggleFavorite(eventId) {
+  if (favoritesState[eventId].loading) return;
+  
+  favoritesState[eventId].loading = true;
+  
+  const btn = document.getElementById(`favorite-btn-${eventId}`);
+  const icon = document.getElementById(`heart-icon-${eventId}`);
+  const text = document.getElementById(`favorite-text-${eventId}`);
+  
+  // Desabilitar botão durante requisição
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch(`/api/favorites/${eventId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Atualizar estado
+      favoritesState[eventId].is_favorited = data.is_favorited;
+      
+      // Atualizar UI
+      updateFavoriteUI(eventId, data.is_favorited);
+      
+      // Mostrar feedback
+      showFavoriteFeedback(data.message, 'success');
+    } else {
+      throw new Error(data.message || 'Erro ao alterar favorito');
+    }
+  } catch (error) {
+    console.error('Erro ao alterar favorito:', error);
+    showFavoriteFeedback(error.message || 'Erro ao alterar favorito. Tente novamente.', 'error');
+  } finally {
+    // Reabilitar botão
+    btn.disabled = false;
+    favoritesState[eventId].loading = false;
+  }
+}
+
+// Função para atualizar UI do favorito
+function updateFavoriteUI(eventId, isFavorited) {
+  const icon = document.getElementById(`heart-icon-${eventId}`);
+  const text = document.getElementById(`favorite-text-${eventId}`);
+  const btn = document.getElementById(`favorite-btn-${eventId}`);
+  
+  if (isFavorited) {
+    icon.name = 'heart';
+    text.textContent = 'Favoritado';
+    btn.classList.add('favorited');
+  } else {
+    icon.name = 'heart-outline';
+    text.textContent = 'Favoritar';
+    btn.classList.remove('favorited');
+  }
+}
+
+// Função para mostrar feedback dos favoritos
+function showFavoriteFeedback(message, type) {
+  // Criar elemento de feedback
+  const feedback = document.createElement('div');
+  feedback.className = `favorite-feedback ${type}`;
+  feedback.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    z-index: 10000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    ${type === 'success' ? 'background: var(--success);' : 'background: var(--error);'}
+  `;
+  feedback.textContent = message;
+  
+  document.body.appendChild(feedback);
+  
+  // Animar entrada
+  setTimeout(() => {
+    feedback.style.transform = 'translateX(0)';
+  }, 10);
+  
+  // Remover após 3 segundos
+  setTimeout(() => {
+    feedback.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      document.body.removeChild(feedback);
+    }, 300);
+  }, 3000);
+}
+
+// Inicializar sistema de favoritos
+initializeFavorites();
+
+// ==================== SISTEMA DE AVALIAÇÕES ====================
+
+// Função para inicializar avaliações
+function initializeRatings() {
+  // Carregar avaliações de todos os eventos
+  document.querySelectorAll('.simple-post').forEach(post => {
+    const eventId = post.querySelector('.favorite-btn').dataset.eventId;
+    if (eventId) {
+      loadEventRating(eventId);
+    }
+  });
+}
+
+// Função para carregar avaliação de um evento
+async function loadEventRating(eventId) {
+  try {
+    const response = await fetch(`/api/events/${eventId}/rating`);
+    const data = await response.json();
+    
+    if (data.success) {
+      updateRatingUI(eventId, data);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar avaliação do evento:', error);
+  }
+}
+
+// Função para atualizar UI da avaliação
+function updateRatingUI(eventId, ratingData) {
+  const starsContainer = document.getElementById(`stars-${eventId}`);
+  const ratingValue = document.getElementById(`rating-value-${eventId}`);
+  const ratingCount = document.getElementById(`rating-count-${eventId}`);
+  
+  if (!starsContainer || !ratingValue || !ratingCount) return;
+  
+  // Atualizar valor numérico
+  ratingValue.textContent = ratingData.average_rating.toFixed(1);
+  
+  // Atualizar contador
+  ratingCount.textContent = `(${ratingData.total_ratings})`;
+  
+  // Atualizar estrelas
+  const stars = starsContainer.querySelectorAll('ion-icon');
+  stars.forEach((star, index) => {
+    const starValue = ratingData.stars[index];
+    
+    if (starValue === 1) {
+      star.name = 'star';
+    } else if (starValue === 0.5) {
+      star.name = 'star-half';
+    } else {
+      star.name = 'star-outline';
+    }
+  });
+}
+
+// Função para atualizar avaliação após nova avaliação
+function refreshEventRating(eventId) {
+  // Aguardar um pouco para garantir que a nova avaliação foi salva
+  setTimeout(() => {
+    loadEventRating(eventId);
+  }, 1000);
+}
+
+// Inicializar sistema de avaliações
+initializeRatings();
 </script>
 {% endblock %}

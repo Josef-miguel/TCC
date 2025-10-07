@@ -1352,3 +1352,297 @@ def init_app(app, db):
         except Exception as e:
             logger.exception(f"Erro ao buscar histórico de chat: {e}")
             return jsonify({"success": False, "messages": []}), 500
+
+    # ==================== ROTAS DE COMENTÁRIOS ====================
+    
+    @app.route("/api/comments/<event_id>", methods=["GET"])
+    def get_comments(event_id):
+        """Buscar avaliações de um evento da subcoleção avaliacoes com paginação"""
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 10))
+            offset = (page - 1) * limit
+            
+            # Buscar avaliações da subcoleção do evento
+            event_ref = db.collection('events').document(event_id)
+            avaliacoes_ref = event_ref.collection('avaliacoes')
+            
+            # Ordenar por data de criação (mais recentes primeiro)
+            avaliacoes_query = avaliacoes_ref.order_by('createdAt', direction=firestore.Query.DESCENDING)
+            
+            # Aplicar paginação
+            avaliacoes_query = avaliacoes_query.offset(offset).limit(limit + 1)  # +1 para verificar se há mais
+            avaliacoes_docs = list(avaliacoes_query.stream())
+            
+            # Verificar se há mais páginas
+            has_more = len(avaliacoes_docs) > limit
+            if has_more:
+                avaliacoes_docs = avaliacoes_docs[:limit]  # Remove o documento extra
+            
+            comments = []
+            for doc in avaliacoes_docs:
+                avaliacao_data = doc.to_dict()
+                avaliacao_data['id'] = doc.id
+                
+                # Usar os dados já disponíveis na avaliação
+                comment_data = {
+                    'id': doc.id,
+                    'texto': avaliacao_data.get('comment_text', ''),
+                    'nota': avaliacao_data.get('nota', 0),
+                    'author_name': avaliacao_data.get('username', 'Usuário Anônimo'),
+                    'author_email': avaliacao_data.get('username', ''),
+                    'user_id': avaliacao_data.get('user_id', ''),
+                    'data_criacao': avaliacao_data.get('createdAt'),
+                    'data_criacao_formatted': ''
+                }
+                
+                # Formatar data
+                if comment_data.get('data_criacao'):
+                    comment_data['data_criacao_formatted'] = comment_data['data_criacao'].strftime('%d/%m/%Y às %H:%M')
+                
+                comments.append(comment_data)
+            
+            return jsonify({
+                "success": True,
+                "comments": comments,
+                "has_more": has_more,
+                "current_page": page,
+                "total_comments": len(comments)
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao buscar comentários: {e}")
+            return jsonify({"success": False, "message": "Erro ao buscar comentários"}), 500
+    
+    @app.route("/api/comments/<event_id>/count", methods=["GET"])
+    def get_comments_count(event_id):
+        """Obter contagem total de avaliações de um evento"""
+        try:
+            # Buscar avaliações da subcoleção do evento
+            event_ref = db.collection('events').document(event_id)
+            avaliacoes_ref = event_ref.collection('avaliacoes')
+            avaliacoes = list(avaliacoes_ref.stream())
+            count = len(avaliacoes)
+            
+            return jsonify({
+                "success": True,
+                "count": count
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao contar avaliações: {e}")
+            return jsonify({"success": False, "count": 0}), 500
+    
+    @app.route("/api/comments", methods=["POST"])
+    def create_comment():
+        """Criar uma nova avaliação na subcoleção avaliacoes"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            data = request.get_json()
+            event_id = data.get('event_id')
+            texto = data.get('texto', '').strip()
+            nota = data.get('nota', 5)  # Nota padrão 5 estrelas
+            
+            if not event_id:
+                return jsonify({"success": False, "message": "ID do evento é obrigatório"}), 400
+            
+            if not texto or len(texto) < 1:
+                return jsonify({"success": False, "message": "Texto do comentário é obrigatório"}), 400
+            
+            if len(texto) > 500:
+                return jsonify({"success": False, "message": "Comentário muito longo (máximo 500 caracteres)"}), 400
+            
+            # Validar nota (1-5)
+            if not isinstance(nota, int) or nota < 1 or nota > 5:
+                nota = 5
+            
+            # Verificar se o evento existe
+            event_ref = db.collection('events').document(event_id).get()
+            if not event_ref.exists:
+                return jsonify({"success": False, "message": "Evento não encontrado"}), 404
+            
+            # Criar avaliação na subcoleção
+            avaliacao_data = {
+                'comment_text': texto,
+                'nota': nota,
+                'user_id': g.user['uid'],
+                'username': g.user.get('email', g.user.get('name', 'Usuário Anônimo')),
+                'createdAt': datetime.utcnow()
+            }
+            
+            # Salvar na subcoleção avaliacoes do evento
+            event_doc_ref = db.collection('events').document(event_id)
+            avaliacao_ref = event_doc_ref.collection('avaliacoes').document()
+            avaliacao_ref.set(avaliacao_data)
+            
+            # Retornar dados da avaliação criada
+            avaliacao_data['id'] = avaliacao_ref.id
+            avaliacao_data['texto'] = avaliacao_data['comment_text']
+            avaliacao_data['author_name'] = avaliacao_data['username']
+            avaliacao_data['author_email'] = avaliacao_data['username']
+            avaliacao_data['data_criacao'] = avaliacao_data['createdAt']
+            avaliacao_data['data_criacao_formatted'] = avaliacao_data['createdAt'].strftime('%d/%m/%Y às %H:%M')
+            
+            return jsonify({
+                "success": True,
+                "message": "Avaliação criada com sucesso",
+                "comment": avaliacao_data
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao criar avaliação: {e}")
+            return jsonify({"success": False, "message": "Erro ao criar avaliação"}), 500
+
+    # ==================== ROTAS DE FAVORITOS ====================
+    
+    @app.route("/api/favorites/<event_id>", methods=["POST"])
+    def toggle_favorite(event_id):
+        """Adicionar ou remover evento dos favoritos do usuário"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            user_uid = g.user['uid']
+            
+            # Verificar se o evento existe
+            event_ref = db.collection('events').document(event_id).get()
+            if not event_ref.exists:
+                return jsonify({"success": False, "message": "Evento não encontrado"}), 404
+            
+            # Buscar dados do usuário
+            user_ref = db.collection('user').document(user_uid)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                return jsonify({"success": False, "message": "Usuário não encontrado"}), 404
+            
+            user_data = user_doc.to_dict()
+            favorite_posts = user_data.get('favoritePosts', [])
+            
+            # Verificar se já está favoritado
+            is_favorited = event_id in favorite_posts
+            
+            if is_favorited:
+                # Remover dos favoritos
+                favorite_posts.remove(event_id)
+                # Decrementar contador
+                event_ref = db.collection('events').document(event_id)
+                event_ref.update({
+                    'favoriteCount': firestore.Increment(-1)
+                })
+                action = "removed"
+            else:
+                # Adicionar aos favoritos
+                favorite_posts.append(event_id)
+                # Incrementar contador
+                event_ref = db.collection('events').document(event_id)
+                event_ref.update({
+                    'favoriteCount': firestore.Increment(1)
+                })
+                action = "added"
+            
+            # Atualizar array de favoritos do usuário
+            user_ref.update({
+                'favoritePosts': favorite_posts
+            })
+            
+            return jsonify({
+                "success": True,
+                "action": action,
+                "is_favorited": not is_favorited,
+                "message": f"Evento {'adicionado aos' if action == 'added' else 'removido dos'} favoritos"
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao alterar favorito: {e}")
+            return jsonify({"success": False, "message": "Erro ao alterar favorito"}), 500
+    
+    @app.route("/api/favorites/<event_id>/status", methods=["GET"])
+    def get_favorite_status(event_id):
+        """Verificar se o evento está favoritado pelo usuário"""
+        if not g.user:
+            return jsonify({"success": False, "is_favorited": False}), 401
+        
+        try:
+            user_uid = g.user['uid']
+            
+            # Buscar dados do usuário
+            user_ref = db.collection('user').document(user_uid)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                return jsonify({"success": False, "is_favorited": False}), 404
+            
+            user_data = user_doc.to_dict()
+            favorite_posts = user_data.get('favoritePosts', [])
+            is_favorited = event_id in favorite_posts
+            
+            return jsonify({
+                "success": True,
+                "is_favorited": is_favorited
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao verificar status do favorito: {e}")
+            return jsonify({"success": False, "is_favorited": False}), 500
+
+    # ==================== ROTAS DE AVALIAÇÕES ====================
+    
+    @app.route("/api/events/<event_id>/rating", methods=["GET"])
+    def get_event_rating(event_id):
+        """Calcular média das avaliações de um evento"""
+        try:
+            # Buscar todas as avaliações da subcoleção do evento
+            event_ref = db.collection('events').document(event_id)
+            avaliacoes_ref = event_ref.collection('avaliacoes')
+            avaliacoes_docs = list(avaliacoes_ref.stream())
+            
+            if not avaliacoes_docs:
+                return jsonify({
+                    "success": True,
+                    "average_rating": 0,
+                    "total_ratings": 0,
+                    "stars": [0, 0, 0, 0, 0]
+                })
+            
+            # Calcular média das notas
+            total_notas = 0
+            count = 0
+            
+            for doc in avaliacoes_docs:
+                avaliacao_data = doc.to_dict()
+                nota = avaliacao_data.get('nota', 0)
+                if nota > 0:  # Só conta notas válidas
+                    total_notas += nota
+                    count += 1
+            
+            if count == 0:
+                average_rating = 0
+            else:
+                average_rating = round(total_notas / count, 1)
+            
+            # Converter para array de estrelas (0-5)
+            stars = []
+            full_stars = int(average_rating)
+            has_half_star = (average_rating - full_stars) >= 0.5
+            
+            for i in range(5):
+                if i < full_stars:
+                    stars.append(1)  # Estrela cheia
+                elif i == full_stars and has_half_star:
+                    stars.append(0.5)  # Meia estrela
+                else:
+                    stars.append(0)  # Estrela vazia
+            
+            return jsonify({
+                "success": True,
+                "average_rating": average_rating,
+                "total_ratings": count,
+                "stars": stars
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao calcular avaliação do evento: {e}")
+            return jsonify({"success": False, "message": "Erro ao calcular avaliação"}), 500
