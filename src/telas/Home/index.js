@@ -20,6 +20,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
+import { StandardHeader, StandardCard, StandardBadge, StandardAvatar } from '../../components/CommonComponents';
+import { textStyles, spacing, borderRadius, shadows } from '../../styles/typography';
 
 import TelaPost from '../../modal/TelaPost';
 import { db, auth } from '../../../services/firebase';
@@ -527,20 +529,21 @@ export default function Home({ navigation, route }) {
   // ========== COMPONENTES DE CARD ==========
   const TripTypeBadge = ({ type }) => {
     const typeConfig = {
-      1: { label: 'VIAGEM', color: '#10b981', icon: 'airplane' },
-      2: { label: 'EXCURSÃO', color: '#f59e0b', icon: 'bus' },
-      3: { label: 'SHOW', color: '#ef4444', icon: 'musical-notes' }
+      1: { label: 'VIAGEM', variant: 'success', icon: 'airplane' },
+      2: { label: 'EXCURSÃO', variant: 'warning', icon: 'bus' },
+      3: { label: 'SHOW', variant: 'error', icon: 'musical-notes' }
     };
     
     const config = typeConfig[type] || typeConfig[1];
     
     return (
-      <View style={[styles.typeBadge, { backgroundColor: config.color + '20' }]}>
-        <Ionicons name={config.icon} size={12} color={config.color} />
-        <Text style={[styles.typeBadgeText, { color: config.color }]}>
-          {config.label}
-        </Text>
-      </View>
+      <StandardBadge
+        text={config.label}
+        variant={config.variant}
+        size="small"
+        icon={config.icon}
+        theme={theme}
+      />
     );
   };
 
@@ -548,8 +551,10 @@ export default function Home({ navigation, route }) {
     <View style={[styles.postHeader, { backgroundColor: theme?.background }]}>
       <View style={styles.headerTopRow}>
         <View style={styles.headerLeft}>
-          <AvatarImage
+          <StandardAvatar
             source={post.creatorAvatar || DEFAULT_AVATAR}
+            size="medium"
+            theme={theme}
             style={styles.avatar}
           />
           <View style={styles.userInfo}>
@@ -656,15 +661,15 @@ export default function Home({ navigation, route }) {
   );
 
   const renderPostItem = ({ item }) => (
-    <View style={[styles.postCard, { 
-      backgroundColor: theme?.cardBackground || theme?.background,
-      shadowColor: theme?.mode === 'dark' ? '#000' : 'rgba(0,0,0,0.1)'
-    }]}>
+    <StandardCard 
+      theme={theme}
+      style={styles.postCard}
+    >
       <PostHeader post={item} />
       <PostImageWithFallback post={item} onPress={() => openModal(item)} />
       <PostActions post={item} />
       <PostInfo post={item} />
-    </View>
+    </StandardCard>
   );
 
   const SidebarContent = () => (
@@ -712,34 +717,15 @@ export default function Home({ navigation, route }) {
       />
       
       {/* Header Principal */}
-      <View style={[styles.header, { backgroundColor: theme?.background }]}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={toggleSidebar} style={styles.menuButton}>
-            <Ionicons name="menu" size={28} color={theme?.primary} />
-          </TouchableOpacity>
-          
-          <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>
-              Excursões
-            </Text>
-          </View>
-          
-          <TouchableOpacity 
-            onPress={() => { navigation.navigate('Notificacoes'); closeSidebar(); }} 
-            style={styles.notificationButton}
-          >
-            <View style={{ position: 'relative' }}>
-              <Ionicons name="notifications-outline" size={24} color={theme?.primary} />
-              {typeof totalUnread === 'number' && totalUnread > 0 && (
-                <View style={[styles.notificationBadge, { backgroundColor: '#ff3b30' }]}>
-                  <Text style={styles.notificationBadgeText}>
-                    {totalUnread > 99 ? '99+' : totalUnread}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
+      <StandardHeader
+        title="Excursões"
+        leftIcon="menu"
+        rightIcon="notifications-outline"
+        onLeftPress={toggleSidebar}
+        onRightPress={() => { navigation.navigate('Notificacoes'); closeSidebar(); }}
+        theme={theme}
+        style={styles.header}
+      />
         
         <View style={[styles.searchContainer, { backgroundColor: theme?.background }]}>
           <View style={styles.searchRow}>
@@ -776,41 +762,40 @@ export default function Home({ navigation, route }) {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
 
-      {/* Abas */}
-      <View style={[styles.tabContainer, { backgroundColor: theme?.background }]}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'timeline' && styles.activeTab]}
-          onPress={() => setActiveTab('timeline')}
-        >
-          <Text style={[
-            styles.tabText, 
-            { color: theme?.textSecondary },
-            activeTab === 'timeline' && [styles.activeTabText, { color: theme?.textPrimary }]
-          ]}>
-            Para você
-          </Text>
-          {activeTab === 'timeline' && <View style={[styles.tabIndicator, { backgroundColor: theme?.primary }]} />}
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'popular' && styles.activeTab]}
-          onPress={() => setActiveTab('popular')}
-        >
-          <Text style={[
-            styles.tabText, 
-            { color: theme?.textSecondary },
-            activeTab === 'popular' && [styles.activeTabText, { color: theme?.textPrimary }]
-          ]}>
-            Populares
-          </Text>
-          {activeTab === 'popular' && <View style={[styles.tabIndicator, { backgroundColor: theme?.primary }]} />}
-        </TouchableOpacity>
-      </View>
+        {/* Abas */}
+        <View style={[styles.tabContainer, { backgroundColor: theme?.background }]}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'timeline' && styles.activeTab]}
+            onPress={() => setActiveTab('timeline')}
+          >
+            <Text style={[
+              styles.tabText, 
+              { color: theme?.textSecondary },
+              activeTab === 'timeline' && [styles.activeTabText, { color: theme?.textPrimary }]
+            ]}>
+              Para você
+            </Text>
+            {activeTab === 'timeline' && <View style={[styles.tabIndicator, { backgroundColor: theme?.primary }]} />}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'popular' && styles.activeTab]}
+            onPress={() => setActiveTab('popular')}
+          >
+            <Text style={[
+              styles.tabText, 
+              { color: theme?.textSecondary },
+              activeTab === 'popular' && [styles.activeTabText, { color: theme?.textPrimary }]
+            ]}>
+              Populares
+            </Text>
+            {activeTab === 'popular' && <View style={[styles.tabIndicator, { backgroundColor: theme?.primary }]} />}
+          </TouchableOpacity>
+        </View>
 
-      {/* Lista de Posts */}
-      <FlatList
+        {/* Lista de Posts */}
+        <FlatList
         data={activeTab === 'timeline' ? sortedPosts : popularPosts}
         renderItem={renderPostItem}
         keyExtractor={(item) => item.id}
@@ -1115,18 +1100,15 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   postCard: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 16,
+    marginHorizontal: spacing.base,
+    marginVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    elevation: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    ...shadows.md,
   },
   postHeader: {
-    padding: 16,
-    paddingBottom: 12,
+    padding: spacing.base,
+    paddingBottom: spacing.md,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -1138,10 +1120,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   userInfo: {
     flex: 1,

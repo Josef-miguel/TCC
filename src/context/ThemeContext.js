@@ -16,9 +16,15 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const theme = isDarkTheme ? darkTheme : lightTheme;
+  
+  // Adicionar informações sobre o modo do tema
+  const themeWithMode = {
+    ...theme,
+    mode: isDarkTheme ? 'dark' : 'light',
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, isDarkTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: themeWithMode, isDarkTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -162,7 +162,61 @@ export default function App() {
               <NavigationContainer>
               <Stack.Navigator
                 initialRouteName="Cadastro"
-                screenOptions={{ headerShown: false }}
+                screenOptions={{ 
+                  headerShown: false,
+                  gestureEnabled: true,
+                  gestureDirection: 'horizontal',
+                  transitionSpec: {
+                    open: {
+                      animation: 'timing',
+                      config: {
+                        duration: 400,
+                      },
+                    },
+                    close: {
+                      animation: 'timing',
+                      config: {
+                        duration: 400,
+                      },
+                    },
+                  },
+                  cardStyleInterpolator: ({ current, layouts, next }) => {
+                    return {
+                      cardStyle: {
+                        transform: [
+                          {
+                            translateX: current.progress.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [layouts.screen.width, 0],
+                            }),
+                          },
+                          {
+                            scale: current.progress.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.9, 1],
+                            }),
+                          },
+                          {
+                            rotateY: current.progress.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: ['15deg', '0deg'],
+                            }),
+                          },
+                        ],
+                        opacity: current.progress.interpolate({
+                          inputRange: [0, 0.5, 1],
+                          outputRange: [0, 0.5, 1],
+                        }),
+                      },
+                      overlayStyle: {
+                        opacity: current.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, 0.3],
+                        }),
+                      },
+                    };
+                  },
+                }}
               >
                 <Stack.Screen
                   name="Login"

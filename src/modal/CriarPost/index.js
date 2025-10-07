@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { 
   Text, 
-  TextInput, 
+  TextInput,
   Modal, 
   View, 
   TouchableOpacity, 
@@ -17,8 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { showMessage } from 'react-native-flash-message';
+import { StandardHeader, StandardInput, StandardButton, StandardCard } from '../../components/CommonComponents';
+import { textStyles, spacing, borderRadius, shadows } from '../../styles/typography';
 
-import { Feather } from '@expo/vector-icons';
 import SimpleRouteMap from '../../components/SimpleRouteMap';
 import RouteInfo from '../../components/RouteInfo';
 
@@ -238,19 +239,14 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme?.backgroundSecondary }]}>
           
-          {/* Header Fixo */}
-          <View style={[styles.modalHeader, { borderBottomColor: theme?.border }]}>
-            <TouchableOpacity 
-              onPress={() => { setModalVisible(false); limparCampos(); }}
-              style={styles.backButton}
-            >
-              <Ionicons name="close" size={28} color={theme?.textPrimary} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: theme?.textPrimary }]}>
-              Nova Excursão
-            </Text>
-            <View style={styles.headerRight} />
-          </View>
+          {/* Header Padronizado */}
+          <StandardHeader
+            title="Nova Excursão"
+            leftIcon="close"
+            onLeftPress={() => { setModalVisible(false); limparCampos(); }}
+            theme={theme}
+            style={styles.modalHeader}
+          />
 
           <ScrollView 
             style={styles.scrollView}
@@ -291,26 +287,20 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
             </View>
 
             {/* Seção de Informações Básicas */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+            <StandardCard theme={theme} style={styles.section}>
+              <Text style={[textStyles.h5, { color: theme?.textPrimary, marginBottom: spacing.lg }]}>
                 Informações da Viagem
               </Text>
               
-              <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: theme?.textSecondary }]}>Título da Viagem *</Text>
-                <TextInput
-                  style={[styles.input, { 
-                    backgroundColor: theme?.background,
-                    color: theme?.textPrimary,
-                    borderColor: theme?.border
-                  }]}
-                  placeholder="Ex: Viagem para Praia Grande - SP"
-                  placeholderTextColor={theme?.textTertiary}
-                  value={postName}
-                  onChangeText={setPostName}
-                  maxLength={60}
-                />
-              </View>
+              <StandardInput
+                placeholder="Ex: Viagem para Praia Grande - SP"
+                value={postName}
+                onChangeText={setPostName}
+                icon="airplane-outline"
+                theme={theme}
+                style={styles.input}
+                maxLength={60}
+              />
 
               <View style={styles.inputGroup}>
                 <Text style={[styles.label, { color: theme?.textSecondary }]}>Tipo de Viagem *</Text>
@@ -362,7 +352,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
                   {description.length}/500
                 </Text>
               </View>
-            </View>
+            </StandardCard>
 
             {/* Seção de Tags */}
             <View style={styles.section}>
@@ -573,30 +563,16 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
             </Text>
 
             {/* Botão de Publicar */}
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                { 
-                  backgroundColor: isLoading ? theme?.textTertiary : theme?.primary,
-                  opacity: isLoading ? 0.7 : 1
-                }
-              ]}
+            <StandardButton
+              title={isLoading ? "Publicando..." : "PUBLICAR EXCURSÃO"}
               onPress={saveData}
+              variant="primary"
+              size="large"
               disabled={isLoading}
-            >
-              {isLoading ? (
-                <Text style={[styles.submitButtonText, { color: theme?.textInverted }]}>
-                  Publicando...
-                </Text>
-              ) : (
-                <>
-                  <Ionicons name="rocket" size={20} color={theme?.textInverted} />
-                  <Text style={[styles.submitButtonText, { color: theme?.textInverted }]}>
-                    PUBLICAR EXCURSÃO
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+              icon={isLoading ? null : "rocket"}
+              theme={theme}
+              style={styles.submitButton}
+            />
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -639,13 +615,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   section: {
-    marginBottom: 24,
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: spacing['2xl'],
+    paddingHorizontal: spacing.lg,
   },
   imagesContainer: {
     flexDirection: 'row',
@@ -773,17 +744,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 18,
-    borderRadius: 12,
-    marginHorizontal: 20,
-    gap: 8,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.lg,
   },
   // Estilos para Tags
   tagsContainer: {
