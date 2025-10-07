@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
-  Dimensions
+  Dimensions,
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { Avatar } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,11 +23,9 @@ import TelaPost from '../../modal/TelaPost';
 const { width } = Dimensions.get('window');
 
 export default function VisualizarPerfil({ route, navigation }) {
-  // normalize uid param (trim strings) and log
   const rawUid = route?.params?.uid;
   const uid = typeof rawUid === 'string' ? rawUid.trim() : rawUid;
 
-  // resolved uid from navigation params
   const { t } = useTranslation();
   const themeContext = useContext(ThemeContext);
   const theme = themeContext?.theme;
@@ -33,93 +33,158 @@ export default function VisualizarPerfil({ route, navigation }) {
   const [userData, setUserData] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
-  // keep auth context for minor UI comparisons only
   const { userData: authUser } = useAuth();
 
-  useEffect(() => {
-    let unsubscribes = [];
+  const fetchUserData = async () => {
+    try {
+      if (!uid) {
+        setLoading(false);
+        return;
+      }
 
-    const fetchUserData = async () => {
-      try {
-        if (!uid) {
-          setLoading(false);
-          return;
-        }
+      const userRef = doc(db, 'user', uid);
+      const userDoc = await getDoc(userRef);
 
-        // Fetch the user document with id === uid
-        const userRef = doc(db, 'user', uid);
-        const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        setUserData(null);
+        setLoading(false);
+        return;
+      }
 
-        if (!userDoc.exists()) {
-          // not found
-          setUserData(null);
-          setLoading(false);
-          return;
-        }
+      const data = userDoc.data();
+      setUserData({ 
+        uid: uid, 
+        userInfo: data, 
+        isOrganizer: !!data?.isOrganizer 
+      });
 
-        const data = userDoc.data();
-        setUserData({ uid: uid, userInfo: data, isOrganizer: !!data?.isOrganizer });
-
-        // If organizer, subscribe to their posts using historical fields
-        if (data?.isOrganizer) {
-          const fields = ['uid', 'creatorId', 'userUID'];
-          const docsMap = new Map();
-          fields.forEach((field) => {
-            const q = query(collection(db, 'events'), where(field, '==', uid));
-            const unsub = onSnapshot(q, (snapshot) => {
-              snapshot.docs.forEach(d => docsMap.set(d.id, { id: d.id, ...d.data() }));
-              setPosts(Array.from(docsMap.values()));
-            });
-            unsubscribes.push(unsub);
+      // Buscar posts do organizador
+      if (data?.isOrganizer) {
+        const fields = ['uid', 'creatorId', 'userUID', 'creatorUid'];
+        const docsMap = new Map();
+        
+        for (const field of fields) {
+          const q = query(collection(db, 'events'), where(field, '==', uid));
+          const unsub = onSnapshot(q, (snapshot) => {
+            snapshot.docs.forEach(d => docsMap.set(d.id, { 
+              id: d.id, 
+              ...d.data(),
+              favoriteCount: d.data().favoriteCount || 0,
+              commentCount: d.data().commentCount || 0
+            }));
+            setPosts(Array.from(docsMap.values()));
           });
         }
-
-      } catch (error) {
-        console.error('VisualizarPerfil: error fetching user by uid', error);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchUserData();
-
-    return () => {
-      if (unsubscribes && unsubscribes.length) {
-        unsubscribes.forEach(u => { try { u(); } catch (e) {} });
-      }
-    };
-  }, [uid]);
-
-  // Small UI debug box to show resolved userData for quick visual confirmation
-  const DebugBox = () => {
-    if (!userData) return null;
-    return (
-      <View style={{ position: 'absolute', right: 8, top: 80, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 6 }}>
-        <Text style={{ color: '#fff', fontSize: 12 }}>resolved uid: {userData.uid}</Text>
-        <Text style={{ color: '#fff', fontSize: 11 }}>name: {userData.userInfo?.nome || userData.userInfo?.userInfo?.nome || ''}</Text>
-      </View>
-    );
+    } catch (error) {
+      console.error('VisualizarPerfil: error fetching user by uid', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const renderPost = (post) => (
+  useEffect(() => {
+    fetchUserData();
+  }, [uid]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchUserData();
+  };
+
+  const isOwnProfile = userData && authUser && userData.uid === authUser.uid;
+
+  const renderStats = () => (
+    <View style={styles.statsContainer}>
+      <View style={styles.statItem}>
+        <Text style={[styles.statNumber, { color: theme?.primary }]}>
+          {posts.length}
+        </Text>
+        <Text style={[styles.statLabel, { color: theme?.textSecondary }]}>
+          Excursões
+        </Text>
+      </View>
+      <View style={styles.statItem}>
+        <Text style={[styles.statNumber, { color: theme?.primary }]}>
+          {posts.reduce((total, post) => total + (post.favoriteCount || 0), 0)}
+        </Text>
+        <Text style={[styles.statLabel, { color: theme?.textSecondary }]}>
+          Curtidas
+        </Text>
+      </View>
+      <View style={styles.statItem}>
+        <Text style={[styles.statNumber, { color: theme?.primary }]}>
+          {posts.reduce((total, post) => total + (post.commentCount || 0), 0)}
+        </Text>
+        <Text style={[styles.statLabel, { color: theme?.textSecondary }]}>
+          Comentários
+        </Text>
+      </View>
+    </View>
+  );
+
+  const renderPost = (post, index) => (
     <TouchableOpacity
-      key={post.id}
-      style={[styles.postCard, { backgroundColor: theme?.cardBackground, borderColor: theme?.primary }]}
+      key={post.id || index}
+      style={[styles.postCard, { 
+        backgroundColor: theme?.cardBackground,
+        borderColor: theme?.border 
+      }]}
       onPress={() => {
         setSelectedPost(post);
         setModalVisible(true);
       }}
     >
-      {post.images && post.images[0] && (
-        <Image source={{ uri: post.images[0] }} style={styles.postImage} />
+      {post.images && post.images[0] ? (
+        <Image 
+          source={{ uri: post.images[0] }} 
+          style={styles.postImage}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[styles.postImagePlaceholder, { backgroundColor: theme?.primary + '20' }]}>
+          <Ionicons name="images" size={32} color={theme?.primary} />
+        </View>
       )}
+      
       <View style={styles.postContent}>
-        <Text style={[styles.postTitle, { color: theme?.textPrimary }]}>{post.title}</Text>
-        <Text style={[styles.postDesc, { color: theme?.textTertiary }]}>
-          {post.desc?.length > 50 ? post.desc.slice(0, 50) + '...' : post.desc}
+        <Text style={[styles.postTitle, { color: theme?.textPrimary }]} 
+              numberOfLines={1}>
+          {post.title || 'Excursão sem título'}
         </Text>
+        
+        <Text style={[styles.postDesc, { color: theme?.textSecondary }]} 
+              numberOfLines={2}>
+          {post.desc || 'Descrição não disponível'}
+        </Text>
+        
+        <View style={styles.postStats}>
+          <View style={styles.postStat}>
+            <Ionicons name="heart" size={14} color={theme?.primary} />
+            <Text style={[styles.postStatText, { color: theme?.textTertiary }]}>
+              {post.favoriteCount || 0}
+            </Text>
+          </View>
+          <View style={styles.postStat}>
+            <Ionicons name="chatbubble" size={14} color={theme?.primary} />
+            <Text style={[styles.postStatText, { color: theme?.textTertiary }]}>
+              {post.commentCount || 0}
+            </Text>
+          </View>
+          {post.price && (
+            <View style={styles.postStat}>
+              <Ionicons name="pricetag" size={14} color={theme?.primary} />
+              <Text style={[styles.postStatText, { color: theme?.textTertiary }]}>
+                R$ {post.price}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -128,7 +193,10 @@ export default function VisualizarPerfil({ route, navigation }) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme?.background }]}>
         <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: theme?.textPrimary }]}>{t('profile.loading')}</Text>
+          <ActivityIndicator size="large" color={theme?.primary} />
+          <Text style={[styles.loadingText, { color: theme?.textPrimary }]}>
+            Carregando perfil...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -138,92 +206,167 @@ export default function VisualizarPerfil({ route, navigation }) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme?.background }]}>
         <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: theme?.textPrimary }]}>{t('profile.userNotFound')}</Text>
+          <Ionicons name="person-circle-outline" size={80} color={theme?.textTertiary} />
+          <Text style={[styles.errorText, { color: theme?.textPrimary }]}>
+            Perfil não encontrado
+          </Text>
+          <Text style={[styles.errorSubtext, { color: theme?.textSecondary }]}>
+            O usuário pode ter excluído a conta ou o link está incorreto.
+          </Text>
+          <TouchableOpacity 
+            style={[styles.backButton, { backgroundColor: theme?.primary }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={[styles.backButtonText, { color: '#fff' }]}>
+              Voltar
+            </Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
+  const displayName = (
+    userData.userInfo?.nome ||
+    userData.userInfo?.name ||
+    userData.userInfo?.userInfo?.nome ||
+    userData.userInfo?.displayName ||
+    'Usuário'
+  );
+
+  const displayBio = (
+    userData.userInfo?.desc ||
+    userData.userInfo?.description ||
+    userData.userInfo?.bio ||
+    (isOwnProfile ? 'Adicione uma bio no seu perfil!' : 'Este usuário ainda não adicionou uma bio.')
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme?.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Small label to indicate when viewing another user's profile */}
-        {userData && authUser && userData.uid !== authUser.uid && (
-          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-            <Text style={{ color: theme?.textTertiary, fontSize: 12 }}>Viewing profile for uid: {userData.uid}</Text>
-          </View>
-        )}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme?.primary]}
+            tintColor={theme?.primary}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme?.primary || "#f37100"} />
+        <View style={[styles.header, { backgroundColor: theme?.cardBackground }]}>
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={[styles.backButton, { backgroundColor: theme?.background }]}
+          >
+            <Ionicons name="arrow-back" size={20} color={theme?.primary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>{t('profile.profile')}</Text>
-          {userData && authUser && userData.uid !== authUser.uid && (
+          
+          <Text style={[styles.headerTitle, { color: theme?.textPrimary }]}>
+            Perfil
+          </Text>
+          
+          {!isOwnProfile && (
             <TouchableOpacity
-              onPress={() => navigation.navigate('Chat', { targetUid: userData.uid, targetUser: userData.userInfo })}
-              style={styles.chatButton}
+              onPress={() => navigation.navigate('Chat', { 
+                targetUid: userData.uid, 
+                targetUser: userData.userInfo 
+              })}
+              style={[styles.chatButton, { backgroundColor: theme?.primary }]}
             >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme?.primary || "#f37100"} />
+              <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Profile Info */}
-        <View style={styles.profileSection}>
-          {(
-            userData.userInfo?.profileImage
-            || userData.userInfo?.photoURL
-            || userData.userInfo?.avatar
-          ) ? (
-            <Avatar.Image
-              source={{ uri: userData.userInfo?.profileImage || userData.userInfo?.photoURL || userData.userInfo?.avatar }}
-              size={120}
-              style={[styles.avatar, { borderColor: theme?.primary }]}
-            />
-          ) : (
-            <Avatar.Text
-              label={(userData.userInfo?.nome || userData.userInfo?.name || (userData.userInfo?.userInfo && userData.userInfo.userInfo.nome) || 'U').charAt(0) || 'U'}
-              size={120}
-              style={[styles.avatar, { borderColor: theme?.primary }]}
-            />
-          )}
+        <View style={[styles.profileSection, { backgroundColor: theme?.cardBackground }]}>
+          <View style={styles.avatarContainer}>
+            {(
+              userData.userInfo?.profileImage ||
+              userData.userInfo?.photoURL ||
+              userData.userInfo?.avatar
+            ) ? (
+              <Image
+                source={{ uri: userData.userInfo?.profileImage || userData.userInfo?.photoURL || userData.userInfo?.avatar }}
+                style={[styles.avatar, { borderColor: theme?.primary }]}
+              />
+            ) : (
+              <View style={[styles.avatar, styles.avatarFallback, { borderColor: theme?.primary }]}>
+                <Text style={[styles.avatarText, { color: theme?.primary }]}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            
+            {userData.isOrganizer && (
+              <View style={[styles.organizerBadge, { backgroundColor: theme?.primary }]}>
+                <Ionicons name="star" size={12} color="#fff" />
+                <Text style={styles.organizerText}>Organizador</Text>
+              </View>
+            )}
+          </View>
 
           <Text style={[styles.name, { color: theme?.textPrimary }]}>
-            {(
-              userData.userInfo?.nome
-              || userData.userInfo?.name
-              || userData.userInfo?.userInfo?.nome
-              || userData.userInfo?.displayName
-            ) || t('profile.unknownUser')}
+            {displayName}
           </Text>
 
-          {(
-            userData.userInfo?.desc
-            || userData.userInfo?.description
-            || userData.userInfo?.bio
-          ) ? (
-            <Text style={[styles.description, { color: theme?.textSecondary }]}>
-              {userData.userInfo?.desc || userData.userInfo?.description || userData.userInfo?.bio}
-            </Text>
-          ) : null}
+          <Text style={[styles.description, { color: theme?.textSecondary }]}>
+            {displayBio}
+          </Text>
 
-          {userData.isOrganizer && (
-            <View style={[styles.organizerBadge, { backgroundColor: theme?.primary }]}>
-              <Text style={[styles.organizerText, { color: theme?.textInverted }]}>{t('profile.organizer')}</Text>
-            </View>
-          )}
+          {/* Stats */}
+          {userData.isOrganizer && renderStats()}
         </View>
 
         {/* Posts Section - Only for organizers */}
         {userData.isOrganizer && (
           <View style={styles.postsSection}>
-            <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>{t('profile.posts')}</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Excursões Criadas ({posts.length})
+              </Text>
+            </View>
+            
             {posts.length > 0 ? (
-              posts.map(renderPost)
+              <View style={styles.postsGrid}>
+                {posts.map(renderPost)}
+              </View>
             ) : (
-              <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>{t('profile.noPosts')}</Text>
+              <View style={styles.emptyPosts}>
+                <Ionicons name="map-outline" size={64} color={theme?.textTertiary} />
+                <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>
+                  Nenhuma excursão criada ainda
+                </Text>
+                <Text style={[styles.emptySubtext, { color: theme?.textTertiary }]}>
+                  {isOwnProfile 
+                    ? 'Crie sua primeira excursão para compartilhar com outros viajantes!' 
+                    : 'Este organizador ainda não criou nenhuma excursão.'
+                  }
+                </Text>
+              </View>
             )}
+          </View>
+        )}
+
+        {/* Non-organizer message */}
+        {!userData.isOrganizer && (
+          <View style={[styles.nonOrganizerSection, { backgroundColor: theme?.cardBackground }]}>
+            <Ionicons name="people-outline" size={48} color={theme?.textTertiary} />
+            <Text style={[styles.nonOrganizerText, { color: theme?.textPrimary }]}>
+              {isOwnProfile 
+                ? 'Torne-se um organizador para criar excursões!' 
+                : 'Este usuário ainda não é um organizador'
+              }
+            </Text>
+            <Text style={[styles.nonOrganizerSubtext, { color: theme?.textSecondary }]}>
+              {isOwnProfile 
+                ? 'Crie excursões incríveis e compartilhe com outros viajantes.' 
+                : 'Quando se tornar organizador, as excursões aparecerão aqui.'
+              }
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -245,84 +388,149 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   backButton: {
-    marginRight: 16,
+    padding: 8,
+    borderRadius: 20,
+    elevation: 2,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   chatButton: {
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 8,
+    padding: 8,
+    borderRadius: 20,
+    elevation: 2,
   },
   profileSection: {
+    padding: 24,
+    margin: 16,
+    borderRadius: 20,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     alignItems: 'center',
-    padding: 20,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 16,
   },
   avatar: {
-    backgroundColor: '#191919',
-    borderWidth: 2,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+  },
+  avatarFallback: {
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+  },
+  organizerBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  organizerText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 4,
   },
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 12,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   description: {
     fontSize: 14,
-    marginTop: 8,
+    lineHeight: 20,
     textAlign: 'center',
+    marginBottom: 20,
     paddingHorizontal: 20,
   },
-  organizerBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginTop: 8,
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
   },
-  organizerText: {
-    fontSize: 14,
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   postsSection: {
-    padding: 16,
+    paddingHorizontal: 16,
+  },
+  sectionHeader: {
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 12,
+  },
+  postsGrid: {
+    gap: 12,
   },
   postCard: {
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
+    borderRadius: 16,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 6,
-    marginBottom: 12,
     padding: 12,
     borderWidth: 1,
     flexDirection: 'row',
-    alignItems: 'center',
   },
   postImage: {
     width: 80,
     height: 80,
-    borderRadius: 8,
+    borderRadius: 12,
+  },
+  postImagePlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   postContent: {
     flex: 1,
     marginLeft: 12,
+    justifyContent: 'space-between',
   },
   postTitle: {
     fontSize: 16,
@@ -330,18 +538,65 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   postDesc: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  postStats: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  postStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  postStatText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  emptyPosts: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
   emptyText: {
     fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
     textAlign: 'center',
-    marginVertical: 20,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  nonOrganizerSection: {
+    padding: 32,
+    margin: 16,
+    borderRadius: 20,
+    elevation: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nonOrganizerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  nonOrganizerSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 16,
   },
   loadingText: {
     fontSize: 16,
@@ -350,8 +605,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 32,
+    gap: 16,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
