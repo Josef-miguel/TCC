@@ -799,7 +799,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight,
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
