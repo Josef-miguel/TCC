@@ -202,7 +202,7 @@ async function handleLogin(obj) {
             <StandardCard theme={theme} style={styles.formCard}>
               {/* Campo de Usuário */}
               <StandardInput
-                placeholder={t('auth.username')}
+                placeholder="Nome de usuário"
                 value={user}
                 onChangeText={setUser}
                 icon="person-outline"
@@ -212,7 +212,7 @@ async function handleLogin(obj) {
 
               {/* Campo de Email */}
               <StandardInput
-                placeholder={t('auth.emailPlaceholder')}
+                placeholder="E-mail"
                 value={email}
                 onChangeText={setEmail}
                 icon="mail-outline"
@@ -224,7 +224,7 @@ async function handleLogin(obj) {
 
               {/* Campo de Senha */}
               <StandardInput
-                placeholder={t('auth.passwordPlaceholder')}
+                placeholder="Senha"
                 value={password}
                 onChangeText={setPassword}
                 icon="lock-closed"
@@ -235,7 +235,7 @@ async function handleLogin(obj) {
 
               {/* Botão Entrar */}
               <StandardButton
-                title={t('auth.signIn')}
+                title="Entrar"
                 onPress={saveData}
                 variant="primary"
                 size="large"
@@ -246,7 +246,7 @@ async function handleLogin(obj) {
               {/* Link para tela de cadastro */}
               <TouchableOpacity onPress={() => navigation.navigate('Cadastro')} style={styles.linkContainer}>
                 <Text style={[textStyles.body, { color: theme?.primary, textAlign: 'center' }]}>
-                  {t('auth.registerLink')}
+                  Não tem uma conta? Cadastre-se
                 </Text>
               </TouchableOpacity>
             </StandardCard>
