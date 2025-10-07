@@ -153,19 +153,19 @@ export default function Home({ navigation, route }) {
   const [showPostMenu, setShowPostMenu] = useState(false);
   const [selectedPostForMenu, setSelectedPostForMenu] = useState(null);
 
-  // FUNÇÃO MELHORADA PARA TOGGLE DO SIDEBAR
+  // FUNÇÃO SIMPLIFICADA PARA TOGGLE DO SIDEBAR
   const toggleSidebar = () => {
     if (sidebarVisible) {
       // Fechar sidebar
       Animated.parallel([
         Animated.timing(sidebarAnimation, {
           toValue: -Dimensions.get('window').width,
-          duration: 250,
+          duration: 300,
           useNativeDriver: true
         }),
         Animated.timing(overlayOpacity, {
           toValue: 0,
-          duration: 250,
+          duration: 300,
           useNativeDriver: true
         })
       ]).start(() => {
@@ -177,12 +177,12 @@ export default function Home({ navigation, route }) {
       Animated.parallel([
         Animated.timing(sidebarAnimation, {
           toValue: 0,
-          duration: 250,
+          duration: 300,
           useNativeDriver: true
         }),
         Animated.timing(overlayOpacity, {
           toValue: 1,
-          duration: 250,
+          duration: 300,
           useNativeDriver: true
         })
       ]).start();
@@ -197,7 +197,6 @@ export default function Home({ navigation, route }) {
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // Simular recarregamento dos dados
     setTimeout(() => {
       setRefreshing(false);
     }, 1500);
@@ -234,6 +233,9 @@ export default function Home({ navigation, route }) {
       formattedCreatedAt: formatFirebaseTimestamp(post.createdAt),
       creatorAvatar: post.creatorAvatar || DEFAULT_AVATAR,
       creatorName: post.creatorName || 'Organizador',
+
+      creatorId: post.creatorId || post.creatorUid || post.uid || null, // Adicione esta linha
+
       images: post.images && post.images[0] ? post.images : [DEFAULT_EVENT_IMAGE]
     }));
   };
@@ -246,25 +248,48 @@ export default function Home({ navigation, route }) {
 
     try {
       const userRef = doc(db, "user", auth.currentUser.uid);
+      const postRef = doc(db, 'events', id);
       const post = posts.find(p => p.id === id);
       
+      // Primeiro obtém o valor atual do banco para evitar condições de corrida
+      const postDoc = await getDoc(postRef);
+      const currentFavCount = postDoc.data()?.favoriteCount || 0;
+      
       if (post?.fav) {
+        // Remover dos favoritos
         await updateDoc(userRef, {
           favoritePosts: arrayRemove(id)
         });
-        await updateDoc(doc(db, 'events', id), {
-          favoriteCount: (post.favCount || 0) - 1
+        await updateDoc(postRef, {
+          favoriteCount: Math.max(0, currentFavCount - 1) // Evita números negativos
         });
+        
+        // Atualiza o estado local
+        setPosts(prev => prev.map(i => 
+          i.id === id ? { 
+            ...i, 
+            fav: false,
+            favCount: Math.max(0, (i.favCount || 0) - 1) 
+          } : i
+        ));
       } else {
+        // Adicionar aos favoritos
         await updateDoc(userRef, {
           favoritePosts: arrayUnion(id)
         });
-        await updateDoc(doc(db, 'events', id), {
-          favoriteCount: (post.favCount || 0) + 1
+        await updateDoc(postRef, {
+          favoriteCount: currentFavCount + 1
         });
+        
+        // Atualiza o estado local
+        setPosts(prev => prev.map(i => 
+          i.id === id ? { 
+            ...i, 
+            fav: true,
+            favCount: (i.favCount || 0) + 1 
+          } : i
+        ));
       }
-      
-      setPosts(prev => prev.map(i => i.id === id ? { ...i, fav: !i.fav } : i));
     } catch (error) {
       console.error('Erro ao favoritar:', error);
       Alert.alert('Erro', 'Não foi possível favoritar o post');
@@ -313,7 +338,24 @@ export default function Home({ navigation, route }) {
 
   const handleVisualizarPerfil = () => {
     closePostMenu();
-    Alert.alert('Visualizar Perfil', 'Funcionalidade em desenvolvimento.');
+    
+    if (selectedPostForMenu?.creatorId) {
+      // Navega para a tela VisualizarPerfil passando o UID do criador
+      navigation.navigate('VisualizarPerfil', { 
+        uid: selectedPostForMenu.creatorId 
+      });
+    } else if (selectedPostForMenu?.creatorUid) {
+      // Se tiver creatorUid em vez de creatorId
+      navigation.navigate('VisualizarPerfil', { 
+        uid: selectedPostForMenu.creatorUid 
+      });
+    } else {
+      // Caso não tenha informações do criador, mostra alerta
+      Alert.alert(
+        'Informação', 
+        'Perfil do organizador não disponível no momento.'
+      );
+    }
   };
 
   // Filtros e ordenação
@@ -346,7 +388,8 @@ export default function Home({ navigation, route }) {
           saved: false,
           theme: doc.data().theme || '',
           favCount: doc.data().favoriteCount || 0,
-          commentCount: doc.data().commentCount || 0
+          commentCount: doc.data().commentCount || 0,
+          creatorId: doc.data().creatorId || doc.data().creatorUid || doc.data().uid || null // Adicione esta linha
         }));
         
         // Buscar dados dos organizadores para cada post
@@ -605,6 +648,14 @@ export default function Home({ navigation, route }) {
           <Ionicons name="heart-outline" size={22} color={theme?.textSecondary} />
           <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Favoritos</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.sidebarItem]} 
+          onPress={() => { navigation.navigate('Salvos'); closeSidebar(); }}
+        >
+          <Ionicons name="bookmark-outline" size={22} color={theme?.textSecondary} />
+          <Text style={[styles.sidebarText, { color: theme?.textSecondary }]}>Posts Salvos</Text>
+        </TouchableOpacity>
       </View>
     </Animated.View>
   );
@@ -616,27 +667,6 @@ export default function Home({ navigation, route }) {
         backgroundColor={theme?.background} 
       />
       
-      {/* Overlay animado para o sidebar */}
-      {sidebarVisible && (
-        <Animated.View 
-          style={[
-            styles.overlay, 
-            { 
-              opacity: overlayOpacity,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)'
-            }
-          ]} 
-        >
-          <TouchableOpacity 
-            style={StyleSheet.absoluteFill} 
-            onPress={closeSidebar} 
-            activeOpacity={1} 
-          />
-        </Animated.View>
-      )}
-      
-      <SidebarContent />
-
       {/* Header Principal */}
       <View style={[styles.header, { backgroundColor: theme?.background }]}>
         <View style={styles.headerContent}>
@@ -745,6 +775,26 @@ export default function Home({ navigation, route }) {
         contentContainerStyle={styles.listContent}
       />
 
+      {/* Overlay e Sidebar - DEVEM VIR POR ÚLTIMO PARA FICAREM POR CIMA */}
+      {sidebarVisible && (
+        <Animated.View 
+          style={[
+            styles.overlay, 
+            { 
+              opacity: overlayOpacity,
+            }
+          ]} 
+        >
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill} 
+            onPress={closeSidebar} 
+            activeOpacity={1} 
+          />
+        </Animated.View>
+      )}
+      
+      <SidebarContent />
+
       {/* Modal do Post */}
       <TelaPost
         modalVisible={modalVisible}
@@ -799,6 +849,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     zIndex: 99,
   },
   sidebar: {
@@ -816,7 +867,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 30,
-    marginTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 20,
+    marginTop: Platform.OS === 'ios' ? 50 : 20, // Reduzido o marginTop
   },
   sidebarContent: {
     flex: 1,
@@ -842,11 +893,11 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   header: {
+    paddingTop: 0, // REMOVIDO o padding top
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
-    zIndex: 10,
   },
   headerContent: {
     flexDirection: 'row',
@@ -895,7 +946,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
-    zIndex: 10,
   },
   tab: {
     flex: 1,
