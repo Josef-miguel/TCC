@@ -220,10 +220,26 @@ export default function Cadastro({ navigation }) {
               />
             </View>
             
-            <Text style={[styles.title, { color: theme?.textPrimary }]}>
+            <Text style={[styles.title, { 
+              color: theme?.textPrimary,
+              fontSize: 28,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              lineHeight: 34,
+              numberOfLines: 0,
+              flexWrap: 'wrap'
+            }]}>
               Criar Conta
             </Text>
-            <Text style={[styles.subtitle, { color: theme?.textSecondary }]}>
+            <Text style={[styles.subtitle, { 
+              color: theme?.textSecondary,
+              fontSize: 16,
+              textAlign: 'center',
+              lineHeight: 22,
+              numberOfLines: 0,
+              flexWrap: 'wrap',
+              opacity: 0.8
+            }]}>
               Preencha os dados para se cadastrar
             </Text>
           </Animated.View>
@@ -320,7 +336,15 @@ export default function Cadastro({ navigation }) {
 
               {/* Link para ir ao login */}
               <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.linkContainer}>
-                <Text style={[textStyles.body, { color: theme?.primary, textAlign: 'center' }]}>
+                <Text style={[textStyles.body, { 
+                  color: theme?.primary, 
+                  textAlign: 'center',
+                  fontSize: 16,
+                  fontWeight: '500',
+                  lineHeight: 22,
+                  numberOfLines: 0,
+                  flexWrap: 'wrap'
+                }]}>
                   Já tem uma conta? Faça login
                 </Text>
               </TouchableOpacity>
@@ -419,5 +443,9 @@ const styles = StyleSheet.create({
   linkContainer: {
     marginTop: spacing.lg,
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

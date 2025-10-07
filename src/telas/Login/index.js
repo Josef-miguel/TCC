@@ -183,10 +183,26 @@ async function handleLogin(obj) {
               />
             </View>
             
-            <Text style={[styles.title, { color: theme?.textPrimary }]}>
+            <Text style={[styles.title, { 
+              color: theme?.textPrimary,
+              fontSize: 28,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              lineHeight: 34,
+              numberOfLines: 0,
+              flexWrap: 'wrap'
+            }]}>
               Bem-vindo de volta!
             </Text>
-            <Text style={[styles.subtitle, { color: theme?.textSecondary }]}>
+            <Text style={[styles.subtitle, { 
+              color: theme?.textSecondary,
+              fontSize: 16,
+              textAlign: 'center',
+              lineHeight: 22,
+              numberOfLines: 0,
+              flexWrap: 'wrap',
+              opacity: 0.8
+            }]}>
               Entre na sua conta para continuar
             </Text>
           </Animated.View>
@@ -245,7 +261,15 @@ async function handleLogin(obj) {
 
               {/* Link para tela de cadastro */}
               <TouchableOpacity onPress={() => navigation.navigate('Cadastro')} style={styles.linkContainer}>
-                <Text style={[textStyles.body, { color: theme?.primary, textAlign: 'center' }]}>
+                <Text style={[textStyles.body, { 
+                  color: theme?.primary, 
+                  textAlign: 'center',
+                  fontSize: 16,
+                  fontWeight: '500',
+                  lineHeight: 22,
+                  numberOfLines: 0,
+                  flexWrap: 'wrap'
+                }]}>
                   Não tem uma conta? Cadastre-se
                 </Text>
               </TouchableOpacity>
@@ -324,5 +348,9 @@ const styles = StyleSheet.create({
   linkContainer: {
     marginTop: spacing.lg,
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

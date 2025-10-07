@@ -32,6 +32,7 @@ import VisualizarPerfil from "./src/telas/VisualizarPerfil";
 import CriarPost from "./src/modal/CriarPost";
 import VerificacaoIdentidade from "./src/telas/VerificacaoIdentidade";
 import Notificacoes from "./src/telas/Notificacoes";
+import TikTokScreen from "./src/telas/TikTok";
 import { Ionicons } from "@expo/vector-icons";
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NotificationProvider } from './src/context/NotificationContext';
@@ -287,6 +288,12 @@ export default function App() {
                 <Stack.Screen
                   name="Notificacoes"
                   component={Notificacoes}
+                  options={{ headerShown: false }}
+                />
+
+                <Stack.Screen
+                  name="TikTok"
+                  component={TikTokScreen}
                   options={{ headerShown: false }}
                 />
 

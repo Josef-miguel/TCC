@@ -754,6 +754,13 @@ export default function Home({ navigation, route }) {
         
         <TouchableOpacity 
           style={styles.headerIconContainer}
+          onPress={() => navigation.navigate('TikTok')}
+        >
+          <Ionicons name="play-circle-outline" size={24} color={theme?.primary} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.headerIconContainer}
           onPress={() => { navigation.navigate('Notificacoes'); closeSidebar(); }}
         >
           <Ionicons name="notifications-outline" size={24} color={theme?.textPrimary} />
