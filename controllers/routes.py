@@ -1022,6 +1022,71 @@ def init_app(app, db):
                 "total": 0
             }), 500
 
+    @app.route("/event/<event_id>")
+    def event_detail(event_id):
+        """Página de detalhes de um evento específico"""
+        try:
+            # Buscar o evento no Firestore
+            event_ref = db.collection('events').document(event_id)
+            event_doc = event_ref.get()
+            
+            if not event_doc.exists:
+                flash('Evento não encontrado.', 'error')
+                return redirect(url_for('home'))
+            
+            event_data = event_doc.to_dict()
+            event_data['id'] = event_doc.id
+            
+            # Buscar dados do organizador
+            if event_data.get('uid'):
+                try:
+                    organizer_doc = db.collection('user').document(event_data['uid']).get()
+                    if organizer_doc.exists:
+                        organizer_data = organizer_doc.to_dict()
+                        event_data['organizer'] = {
+                            'name': organizer_data.get('name', 'Organizador'),
+                            'uid': event_data['uid'],
+                            'profile_picture': organizer_data.get('profile_picture'),
+                            'email': organizer_data.get('email'),
+                            'is_organizer': organizer_data.get('isOrganizer', False)
+                        }
+                except Exception as e:
+                    logger.exception(f"Erro ao buscar organizador: {e}")
+                    event_data['organizer'] = {'name': 'Organizador', 'uid': event_data['uid']}
+            else:
+                event_data['organizer'] = {'name': 'Organizador', 'uid': None}
+            
+            # Processar rota para JSON serializável
+            route = event_data.get('route')
+            if route and isinstance(route, dict):
+                start = route.get('start')
+                end = route.get('end')
+                if start and end:
+                    route['start'] = {
+                        'latitude': start.get('latitude'),
+                        'longitude': start.get('longitude')
+                    }
+                    route['end'] = {
+                        'latitude': end.get('latitude'),
+                        'longitude': end.get('longitude')
+                    }
+                event_data['route'] = route
+            
+            # Incrementar contador de acessos
+            try:
+                event_ref.update({
+                    'numAcess': firestore.Increment(1)
+                })
+            except Exception as e:
+                logger.exception(f"Erro ao incrementar acessos: {e}")
+            
+            return render_template("event_detail.html", event=event_data, user=g.user)
+            
+        except Exception as e:
+            logger.exception(f"Erro ao carregar detalhes do evento: {e}")
+            flash('Erro ao carregar evento. Tente novamente.', 'error')
+            return redirect(url_for('home'))
+
     @app.route("/edit_post/<event_id>", methods=["GET", "POST"])
     def edit_post(event_id):
         """Rota para editar um evento existente"""

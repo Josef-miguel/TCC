@@ -1,48 +1,47 @@
-{% set hide_header = true %}
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
+<div class="auth-container">
   <div class="card register-card">
-    <div class="register-header" style="text-align:center; margin-bottom:1.5rem">
-      <h3 class="register-title" style="font-size:2rem; font-weight:700; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+    <div class="register-header">
+      <h3 class="register-title">
         Criar Conta
       </h3>
     </div>
 
     <div class="register-body">
       <form id="registerForm" novalidate>
-        <div class="form-group" style="margin-bottom:1rem">
+        <div class="form-group">
           <label for="name" class="form-label">Nome</label>
           <input type="text" id="name" required class="form-control" placeholder="Digite seu nome completo">
         </div>
 
-        <div class="form-group" style="margin-bottom:1rem">
+        <div class="form-group">
           <label for="email" class="form-label">E-mail</label>
           <input type="email" id="email" required class="form-control" placeholder="Digite seu e-mail">
         </div>
 
-        <div class="form-group" style="margin-bottom:1rem">
+        <div class="form-group">
           <label for="password" class="form-label">Senha</label>
           <input type="password" id="password" required class="form-control" placeholder="Crie uma senha segura">
         </div>
 
-        <div class="form-group" style="margin-bottom:1rem">
+        <div class="form-group">
           <label for="cpf" class="form-label">CPF</label>
           <input type="text" id="CPF" required class="form-control" placeholder="Digite seu CPF">
         </div>
         
-        <div class="form-group" style="margin-bottom:1rem">
+        <div class="form-group">
           <label for="datanasc" class="form-label">Data de Nascimento</label>
           <input type="date" id="datanasc" required class="form-control">
         </div>
 
-        <button id="registerButton" type="submit" class="btn" style="width:100%">Cadastrar</button>
-        <div id="formAlert" style="margin-top:12px; text-align:center"></div>
+        <button id="registerButton" type="submit" class="btn">Cadastrar</button>
+        <div id="formAlert"></div>
       </form>
 
-      <p class="login-text" style="margin-top:2rem; text-align:center">
-        Já tem conta? <a href="{{ url_for('login') }}" class="login-link" style="color:var(--primary); font-weight:600">Entre aqui</a>
+      <p class="login-text">
+        Já tem conta? <a href="{{ url_for('login') }}" class="login-link">Entre aqui</a>
       </p>
     </div>
   </div>
