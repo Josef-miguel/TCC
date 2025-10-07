@@ -1,3 +1,5 @@
+
+
 import React, { useState, useContext, useEffect } from "react";
 import {
   Modal,
@@ -107,10 +109,10 @@ const Configuracoes = ({ modalVisible, setModalVisible }) => {
     );
   };
 
-  const handleTermsSupport = () => {
+  const handleTermsAndSupport = () => {
     Alert.alert(
-      t("settings.termsSupport"),
-      t("settings.termsSupportMessage"),
+      t("settings.termsAndSupport"),
+      t("settings.termsAndSupportMessage"),
       [
         { text: "Termos de Uso", onPress: () => console.log("Abrir termos") },
         { text: "Suporte", onPress: () => console.log("Abrir suporte") },
@@ -360,11 +362,11 @@ const Configuracoes = ({ modalVisible, setModalVisible }) => {
               ]}>
                 <SettingItem
                   icon="document-text-outline"
-                  title={t("settings.termsSupport")}
+                  title={t("settings.termsAndSupport")}
                   rightComponent={
                     <Ionicons name="chevron-forward" size={20} color={theme?.textTertiary} />
                   }
-                  onPress={handleTermsSupport}
+                  onPress={handleTermsAndSupport}
                 />
                 
                 <SettingItem
