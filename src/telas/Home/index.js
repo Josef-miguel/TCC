@@ -56,11 +56,36 @@ const formatTripDate = (dateString) => {
   if (!dateString) return 'Data não definida';
   
   try {
+    let date;
+    
+    // Se for uma string ISO (formato do Firebase)
     if (typeof dateString === 'string') {
-      return new Date(dateString).toLocaleDateString('pt-BR');
+      date = new Date(dateString);
     }
-    return formatFirebaseTimestamp(dateString);
+    // Se for um objeto Timestamp do Firebase
+    else if (dateString.toDate && typeof dateString.toDate === 'function') {
+      date = dateString.toDate();
+    }
+    // Se for um objeto com seconds e nanoseconds
+    else if (dateString.seconds && dateString.nanoseconds !== undefined) {
+      date = new Date(dateString.seconds * 1000);
+    }
+    // Se já for um objeto Date
+    else if (dateString instanceof Date) {
+      date = dateString;
+    }
+    else {
+      date = new Date(dateString);
+    }
+    
+    // Verificar se a data é válida
+    if (isNaN(date.getTime())) {
+      return 'Data não definida';
+    }
+    
+    return date.toLocaleDateString('pt-BR');
   } catch (error) {
+    console.error('Erro ao formatar data da viagem:', error);
     return 'Data não definida';
   }
 };
@@ -208,6 +233,7 @@ export default function Home({ navigation, route }) {
       formattedReturnDate: formatTripDate(post.return_date),
       formattedCreatedAt: formatFirebaseTimestamp(post.createdAt),
       creatorAvatar: post.creatorAvatar || DEFAULT_AVATAR,
+      creatorName: post.creatorName || 'Organizador',
       images: post.images && post.images[0] ? post.images : [DEFAULT_EVENT_IMAGE]
     }));
   };
@@ -323,6 +349,39 @@ export default function Home({ navigation, route }) {
           commentCount: doc.data().commentCount || 0
         }));
         
+        // Buscar dados dos organizadores para cada post
+        const postsWithCreatorData = await Promise.all(
+          fetchedPosts.map(async (post) => {
+            try {
+              if (post.uid) {
+                const creatorRef = doc(db, 'user', post.uid);
+                const creatorDoc = await getDoc(creatorRef);
+                
+                if (creatorDoc.exists()) {
+                  const creatorData = creatorDoc.data();
+                  return {
+                    ...post,
+                    creatorName: creatorData.nome || 'Organizador',
+                    creatorAvatar: creatorData.profileImage || DEFAULT_AVATAR
+                  };
+                }
+              }
+              return {
+                ...post,
+                creatorName: 'Organizador',
+                creatorAvatar: DEFAULT_AVATAR
+              };
+            } catch (error) {
+              console.error('Erro ao buscar dados do organizador:', error);
+              return {
+                ...post,
+                creatorName: 'Organizador',
+                creatorAvatar: DEFAULT_AVATAR
+              };
+            }
+          })
+        );
+        
         if (auth.currentUser) {
           try {
             const userRef = doc(db, 'user', auth.currentUser.uid);
@@ -333,7 +392,7 @@ export default function Home({ navigation, route }) {
               const favoritePostIds = userData.favoritePosts || [];
               const savedPostIds = userData.savedPosts || [];
               
-              fetchedPosts.forEach(post => {
+              postsWithCreatorData.forEach(post => {
                 post.fav = favoritePostIds.includes(post.id);
                 post.saved = savedPostIds.includes(post.id);
               });
@@ -343,7 +402,7 @@ export default function Home({ navigation, route }) {
           }
         }
         
-        setPosts(processPosts(fetchedPosts));
+        setPosts(processPosts(postsWithCreatorData));
       } catch (error) {
         console.error('Erro ao buscar posts:', error);
         Alert.alert('Erro', 'Não foi possível carregar os posts');
@@ -392,25 +451,36 @@ export default function Home({ navigation, route }) {
 
   const PostHeader = ({ post }) => (
     <View style={[styles.postHeader, { backgroundColor: theme?.background }]}>
-      <View style={styles.headerLeft}>
-        <AvatarImage
-          source={post.creatorAvatar}
-          style={styles.avatar}
-        />
-        <View style={styles.userInfo}>
-          <Text style={[styles.username, { color: theme?.textPrimary }]}>
-            {post.creatorName || 'Organizador'}
-          </Text>
-          <Text style={[styles.postTime, { color: theme?.textTertiary }]}>
-            {post.formattedDate || 'Em breve'}
-          </Text>
+      <View style={styles.headerTopRow}>
+        <View style={styles.headerLeft}>
+          <AvatarImage
+            source={post.creatorAvatar || DEFAULT_AVATAR}
+            style={styles.avatar}
+          />
+          <View style={styles.userInfo}>
+            <View style={styles.nameRow}>
+              <Text style={[styles.username, { color: theme?.textPrimary }]}>
+                {post.creatorName || 'Organizador'}
+              </Text>
+              <TouchableOpacity onPress={() => openPostMenu(post)} style={styles.menuButton}>
+                <Ionicons name="ellipsis-horizontal" size={20} color={theme?.textTertiary} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.badgeRow}>
+              <TripTypeBadge type={post.type} />
+            </View>
+            <Text style={[styles.postTime, { color: theme?.textTertiary }]}>
+              {post.formattedExitDate || formatTripDate(post.exit_date) || 'Em breve'}
+            </Text>
+          </View>
         </View>
       </View>
-      <View style={styles.headerRight}>
-        <TripTypeBadge type={post.type} />
-        <TouchableOpacity onPress={() => openPostMenu(post)} style={styles.menuButton}>
-          <Ionicons name="ellipsis-horizontal" size={20} color={theme?.textTertiary} />
-        </TouchableOpacity>
+      
+      {/* Título do Post */}
+      <View style={styles.titleContainer}>
+        <Text style={[styles.postTitle, { color: theme?.textPrimary }]}>
+          {post.title || 'Excursão Especial'}
+        </Text>
       </View>
     </View>
   );
@@ -461,48 +531,21 @@ export default function Home({ navigation, route }) {
 
   const PostInfo = ({ post }) => (
     <View style={[styles.postInfo, { backgroundColor: theme?.background }]}>
-      <Text style={[styles.postTitle, { color: theme?.textPrimary }]}>
-        {post.title || 'Viagem incrível!'}
-      </Text>
-      
-      <View style={styles.eventDetails}>
-        <View style={styles.detailRow}>
-          <View style={styles.detailItem}>
-            <Ionicons name="location-outline" size={16} color={theme?.primary} />
-            <Text style={[styles.detailText, { color: theme?.textSecondary }]} numberOfLines={1}>
-              {post.location || 'Local a definir'}
-            </Text>
-          </View>
-          
-          <View style={styles.detailItem}>
-            <Ionicons name="people-outline" size={16} color={theme?.primary} />
-            <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
-              {post.numSlots || 0} vagas
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.detailRow}>
-          <View style={styles.detailItem}>
-            <Ionicons name="calendar-outline" size={16} color={theme?.primary} />
-            <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
-              {post.formattedExitDate || 'Data não definida'}
-            </Text>
-          </View>
-          
-          {post.formattedReturnDate && post.formattedReturnDate !== 'Data não definida' && (
-            <View style={styles.detailItem}>
-              <Ionicons name="arrow-redo-outline" size={16} color={theme?.primary} />
-              <Text style={[styles.detailText, { color: theme?.textSecondary }]}>
-                {post.formattedReturnDate}
+      {/* Tags do Post */}
+      {post.tags && post.tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          {post.tags.map((tag, index) => (
+            <View key={index} style={[styles.tagBadge, { backgroundColor: theme?.primary + '20' }]}>
+              <Text style={[styles.tagText, { color: theme?.primary }]}>
+                #{tag}
               </Text>
             </View>
-          )}
+          ))}
         </View>
-      </View>
+      )}
 
       <Text style={[styles.postDescription, { color: theme?.textSecondary }]} numberOfLines={2}>
-        {post.desc || 'Uma experiência única te aguarda! Não perca essa oportunidade.'}
+        {post.desc || 'Uma experiência única te aguarda! Não perca essa oportunidade de viajar conosco.'}
       </Text>
       
       <TouchableOpacity 
@@ -885,11 +928,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
     paddingBottom: 12,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -905,10 +949,18 @@ const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  badgeRow: {
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
   username: {
     fontSize: 15,
     fontWeight: '600',
-    marginBottom: 2,
   },
   postTime: {
     fontSize: 12,
@@ -917,6 +969,12 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  titleContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   typeBadge: {
     flexDirection: 'row',
@@ -998,10 +1056,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   postTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 12,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   eventDetails: {
     marginBottom: 12,
@@ -1112,6 +1169,24 @@ const styles = StyleSheet.create({
   dropdownText: {
     fontSize: 16,
     marginLeft: 12,
+    fontWeight: '500',
+  },
+  // Estilos para Tags
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+    gap: 6,
+  },
+  tagBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+  tagText: {
+    fontSize: 12,
     fontWeight: '500',
   },
 });

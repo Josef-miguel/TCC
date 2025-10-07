@@ -46,6 +46,8 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [mapEnd, setMapEnd] = useState(null);
   const [routeCoords, setRouteCoords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [newTag, setNewTag] = useState('');
 
   const tripTypes = [
     { id: 1, label: 'VIAGEM', icon: 'airplane' },
@@ -63,7 +65,21 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
     setMapStart(null);
     setMapEnd(null);
     setRouteCoords([]);
+    setTags([]);
+    setNewTag("");
   }
+
+  // Funções para gerenciar tags
+  const addTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag("");
+    }
+  };
+
+  const removeTag = (index) => {
+    setTags(tags.filter((_, i) => i !== index));
+  };
 
   const validateForm = () => {
     if (!postName.trim()) {
@@ -121,6 +137,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
           end: mapEnd,
           coordinates: routeCoords,
         },
+        tags: tags,
         uid: uid,
         createdAt: new Date().toISOString(),
         favoriteCount: 0,
@@ -344,6 +361,79 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
                 <Text style={[styles.charCount, { color: theme?.textTertiary }]}>
                   {description.length}/500
                 </Text>
+              </View>
+            </View>
+
+            {/* Seção de Tags */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme?.textPrimary }]}>
+                Tags da Viagem
+              </Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: theme?.textSecondary }]}>
+                  Adicione tags para categorizar sua viagem
+                </Text>
+                
+                {/* Interface de Tags */}
+                <View style={[styles.tagsContainer, { backgroundColor: theme?.background, borderColor: theme?.border }]}>
+                  <View style={styles.tagsHeader}>
+                    <View style={styles.tagsHeaderLeft}>
+                      <Ionicons name="chevron-down" size={16} color={theme?.textPrimary} />
+                      <Text style={[styles.tagsTitle, { color: theme?.textPrimary }]}>tags</Text>
+                      <Text style={[styles.tagsArrayLabel, { color: theme?.textSecondary }]}>(array)</Text>
+                    </View>
+                    <View style={styles.tagsHeaderRight}>
+                      <TouchableOpacity 
+                        style={[styles.addTagButton, { backgroundColor: theme?.primary }]}
+                        onPress={addTag}
+                      >
+                        <Ionicons name="add" size={16} color="#FFF" />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.clearTagsButton, { backgroundColor: theme?.error }]}
+                        onPress={() => setTags([])}
+                      >
+                        <Ionicons name="trash" size={16} color="#FFF" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  
+                  {/* Lista de Tags */}
+                  <ScrollView style={styles.tagsList} showsVerticalScrollIndicator={true}>
+                    {tags.map((tag, index) => (
+                      <View key={index} style={styles.tagItem}>
+                        <View style={[styles.tagIndex, { backgroundColor: theme?.backgroundSecondary }]}>
+                          <Text style={[styles.tagIndexText, { color: theme?.textSecondary }]}>{index}</Text>
+                        </View>
+                        <Text style={[styles.tagText, { color: theme?.textPrimary }]}>"{tag}"</Text>
+                        <TouchableOpacity 
+                          style={styles.removeTagButton}
+                          onPress={() => removeTag(index)}
+                        >
+                          <Ionicons name="close" size={14} color={theme?.textTertiary} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </ScrollView>
+                  
+                  {/* Input para nova tag */}
+                  <View style={styles.addTagInputContainer}>
+                    <TextInput
+                      style={[styles.addTagInput, { 
+                        backgroundColor: theme?.backgroundSecondary,
+                        color: theme?.textPrimary,
+                        borderColor: theme?.border
+                      }]}
+                      placeholder="Digite uma nova tag..."
+                      placeholderTextColor={theme?.textTertiary}
+                      value={newTag}
+                      onChangeText={setNewTag}
+                      onSubmitEditing={addTag}
+                      returnKeyType="done"
+                    />
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -694,6 +784,92 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Estilos para Tags
+  tagsContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  tagsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  tagsHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tagsTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  tagsArrayLabel: {
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  tagsHeaderRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  addTagButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearTagsButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagsList: {
+    maxHeight: 120,
+    marginBottom: 8,
+  },
+  tagItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginBottom: 4,
+    borderRadius: 4,
+  },
+  tagIndex: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  tagIndexText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  tagText: {
+    flex: 1,
+    fontSize: 14,
+    marginRight: 8,
+  },
+  removeTagButton: {
+    padding: 2,
+  },
+  addTagInputContainer: {
+    marginTop: 8,
+  },
+  addTagInput: {
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
   },
 });
 
