@@ -183,7 +183,7 @@ export default function Cadastro({ navigation }) {
       
       {/* Header com navegação */}
       <StandardHeader
-        title={t('register.title')}
+        title="Criar Conta"
         rightIcon={themeContext?.isDarkTheme ? "sunny" : "moon"}
         onRightPress={themeContext?.toggleTheme}
         theme={theme}
@@ -221,10 +221,10 @@ export default function Cadastro({ navigation }) {
             </View>
             
             <Text style={[styles.title, { color: theme?.textPrimary }]}>
-              {t('register.title')}
+              Criar Conta
             </Text>
             <Text style={[styles.subtitle, { color: theme?.textSecondary }]}>
-              {t('register.subtitle')}
+              Preencha os dados para se cadastrar
             </Text>
           </Animated.View>
 
@@ -244,7 +244,7 @@ export default function Cadastro({ navigation }) {
             <StandardCard theme={theme} style={styles.formCard}>
               {/* Campo Usuário */}
               <StandardInput
-                placeholder={t('register.userPlaceholder')}
+                placeholder="Nome de usuário"
                 value={user}
                 onChangeText={setUser}
                 icon="person-outline"
@@ -254,7 +254,7 @@ export default function Cadastro({ navigation }) {
 
               {/* Campo E-mail */}
               <StandardInput
-                placeholder={t('register.emailPlaceholder')}
+                placeholder="E-mail"
                 value={email}
                 onChangeText={setEmail}
                 icon="mail-outline"
@@ -266,7 +266,7 @@ export default function Cadastro({ navigation }) {
 
               {/* Campo Senha */}
               <StandardInput
-                placeholder={t('register.passwordPlaceholder')}
+                placeholder="Senha"
                 value={password}
                 onChangeText={setPassword}
                 icon="lock-closed"
@@ -277,7 +277,7 @@ export default function Cadastro({ navigation }) {
 
               {/* Campo CPF */}
               <StandardInput
-                placeholder={t('register.cpfPlaceholder')}
+                placeholder="CPF"
                 value={cpf}
                 onChangeText={setCpf}
                 icon="card"
@@ -310,7 +310,7 @@ export default function Cadastro({ navigation }) {
 
               {/* Botão de Cadastro */}
               <StandardButton
-                title={t('register.registerButton')}
+                title="Cadastrar"
                 onPress={saveData}
                 variant="primary"
                 size="large"
@@ -321,7 +321,7 @@ export default function Cadastro({ navigation }) {
               {/* Link para ir ao login */}
               <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.linkContainer}>
                 <Text style={[textStyles.body, { color: theme?.primary, textAlign: 'center' }]}>
-                  {t('register.loginLink')}
+                  Já tem uma conta? Faça login
                 </Text>
               </TouchableOpacity>
             </StandardCard>

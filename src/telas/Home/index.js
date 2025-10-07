@@ -716,42 +716,31 @@ export default function Home({ navigation, route }) {
         backgroundColor={theme?.background} 
       />
       
-      {/* Header Principal */}
-      <StandardHeader
-        title="Excursões"
-        leftIcon="menu"
-        rightIcon="notifications-outline"
-        onLeftPress={toggleSidebar}
-        onRightPress={() => { navigation.navigate('Notificacoes'); closeSidebar(); }}
-        theme={theme}
-        style={styles.header}
-      />
+      {/* Header Customizado */}
+      <View style={[styles.customHeader, { backgroundColor: theme?.background }]}>
+        <TouchableOpacity 
+          style={styles.headerIconContainer}
+          onPress={toggleSidebar}
+        >
+          <Ionicons name="menu" size={24} color={theme?.textPrimary} />
+        </TouchableOpacity>
         
-        <View style={[styles.searchContainer, { backgroundColor: theme?.background }]}>
-          <View style={styles.searchRow}>
-            <View style={[styles.searchInputContainer, { backgroundColor: theme?.backgroundSecondary }]}>
-              <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
-              <TextInput
-                style={[styles.searchInput, { color: theme?.textPrimary }]}
-                placeholder="Buscar excursões..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={theme?.textTertiary}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            {/* Botão de Filtro */}
+        <View style={[styles.searchInputContainerInHeader, { backgroundColor: theme?.backgroundSecondary }]}>
+          <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
+          <TextInput
+            style={[styles.searchInputInHeader, { color: theme?.textPrimary }]}
+            placeholder="Buscar excursões..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={theme?.textTertiary}
+          />
+          {searchQuery.length > 0 ? (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
+            </TouchableOpacity>
+          ) : (
             <TouchableOpacity
-              style={[
-                styles.filterButton,
-                { backgroundColor: selectedTags.length > 0 ? theme?.primary : theme?.backgroundSecondary },
-                { borderColor: theme?.primary }
-              ]}
+              style={styles.filterButtonInside}
               onPress={() => setFilterModalVisible(true)}
             >
               <Ionicons 
@@ -760,8 +749,16 @@ export default function Home({ navigation, route }) {
                 color={selectedTags.length > 0 ? 'white' : theme?.primary} 
               />
             </TouchableOpacity>
-          </View>
+          )}
         </View>
+        
+        <TouchableOpacity 
+          style={styles.headerIconContainer}
+          onPress={() => { navigation.navigate('Notificacoes'); closeSidebar(); }}
+        >
+          <Ionicons name="notifications-outline" size={24} color={theme?.textPrimary} />
+        </TouchableOpacity>
+      </View>
 
         {/* Abas */}
         <View style={[styles.tabContainer, { backgroundColor: theme?.background }]}>
@@ -1010,69 +1007,45 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
-  header: {
-    paddingTop: 0, // REMOVIDO o padding top
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingVertical: 12,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  menuButton: {
-    padding: 4,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    letterSpacing: -0.5,
-  },
-  notificationButton: {
-    padding: 6,
+  headerIconContainer: {
+    padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.05)',
   },
-  searchContainer: {
-    marginTop: 4,
-  },
-  searchRow: {
+  searchInputContainerInHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: 25,
     paddingHorizontal: 16,
-    height: 40,
+    height: 44,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
     flex: 1,
+    marginHorizontal: 12,
   },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
+  searchInputInHeader: {
     flex: 1,
     fontSize: 16,
     height: '100%',
+    marginLeft: 8,
   },
-  filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  clearButton: {
+    padding: 4,
+  },
+  filterButtonInside: {
+    padding: 4,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginLeft: 8,
   },
   tabContainer: {
     flexDirection: 'row',
