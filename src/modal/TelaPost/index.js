@@ -207,7 +207,8 @@ const PostScreen = ({
       const eventRef = doc(db, "events", postId);
       await updateDoc(eventRef, {
         ratingCount: increment(1),
-        ratingSum: increment(commentObj.nota)
+        ratingSum: increment(commentObj.nota),
+        commentCount: increment(1)
       });
 
       setNewText("");

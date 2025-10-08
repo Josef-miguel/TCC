@@ -12,14 +12,17 @@ import {
   Modal,
   Animated,
   PanResponder,
+  Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Video, ResizeMode } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeContext } from '../../context/ThemeContext';
-import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, getDoc, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { db, auth } from '../../../services/firebase';
+import TelaPost from '../../modal/TelaPost';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -29,6 +32,7 @@ const DEFAULT_EVENT_IMAGE = 'https://cdn.pixabay.com/photo/2016/11/22/19/08/hill
 
 const TikTokScreen = () => {
   const { isDarkMode } = React.useContext(ThemeContext);
+  const navigation = useNavigation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -38,6 +42,11 @@ const TikTokScreen = () => {
   const flatListRef = useRef(null);
   const videoRefs = useRef({});
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const lastTap = useRef(0);
+  
+  // Estados para o modal da tela Home
+  const [homeModalVisible, setHomeModalVisible] = useState(false);
+  const [selectedPostForModal, setSelectedPostForModal] = useState(null);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -53,9 +62,23 @@ const TikTokScreen = () => {
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       try {
         setLoading(true);
-        const fetchedPosts = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
+        const fetchedPosts = await Promise.all(snapshot.docs.map(async (docSnapshot) => {
+          // Buscar contagem real de comentários da coleção de avaliações
+          let realCommentCount = 0;
+          try {
+            const commentsRef = collection(db, 'events', docSnapshot.id, 'avaliacoes');
+            const commentsSnapshot = await getDocs(commentsRef);
+            realCommentCount = commentsSnapshot.size;
+          } catch (error) {
+            console.error('Erro ao contar comentários:', error);
+            realCommentCount = docSnapshot.data().commentCount || 0;
+          }
+
+          return {
+            id: docSnapshot.id,
+            ...docSnapshot.data(),
+            commentCount: realCommentCount,
+          };
         }));
         
         // Buscar dados dos organizadores para cada post
@@ -101,7 +124,7 @@ const TikTokScreen = () => {
           description: post.desc || 'Sem descrição',
           likes: post.favoriteCount || 0,
           comments: post.commentCount || 0,
-          shares: Math.floor(Math.random() * 50), // Mock para compartilhamentos
+          shares: post.shareCount || 0, // Usar contador real de compartilhamentos
           date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível',
           price: post.price || 0,
           numSlots: post.numSlots || 0,
@@ -110,6 +133,12 @@ const TikTokScreen = () => {
           exitDate: post.exit_date,
           returnDate: post.return_date,
           route: post.route || null,
+          // Preservar dados do criador para navegação
+          creatorId: post.creatorId,
+          creatorUid: post.creatorUid,
+          uid: post.uid,
+          creatorName: post.creatorName,
+          creatorAvatar: post.creatorAvatar,
         }));
         
         setPosts(processedPosts);
@@ -156,6 +185,68 @@ const TikTokScreen = () => {
       }
       return newSet;
     });
+  };
+
+  const handleShare = async (postId) => {
+    try {
+      // Incrementar contador de compartilhamentos no Firebase
+      const eventRef = doc(db, 'events', postId);
+      await updateDoc(eventRef, {
+        shareCount: increment(1)
+      });
+      
+      // Atualizar estado local
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, shares: (post.shares || 0) + 1 }
+          : post
+      ));
+      
+      // Aqui você pode adicionar lógica para compartilhar via WhatsApp, Instagram, etc.
+      Alert.alert('Compartilhado!', 'Post compartilhado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      Alert.alert('Erro', 'Não foi possível compartilhar o post');
+    }
+  };
+
+  const handleNavigateToProfile = (post) => {
+    if (post?.creatorId) {
+      navigation.navigate('VisualizarPerfil', { 
+        uid: post.creatorId 
+      });
+    } else if (post?.creatorUid) {
+      navigation.navigate('VisualizarPerfil', { 
+        uid: post.creatorUid 
+      });
+    } else if (post?.uid) {
+      navigation.navigate('VisualizarPerfil', { 
+        uid: post.uid 
+      });
+    } else {
+      Alert.alert(
+        'Informação', 
+        'Perfil do organizador não disponível no momento.'
+      );
+    }
+  };
+
+  const handleDoubleTap = (post) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    
+    if (lastTap.current && (now - lastTap.current) < DOUBLE_TAP_DELAY) {
+      // Duplo toque detectado - abrir modal da tela Home
+      setSelectedPostForModal(post);
+      setHomeModalVisible(true);
+    } else {
+      lastTap.current = now;
+    }
+  };
+
+  const closeHomeModal = () => {
+    setHomeModalVisible(false);
+    setSelectedPostForModal(null);
   };
 
   const handlePostPress = (post) => {
@@ -211,13 +302,18 @@ const TikTokScreen = () => {
         {/* Conteúdo do post */}
         <TouchableOpacity
           style={styles.postContent}
-          onPress={() => handlePostPress(item)}
+          onPress={() => handleDoubleTap(item)}
           activeOpacity={0.9}
         >
           <View style={styles.postInfo}>
             <Text style={styles.postTitle}>{item.title}</Text>
             <Text style={styles.postDescription}>{item.description}</Text>
-            <Text style={styles.postAuthor}>@{item.author}</Text>
+            <TouchableOpacity 
+              onPress={() => handleNavigateToProfile(item)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.postAuthor}>@{item.author}</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
 
@@ -240,7 +336,10 @@ const TikTokScreen = () => {
             <Text style={styles.iconText}>{item.comments}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => handleShare(item.id)}
+          >
             <Ionicons name="arrow-redo-outline" size={28} color="#ffffff" />
             <Text style={styles.iconText}>{item.shares}</Text>
           </TouchableOpacity>
@@ -318,7 +417,10 @@ const TikTokScreen = () => {
                   <Text style={styles.modalActionText}>{selectedPost.comments}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.modalActionButton}>
+                <TouchableOpacity 
+                  style={styles.modalActionButton}
+                  onPress={() => handleShare(selectedPost.id)}
+                >
                   <Ionicons name="arrow-redo-outline" size={24} color="#ffffff" />
                   <Text style={styles.modalActionText}>{selectedPost.shares}</Text>
                 </TouchableOpacity>
@@ -360,11 +462,26 @@ const TikTokScreen = () => {
       )}
 
       {/* Ícone de perfil no canto superior direito */}
-      <TouchableOpacity style={styles.profileButton}>
+      <TouchableOpacity 
+        style={styles.profileButton}
+        onPress={() => {
+          if (posts[currentIndex]) {
+            handleNavigateToProfile(posts[currentIndex]);
+          }
+        }}
+      >
         <Ionicons name="person-circle-outline" size={32} color="#ffffff" />
       </TouchableOpacity>
 
       {renderModal()}
+      
+      {/* Modal da tela Home */}
+      <TelaPost
+        modalVisible={homeModalVisible}
+        setModalVisible={setHomeModalVisible}
+        selectedPost={selectedPostForModal}
+        setSelectedPost={setSelectedPostForModal}
+      />
     </SafeAreaView>
   );
 };

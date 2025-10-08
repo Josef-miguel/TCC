@@ -18,7 +18,7 @@ import {
   Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc, getDocs } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { StandardHeader, StandardCard, StandardBadge, StandardAvatar } from '../../components/CommonComponents';
 import { textStyles, spacing, borderRadius, shadows } from '../../styles/typography';
@@ -365,6 +365,27 @@ export default function Home({ navigation, route }) {
     }
   };
 
+  const handleNavigateToProfile = (post) => {
+    if (post?.creatorId) {
+      navigation.navigate('VisualizarPerfil', { 
+        uid: post.creatorId 
+      });
+    } else if (post?.creatorUid) {
+      navigation.navigate('VisualizarPerfil', { 
+        uid: post.creatorUid 
+      });
+    } else if (post?.uid) {
+      navigation.navigate('VisualizarPerfil', { 
+        uid: post.uid 
+      });
+    } else {
+      Alert.alert(
+        'Informação', 
+        'Perfil do organizador não disponível no momento.'
+      );
+    }
+  };
+
   // Funções para gerenciar filtros de tags
   const toggleTagFilter = (tag) => {
     setSelectedTags(prev => {
@@ -435,15 +456,29 @@ export default function Home({ navigation, route }) {
     const q = query(collection(db, 'events'));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       try {
-        const fetchedPosts = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          fav: false,
-          saved: false,
-          theme: doc.data().theme || '',
-          favCount: doc.data().favoriteCount || 0,
-          commentCount: doc.data().commentCount || 0,
-          creatorId: doc.data().creatorId || doc.data().creatorUid || doc.data().uid || null // Adicione esta linha
+        const fetchedPosts = await Promise.all(snapshot.docs.map(async (doc) => {
+          // Buscar contagem real de comentários da coleção de avaliações
+          let realCommentCount = 0;
+          try {
+            const commentsRef = collection(db, 'events', doc.id, 'avaliacoes');
+            const commentsSnapshot = await getDocs(commentsRef);
+            realCommentCount = commentsSnapshot.size;
+          } catch (error) {
+            console.error('Erro ao contar comentários:', error);
+            realCommentCount = doc.data().commentCount || 0;
+          }
+
+          return {
+            id: doc.id,
+            ...doc.data(),
+            fav: false,
+            saved: false,
+            theme: doc.data().theme || '',
+            favCount: doc.data().favoriteCount || 0,
+            commentCount: realCommentCount,
+            ratingCount: doc.data().ratingCount || 0,
+            creatorId: doc.data().creatorId || doc.data().creatorUid || doc.data().uid || null
+          };
         }));
         
         // Buscar dados dos organizadores para cada post
@@ -551,17 +586,29 @@ export default function Home({ navigation, route }) {
     <View style={[styles.postHeader, { backgroundColor: theme?.background }]}>
       <View style={styles.headerTopRow}>
         <View style={styles.headerLeft}>
-          <StandardAvatar
-            source={post.creatorAvatar || DEFAULT_AVATAR}
-            size="medium"
-            theme={theme}
-            style={styles.avatar}
-          />
+          <TouchableOpacity 
+            style={styles.profileClickable}
+            onPress={() => handleNavigateToProfile(post)}
+            activeOpacity={0.7}
+          >
+            <StandardAvatar
+              source={post.creatorAvatar || DEFAULT_AVATAR}
+              size="medium"
+              theme={theme}
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
           <View style={styles.userInfo}>
             <View style={styles.nameRow}>
-              <Text style={[styles.username, { color: theme?.textPrimary }]}>
-                {post.creatorName || 'Organizador'}
-              </Text>
+              <TouchableOpacity 
+                onPress={() => handleNavigateToProfile(post)}
+                activeOpacity={0.7}
+                style={styles.usernameClickable}
+              >
+                <Text style={[styles.username, { color: theme?.textPrimary }]}>
+                  {post.creatorName || 'Organizador'}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => openPostMenu(post)} style={styles.menuButton}>
                 <Ionicons name="ellipsis-horizontal" size={20} color={theme?.textTertiary} />
               </TouchableOpacity>
@@ -601,7 +648,7 @@ export default function Home({ navigation, route }) {
             styles.actionCount,
             { color: post.fav ? '#ff3040' : theme?.textTertiary }
           ]}>
-            {post.favCount || 0}
+            {(post.ratingCount || 0) + (post.commentCount || 0)}
           </Text>
         </TouchableOpacity>
         
@@ -1019,7 +1066,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingTop: Platform.OS === 'ios' ? 20 : 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
@@ -1117,6 +1164,12 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  profileClickable: {
+    marginRight: spacing.md,
+  },
+  usernameClickable: {
+    flex: 1,
   },
   postTime: {
     fontSize: 12,
