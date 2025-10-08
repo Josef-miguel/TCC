@@ -15,7 +15,7 @@
     <h1 class="mb-3">Discover</h1>
     
     {% for event in events %}
-    <div class="simple-post" data-event-id="{{ event.id }}" data-event-url="{{ url_for('event_detail', event_id=event.id) }}" style="margin-top: 5vh; margin-bottom: 5vh;">
+    <div class="simple-post clickable-post" data-event-id="{{ event.id }}" data-event-url="{{ url_for('event_detail', event_id=event.id) }}" style="margin-top: 5vh; margin-bottom: 5vh;">
         <!-- Header com Organizador e Rating -->
         <div class="post-header">
           <div class="organizer-section">
@@ -44,20 +44,15 @@
             </div>
           </div>
           <div class="rating-section">
-            <div class="stars" id="stars-{{ event.id }}">
-              <ion-icon name="star-outline" id="star1-{{ event.id }}"></ion-icon>
-              <ion-icon name="star-outline" id="star2-{{ event.id }}"></ion-icon>
-              <ion-icon name="star-outline" id="star3-{{ event.id }}"></ion-icon>
-              <ion-icon name="star-outline" id="star4-{{ event.id }}"></ion-icon>
-              <ion-icon name="star-outline" id="star5-{{ event.id }}"></ion-icon>
+            <div class="fire-rating" id="fire-rating-{{ event.id }}">
+              <ion-icon name="{% if event.ratingCount and event.ratingCount > 0 %}flame{% else %}flame-outline{% endif %}" class="fire-icon"></ion-icon>
+              <span class="rating-count" id="rating-count-{{ event.id }}">{{ event.ratingCount or 0 }}</span>
             </div>
-            <span class="rating-value" id="rating-value-{{ event.id }}">0.0</span>
-            <span class="rating-count" id="rating-count-{{ event.id }}">(0)</span>
           </div>
         </div>
 
         <!-- Título -->
-        <div class="post-title-section">
+        <div class="post-title-section clickable-element">
           <h2 class="post-title">
             {% if event.title %}
               {{ event.title }}
@@ -68,7 +63,7 @@
         </div>
 
         <!-- Imagem -->
-        <div class="post-image">
+        <div class="post-image clickable-element">
           {% if event.images %}
             <img src="{{ event.images[0] }}" alt="Imagem da viagem">
           {% else %}
@@ -142,7 +137,7 @@
           <!-- Botão de expandir informações -->
           <div class="expand-info-section">
             <button class="expand-info-btn" data-event-id="{{ event.id }}">
-              <ion-icon name="chevron-down-outline"></ion-icon>
+              <span>Ver mais detalhes</span>
               <ion-icon name="chevron-down-outline"></ion-icon>
             </button>
           </div>
@@ -201,6 +196,19 @@
             <ion-icon name="share-outline"></ion-icon>
             <span>Compartilhar</span>
           </button>
+        </div>
+
+        <!-- Seção de Comentários -->
+        <div class="comments-section" id="comments-section-{{ event.id }}" style="display: none;">
+          <div class="comments-container">
+            <div class="comments-list" id="comments-list-{{ event.id }}">
+              <!-- Comentários serão carregados aqui -->
+            </div>
+            <div class="comment-form">
+              <textarea placeholder="Escreva seu comentário..." id="comment-text-{{ event.id }}"></textarea>
+              <button class="btn btn-primary submit-comment-btn" data-event-id="{{ event.id }}">Comentar</button>
+            </div>
+          </div>
         </div>
 
         <!-- Status de participação -->
@@ -263,13 +271,21 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
           expandedInfo.style.maxHeight = expandedInfo.scrollHeight + 'px';
           expandedInfo.style.opacity = '1';
-          icons.forEach(icon => icon.name = 'chevron-up-outline');
+          // Atualizar apenas o ícone (não todos os ícones)
+          const chevronIcon = btn.querySelector('ion-icon');
+          if (chevronIcon) {
+            chevronIcon.name = 'chevron-up-outline';
+          }
         }, 10);
       } else {
         // Animar contração
         expandedInfo.style.maxHeight = '0px';
         expandedInfo.style.opacity = '0';
-        icons.forEach(icon => icon.name = 'chevron-down-outline');
+        // Atualizar apenas o ícone (não todos os ícones)
+        const chevronIcon = btn.querySelector('ion-icon');
+        if (chevronIcon) {
+          chevronIcon.name = 'chevron-down-outline';
+        }
         
         setTimeout(() => {
           expandedInfo.style.display = 'none';
@@ -306,7 +322,28 @@ document.addEventListener("DOMContentLoaded", () => {
   function toggleComments(eventId) {
     const section = document.getElementById(`comments-section-${eventId}`);
     if (section) {
-      section.style.display = section.style.display === 'none' ? 'block' : 'none';
+      if (section.style.display === 'none' || section.style.display === '') {
+        section.style.display = 'block';
+        section.style.maxHeight = '0px';
+        section.style.opacity = '0';
+        
+        // Animar expansão
+        setTimeout(() => {
+          section.style.maxHeight = section.scrollHeight + 'px';
+          section.style.opacity = '1';
+        }, 10);
+        
+        // Carregar comentários se ainda não foram carregados
+        loadComments(eventId);
+      } else {
+        // Animar contração
+        section.style.maxHeight = '0px';
+        section.style.opacity = '0';
+        
+        setTimeout(() => {
+          section.style.display = 'none';
+        }, 300);
+      }
     }
   }
   
@@ -327,8 +364,97 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
+  // Função para carregar comentários
+  async function loadComments(eventId) {
+    try {
+      const response = await fetch(`/api/comments/${eventId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const commentsList = document.getElementById(`comments-list-${eventId}`);
+        if (commentsList) {
+          commentsList.innerHTML = '';
+          data.comments.forEach(comment => {
+            const commentElement = document.createElement('div');
+            commentElement.className = 'comment-item';
+            commentElement.innerHTML = `
+              <div class="comment-header">
+                <strong>${comment.author_name || 'Usuário'}</strong>
+                <span class="comment-date">${new Date(comment.created_at).toLocaleDateString()}</span>
+              </div>
+              <div class="comment-content">${comment.content}</div>
+            `;
+            commentsList.appendChild(commentElement);
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar comentários:', error);
+    }
+  }
+  
+  // Função para submeter comentário
+  async function submitComment(eventId) {
+    const textarea = document.getElementById(`comment-text-${eventId}`);
+    const content = textarea.value.trim();
+    
+    if (!content) return;
+    
+    try {
+      const response = await fetch(`/api/comments/${eventId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: content })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        textarea.value = '';
+        loadComments(eventId);
+        loadCommentsCount(eventId);
+      }
+    } catch (error) {
+      console.error('Erro ao submeter comentário:', error);
+    }
+  }
+  
   // Inicializar sistema de comentários
   initializeComments();
+  
+  // Adicionar event listeners para botões de submeter comentário
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('submit-comment-btn')) {
+      e.stopPropagation();
+      const eventId = e.target.dataset.eventId;
+      submitComment(eventId);
+    }
+  });
+  
+  // ==================== SISTEMA DE REDIRECIONAMENTO ====================
+  
+  // Adicionar event listeners para elementos clicáveis
+  document.querySelectorAll('.clickable-post, .clickable-element').forEach(element => {
+    element.addEventListener('click', (e) => {
+      // Evitar redirecionamento se clicou em botões ou elementos interativos
+      if (e.target.closest('button') || e.target.closest('form') || e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      
+      const post = e.target.closest('.simple-post');
+      if (post) {
+        const eventUrl = post.dataset.eventUrl;
+        if (eventUrl) {
+          window.location.href = eventUrl;
+        }
+      }
+    });
+    
+    // Adicionar cursor pointer para indicar que é clicável
+    element.style.cursor = 'pointer';
+  });
   
   // ==================== SISTEMA DE FAVORITOS ====================
   
@@ -416,55 +542,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Inicializar sistema de favoritos
   initializeFavorites();
-  
-  // ==================== SISTEMA DE AVALIAÇÕES ====================
-  
-  function initializeRatings() {
-    document.querySelectorAll('.discover-card').forEach(card => {
-      const eventId = card.dataset.eventId;
-      if (eventId) {
-        loadEventRating(eventId);
-      }
-    });
-  }
-  
-  async function loadEventRating(eventId) {
-    try {
-      const response = await fetch(`/api/events/${eventId}/rating`);
-      const data = await response.json();
-      
-      if (data.success) {
-        updateRatingUI(eventId, data);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar avaliação do evento:', error);
-    }
-  }
-  
-  function updateRatingUI(eventId, ratingData) {
-    const starsContainer = document.getElementById(`stars-${eventId}`);
-    const ratingValue = document.getElementById(`rating-value-${eventId}`);
-    
-    if (!starsContainer || !ratingValue) return;
-    
-    ratingValue.textContent = ratingData.average_rating.toFixed(1);
-    
-    const stars = starsContainer.querySelectorAll('ion-icon');
-    stars.forEach((star, index) => {
-      const starValue = ratingData.stars[index];
-      
-      if (starValue === 1) {
-        star.name = 'star';
-      } else if (starValue === 0.5) {
-        star.name = 'star-half';
-      } else {
-        star.name = 'star-outline';
-      }
-    });
-  }
-  
-  // Inicializar sistema de avaliações
-  initializeRatings();
   
   // ==================== MAPAS ====================
   
