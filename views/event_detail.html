@@ -16,32 +16,9 @@
   <!-- Hero Section -->
   <div class="hero-section">
     {% if event.images and event.images|length > 0 %}
-      <div class="hero-image-container">
-        <img src="{{ event.images[0] }}" alt="Imagem da viagem" class="hero-image">
-        <div class="image-overlay">
-          <div class="hero-content">
-            <h1 class="event-title">
-              {% if event.title %}
-                {{ event.title }}
-              {% else %}
-                Viagem sem título
-              {% endif %}
-            </h1>
-            <div class="hero-stats">
-              <div class="stat-item">
-                <ion-icon name="eye-outline"></ion-icon>
-                <span>{{ event.numAcess or 0 }} visualizações</span>
-              </div>
-              <div class="stat-item">
-                <ion-icon name="flame-outline"></ion-icon>
-                <span>{{ event.ratingCount or 0 }} avaliações</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    {% else %}
-      <div class="hero-no-image">
+    <div class="hero-image-container">
+      <img src="{{ event.images[0] }}" alt="Imagem da viagem" class="hero-image">
+      <div class="image-overlay">
         <div class="hero-content">
           <h1 class="event-title">
             {% if event.title %}
@@ -62,6 +39,29 @@
           </div>
         </div>
       </div>
+    </div>
+    {% else %}
+    <div class="hero-no-image">
+      <div class="hero-content">
+        <h1 class="event-title">
+          {% if event.title %}
+            {{ event.title }}
+          {% else %}
+            Viagem sem título
+          {% endif %}
+        </h1>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <ion-icon name="eye-outline"></ion-icon>
+            <span>{{ event.numAcess or 0 }} visualizações</span>
+          </div>
+          <div class="stat-item">
+            <ion-icon name="flame-outline"></ion-icon>
+            <span>{{ event.ratingCount or 0 }} avaliações</span>
+          </div>
+        </div>
+      </div>
+    </div>
     {% endif %}
   </div>
 
@@ -298,16 +298,12 @@
             </button>
           </div>
 
-          <!-- Botão de Participação -->
+          <!-- Botão de Participação - VERSÃO CORRIGIDA E SIMPLIFICADA -->
           {% if user %}
-            {% set is_participating = false %}
-            {% for events in user.joinedEvents %}
-              {% if events == event.id %}
-                {% set is_participating = true %}
-              {% endif %}
-            {% endfor %}
+            <!-- DEBUG: User joinedEvents = {{ user.joinedEvents }}, Event ID = {{ event.id }} -->
             
-            {% if is_participating %}
+            {% if user.joinedEvents and event.id in user.joinedEvents %}
+              <!-- USUÁRIO JÁ PARTICIPANDO - MOSTRAR BOTÃO FALAR COM GRUPO -->
               <div class="participation-status">
                 <div class="status-icon">
                   <ion-icon name="checkmark-circle"></ion-icon>
@@ -316,14 +312,18 @@
                   <h4>Você está participando!</h4>
                   <p>Você já está inscrito nesta viagem</p>
                 </div>
-                <form action="{{url_for('chat_group')}}" method="post">
+                <form action="{{ url_for('chat_group') }}" method="post">
                   <input type="hidden" name="org_uid" value="{{ event.id }}">
-                  <button class="btn btn-secondary">Falar com o grupo</button>
+                  <button type="submit" class="btn btn-secondary btn-full-width">
+                    <ion-icon name="chatbubbles-outline"></ion-icon>
+                    Falar com o grupo
+                  </button>
                 </form>
               </div>
             {% else %}
-              <form action="{{url_for('joinEvent')}}" method="post" class="join-form">
-                <button class="btn btn-primary">
+              <!-- USUÁRIO NÃO PARTICIPANDO - MOSTRAR BOTÃO PARTICIPAR -->
+              <form action="{{ url_for('joinEvent') }}" method="post" class="join-form">
+                <button type="submit" class="btn btn-primary btn-full-width">
                   <ion-icon name="add-circle-outline"></ion-icon>
                   Participar da viagem
                 </button>
@@ -331,6 +331,7 @@
               </form>
             {% endif %}
           {% else %}
+            <!-- USUÁRIO NÃO LOGADO -->
             <div class="login-prompt">
               <div class="login-icon">
                 <ion-icon name="lock-closed-outline"></ion-icon>
@@ -338,7 +339,7 @@
               <div class="login-content">
                 <h4>Login necessário</h4>
                 <p>Para participar desta viagem, você precisa estar logado.</p>
-                <a href="{{ url_for('login') }}" class="btn btn-primary">Fazer Login</a>
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-full-width">Fazer Login</a>
               </div>
             </div>
           {% endif %}
