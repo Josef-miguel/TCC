@@ -3,107 +3,113 @@
 {% block title %}{{ user.name }} - Perfil - JustSetGo{% endblock %}
 
 {% block content %}
-<div class="user-profile-page">
-  <!-- Header do Perfil -->
-  <div class="profile-header">
-    <div class="profile-cover">
-      <div class="cover-image">
-        <!-- Imagem de capa padrão ou personalizada -->
-        <div class="default-cover"></div>
-      </div>
-      <div class="profile-actions">
-        <button class="btn btn-secondary" onclick="history.back()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Voltar
-        </button>
-        <button class="btn btn-primary" id="followBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
-            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-            <path d="M22 11v6M19 14l3-3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Seguir
-        </button>
-      </div>
-    </div>
-    
-    <div class="profile-info">
-      <div class="profile-avatar">
-        {% if user.profileImage %}
-          <img src="{{ user.profileImage }}" alt="{{ user.name }}" id="profileAvatar">
-        {% else %}
-          <div class="default-avatar large" id="profileAvatar">
-            {{ user.name[0].upper() if user.name else 'U' }}
-          </div>
-        {% endif %}
-      </div>
-      
-      <div class="profile-details">
-        <h1 class="profile-name">{{ user.name or 'Nome não informado' }}</h1>
-        <p class="profile-username">@{{ user.name.lower().replace(' ', '') if user.name else 'usuario' }}</p>
-        <p class="profile-bio">{{ user.bio or 'Ainda não adicionou uma biografia.' }}</p>
-        
-        <div class="profile-meta">
-          <div class="meta-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2"/>
-              <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <span>{{ user.location or 'Localização não informada' }}</span>
-          </div>
-          <div class="meta-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-              <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
-              <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
-              <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <span>Membro desde {{ user.created_at.strftime('%B %Y') if user.created_at else 'Data não informada' }}</span>
-          </div>
-        </div>
-        
-        <div class="profile-stats">
-          <div class="stat-item">
-            <span class="stat-number">{{ user.organizedEventsCount or 0 }}</span>
-            <span class="stat-label">Viagens Organizadas</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">{{ user.joinedEventsCount or 0 }}</span>
-            <span class="stat-label">Viagens Participadas</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">{{ user.followersCount or 0 }}</span>
-            <span class="stat-label">Seguidores</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">{{ user.followingCount or 0 }}</span>
-            <span class="stat-label">Seguindo</span>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="user-profile-container">
+  <!-- Header com botão de voltar -->
+  <div class="profile-page-header">
+    <button class="back-button" onclick="history.back()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Voltar
+    </button>
   </div>
 
-  <!-- Navegação do Perfil -->
-  <div class="profile-nav">
-    <div class="nav-container">
-      <button class="nav-item active" data-tab="trips">
+  <!-- Seção principal do perfil -->
+  <div class="profile-main-section">
+    <!-- Card do perfil -->
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-avatar-section">
+          {% if user.profileImage %}
+            <img src="{{ user.profileImage }}" alt="{{ user.name }}" class="profile-avatar">
+          {% else %}
+            <div class="profile-avatar-placeholder">
+              {{ user.name[0].upper() if user.name else 'U' }}
+            </div>
+          {% endif %}
+        </div>
+        
+        <div class="profile-info">
+          <h1 class="profile-name">{{ user.name or 'Nome não informado' }}</h1>
+          <p class="profile-username">@{{ user.name.lower().replace(' ', '') if user.name else 'usuario' }}</p>
+          <p class="profile-bio">{{ user.bio or 'Ainda não adicionou uma biografia.' }}</p>
+          
+          <div class="profile-meta">
+            <div class="meta-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <span>{{ user.location or 'Localização não informada' }}</span>
+            </div>
+            <div class="meta-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <span>Membro desde {{ user.created_at.strftime('%B %Y') if user.created_at else 'Data não informada' }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="profile-actions">
+          <button class="action-button chat-button" onclick="startChat('{{ user.uid }}')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Conversar
+          </button>
+          <button class="action-button follow-button" id="followBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M22 11v6M19 14l3-3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Seguir
+          </button>
+        </div>
+      </div>
+      
+      <!-- Estatísticas -->
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-number">{{ user.organizedEventsCount or 0 }}</div>
+          <div class="stat-label">Viagens </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ user.joinedEventsCount or 0 }}</div>
+          <div class="stat-label">Viagens Participadas</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ user.followersCount or 0 }}</div>
+          <div class="stat-label">Seguidores</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ user.followingCount or 0 }}</div>
+          <div class="stat-label">Seguindo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navegação por abas -->
+    <div class="profile-tabs">
+      <button class="tab-button active" data-tab="trips">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2"/>
           <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
         </svg>
         Viagens Organizadas
       </button>
-      <button class="nav-item" data-tab="participated">
+      <button class="tab-button" data-tab="participated">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
           <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
         </svg>
         Viagens Participadas
       </button>
-      <button class="nav-item" data-tab="about">
+      <button class="tab-button" data-tab="about">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
           <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -111,21 +117,19 @@
         Sobre
       </button>
     </div>
-  </div>
 
-  <!-- Conteúdo das Abas -->
-  <div class="profile-content">
-    <!-- Aba Viagens Organizadas -->
-    <div class="tab-content active" id="tripsContent">
-      <div class="events-grid" id="organizedEventsGrid">
-        <!-- Viagens organizadas serão carregadas aqui -->
-      </div>
-      <div class="loading" id="tripsLoading" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>Carregando viagens...</p>
-      </div>
-      <div class="no-events" id="noOrganizedEvents" style="display: none;">
-        <div class="no-events-content">
+    <!-- Conteúdo das abas -->
+    <div class="tab-content">
+      <!-- Aba Viagens Organizadas -->
+      <div class="tab-panel active" id="tripsContent">
+        <div class="events-grid" id="organizedEventsGrid">
+          <!-- Viagens organizadas serão carregadas aqui -->
+        </div>
+        <div class="loading-state" id="tripsLoading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <p>Carregando viagens...</p>
+        </div>
+        <div class="empty-state" id="noOrganizedEvents" style="display: none;">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2"/>
             <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
@@ -134,19 +138,17 @@
           <p>Este usuário ainda não organizou nenhuma viagem.</p>
         </div>
       </div>
-    </div>
 
-    <!-- Aba Viagens Participadas -->
-    <div class="tab-content" id="participatedContent">
-      <div class="events-grid" id="participatedEventsGrid">
-        <!-- Viagens participadas serão carregadas aqui -->
-      </div>
-      <div class="loading" id="participatedLoading" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>Carregando viagens...</p>
-      </div>
-      <div class="no-events" id="noParticipatedEvents" style="display: none;">
-        <div class="no-events-content">
+      <!-- Aba Viagens Participadas -->
+      <div class="tab-panel" id="participatedContent">
+        <div class="events-grid" id="participatedEventsGrid">
+          <!-- Viagens participadas serão carregadas aqui -->
+        </div>
+        <div class="loading-state" id="participatedLoading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <p>Carregando viagens...</p>
+        </div>
+        <div class="empty-state" id="noParticipatedEvents" style="display: none;">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
             <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
@@ -155,65 +157,35 @@
           <p>Este usuário ainda não participou de nenhuma viagem.</p>
         </div>
       </div>
-    </div>
 
-    <!-- Aba Sobre -->
-    <div class="tab-content" id="aboutContent">
-      <div class="about-section">
-        <div class="about-card">
-          <h3>Informações Pessoais</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">Nome completo</span>
-              <span class="info-value">{{ user.name or 'Não informado' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Email</span>
-              <span class="info-value">{{ user.email or 'Não informado' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Tipo de usuário</span>
-              <span class="info-value">{{ 'Organizador' if user.isOrganizer else 'Participante' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Membro desde</span>
-              <span class="info-value">{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'Data não informada' }}</span>
+      <!-- Aba Sobre -->
+      <div class="tab-panel" id="aboutContent">
+        <div class="about-section">
+          <div class="info-card">
+            <h3>Informações Pessoais</h3>
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="info-label">Nome completo</span>
+                <span class="info-value">{{ user.name or 'Não informado' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ user.email or 'Não informado' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Tipo de usuário</span>
+                <span class="info-value">{{ 'Organizador' if user.isOrganizer else 'Participante' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Membro desde</span>
+                <span class="info-value">{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'Data não informada' }}</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div class="about-card">
-          <h3>Biografia</h3>
-          <p class="bio-text">{{ user.bio or 'Este usuário ainda não adicionou uma biografia.' }}</p>
-        </div>
-        
-        <div class="about-card">
-          <h3>Estatísticas</h3>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2"/>
-                  <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <span class="stat-number">{{ user.organizedEventsCount or 0 }}</span>
-                <span class="stat-label">Viagens Organizadas</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <span class="stat-number">{{ user.joinedEventsCount or 0 }}</span>
-                <span class="stat-label">Viagens Participadas</span>
-              </div>
-            </div>
+          
+          <div class="info-card">
+            <h3>Biografia</h3>
+            <p class="bio-text">{{ user.bio or 'Este usuário ainda não adicionou uma biografia.' }}</p>
           </div>
         </div>
       </div>
@@ -226,8 +198,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const userId = '{{ user.uid }}';
-  const navItems = document.querySelectorAll('.nav-item');
-  const tabContents = document.querySelectorAll('.tab-content');
+  console.log('User ID carregado:', userId);
+  console.log('User object:', JSON.parse('{{ user | tojson | safe }}'));
+  
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabPanels = document.querySelectorAll('.tab-panel');
   
   // Elementos de loading e estados vazios
   const tripsLoading = document.getElementById('tripsLoading');
@@ -240,13 +215,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Função para alternar entre abas
   function switchTab(tabName) {
     // Atualizar navegação
-    navItems.forEach(item => {
-      item.classList.toggle('active', item.dataset.tab === tabName);
+    tabButtons.forEach(button => {
+      button.classList.toggle('active', button.dataset.tab === tabName);
     });
     
     // Atualizar conteúdo
-    tabContents.forEach(content => {
-      content.classList.toggle('active', content.id === `${tabName}Content`);
+    tabPanels.forEach(panel => {
+      panel.classList.toggle('active', panel.id === `${tabName}Content`);
     });
     
     // Carregar dados da aba ativa
@@ -261,24 +236,33 @@ document.addEventListener('DOMContentLoaded', function() {
   async function loadOrganizedEvents() {
     if (organizedEventsGrid.children.length > 0) return; // Já carregado
     
-    tripsLoading.style.display = 'block';
+    tripsLoading.style.display = 'flex';
     noOrganizedEvents.style.display = 'none';
     
     try {
+      console.log('Carregando viagens organizadas para usuário:', userId);
       const response = await fetch(`/user_details_api?uid=${userId}`);
+      console.log('Resposta da API:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Dados recebidos:', data);
       
       if (data.success && data.events) {
         displayEvents(data.events, organizedEventsGrid);
         if (data.events.length === 0) {
-          noOrganizedEvents.style.display = 'block';
+          noOrganizedEvents.style.display = 'flex';
         }
       } else {
-        noOrganizedEvents.style.display = 'block';
+        console.log('Nenhuma viagem organizada encontrada');
+        noOrganizedEvents.style.display = 'flex';
       }
     } catch (error) {
       console.error('Erro ao carregar viagens organizadas:', error);
-      noOrganizedEvents.style.display = 'block';
+      noOrganizedEvents.style.display = 'flex';
     } finally {
       tripsLoading.style.display = 'none';
     }
@@ -288,24 +272,33 @@ document.addEventListener('DOMContentLoaded', function() {
   async function loadParticipatedEvents() {
     if (participatedEventsGrid.children.length > 0) return; // Já carregado
     
-    participatedLoading.style.display = 'block';
+    participatedLoading.style.display = 'flex';
     noParticipatedEvents.style.display = 'none';
     
     try {
+      console.log('Carregando viagens participadas para usuário:', userId);
       const response = await fetch(`/user_participated_events_api?uid=${userId}`);
+      console.log('Resposta da API participadas:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Dados participadas recebidos:', data);
       
       if (data.success && data.events) {
         displayEvents(data.events, participatedEventsGrid);
         if (data.events.length === 0) {
-          noParticipatedEvents.style.display = 'block';
+          noParticipatedEvents.style.display = 'flex';
         }
       } else {
-        noParticipatedEvents.style.display = 'block';
+        console.log('Nenhuma viagem participada encontrada');
+        noParticipatedEvents.style.display = 'flex';
       }
     } catch (error) {
       console.error('Erro ao carregar viagens participadas:', error);
-      noParticipatedEvents.style.display = 'block';
+      noParticipatedEvents.style.display = 'flex';
     } finally {
       participatedLoading.style.display = 'none';
     }
@@ -356,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
         <div class="event-actions">
-          <button class="btn btn-primary" onclick="viewEvent('${event.id}')">Ver Detalhes</button>
+          <button class="view-button" onclick="viewEvent('${event.id}')">Ver Detalhes</button>
         </div>
       </div>
     `;
@@ -365,8 +358,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Event listeners para navegação
-  navItems.forEach(item => {
-    item.addEventListener('click', function() {
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function() {
       switchTab(this.dataset.tab);
     });
   });
@@ -379,120 +372,127 @@ document.addEventListener('DOMContentLoaded', function() {
 function viewEvent(eventId) {
   window.location.href = `/event/${eventId}`;
 }
+
+// Função para iniciar chat individual
+function startChat(userId) {
+  console.log('Iniciando chat com usuário:', userId);
+  window.location.href = `/chat_individual?user_id=${userId}`;
+}
 </script>
 
 <style>
-.user-profile-page {
+/* Container principal */
+.user-profile-container {
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: var(--background);
+  padding-top: 80px;
 }
 
-/* Header do Perfil */
-.profile-header {
-  position: relative;
+/* Header da página */
+.profile-page-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
 }
 
-.profile-cover {
-  position: relative;
-  height: 300px;
-  overflow: hidden;
-}
-
-.cover-image {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.default-cover {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #1a1a2e 100%);
-  position: relative;
-}
-
-.default-cover::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
-}
-
-.profile-actions {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+.back-button {
   display: flex;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
-.profile-info {
-  position: relative;
-  padding: 0 1.5rem 1.5rem;
-  margin-top: -80px;
+.back-button:hover {
+  background: var(--background-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Seção principal */
+.profile-main-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+}
+
+/* Card do perfil */
+.profile-card {
+  background: var(--background-secondary);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.profile-avatar-section {
+  flex-shrink: 0;
 }
 
 .profile-avatar {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid var(--bg-primary);
-  background: var(--bg-secondary);
-  margin-bottom: 1rem;
-}
-
-.profile-avatar img {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
+  border: 4px solid var(--primary);
 }
 
-.default-avatar.large {
-  width: 100%;
-  height: 100%;
-  background: var(--primary-color);
+.profile-avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--primary);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3rem;
   font-weight: 600;
+  border: 4px solid var(--primary);
 }
 
-.profile-details {
-  max-width: 600px;
+.profile-info {
+  flex: 1;
 }
 
 .profile-name {
   font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 0.25rem;
   color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
 }
 
 .profile-username {
   color: var(--text-secondary);
   font-size: 1.1rem;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem 0;
 }
 
 .profile-bio {
   color: var(--text-primary);
   font-size: 1rem;
-  line-height: 1.5;
-  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
 }
 
 .profile-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
 }
 
 .meta-item {
@@ -503,84 +503,132 @@ function viewEvent(eventId) {
   font-size: 0.9rem;
 }
 
-.profile-stats {
-  display: flex;
-  gap: 2rem;
-}
-
-.stat-item {
+.profile-actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
-.stat-number {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-/* Navegação do Perfil */
-.profile-nav {
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  padding: 0 1.5rem;
-}
-
-.nav-item {
+.action-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
   font-weight: 500;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   transition: all 0.3s ease;
+  border: none;
+  font-size: 0.9rem;
+  min-width: 140px;
+  justify-content: center;
 }
 
-.nav-item:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
+.chat-button {
+  background: var(--secondary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 119, 182, 0.2);
 }
 
-.nav-item.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
+.chat-button:hover {
+  background: var(--secondary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 119, 182, 0.3);
 }
 
-/* Conteúdo das Abas */
-.profile-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+.follow-button {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.2);
 }
 
-.tab-content {
-  display: none;
+.follow-button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 0, 0.3);
 }
 
-.tab-content.active {
+/* Estatísticas */
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--background-tertiary);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
   display: block;
 }
 
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Navegação por abas */
+.profile-tabs {
+  display: flex;
+  background: var(--background-secondary);
+  border-radius: 16px;
+  padding: 0.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.tab-button:hover {
+  color: var(--text-primary);
+  background: var(--background-hover);
+}
+
+.tab-button.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Conteúdo das abas */
+.tab-content {
+  position: relative;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Grid de eventos */
 .events-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -588,16 +636,16 @@ function viewEvent(eventId) {
 }
 
 .event-card {
-  background: var(--bg-secondary);
-  border-radius: 12px;
+  background: var(--background-secondary);
+  border-radius: 16px;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
 }
 
 .event-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .event-image {
@@ -614,7 +662,7 @@ function viewEvent(eventId) {
 .no-image {
   width: 100%;
   height: 100%;
-  background: var(--bg-tertiary);
+  background: var(--background-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -628,13 +676,13 @@ function viewEvent(eventId) {
 .event-title {
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem 0;
   color: var(--text-primary);
 }
 
 .event-description {
   color: var(--text-secondary);
-  margin-bottom: 1rem;
+  margin: 0 0 1rem 0;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -663,47 +711,100 @@ function viewEvent(eventId) {
   gap: 0.75rem;
 }
 
-.event-actions .btn {
+.view-button {
   flex: 1;
   padding: 0.75rem;
-  font-size: 0.875rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* Seção Sobre */
+.view-button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* Estados de loading e vazio */
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state svg {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Seção sobre */
 .about-section {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.about-card {
-  background: var(--bg-secondary);
-  border-radius: 12px;
+.info-card {
+  background: var(--background-secondary);
+  border-radius: 16px;
   padding: 2rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
 }
 
-.about-card h3 {
+.info-card h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.5rem 0;
   color: var(--text-primary);
 }
 
 .info-grid {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.info-item {
+.info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border);
 }
 
-.info-item:last-child {
+.info-row:last-child {
   border-bottom: none;
 }
 
@@ -721,147 +822,66 @@ function viewEvent(eventId) {
   color: var(--text-primary);
   line-height: 1.6;
   font-size: 1rem;
+  margin: 0;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-info .stat-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.stat-info .stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-/* Estados de Loading e Vazio */
-.loading {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--border-color);
-  border-top: 4px solid var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.no-events {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.no-events-content svg {
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-}
-
-.no-events-content h3 {
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-
-.no-events-content p {
-  color: var(--text-secondary);
-}
-
-/* Responsive */
+/* Responsivo */
 @media (max-width: 768px) {
+  .user-profile-container {
+    padding-top: 70px;
+  }
+  
+  .profile-main-section {
+    padding: 0 1rem 2rem;
+  }
+  
+  .profile-page-header {
+    padding: 1rem;
+  }
+  
+  .profile-card {
+    padding: 1.5rem;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
   .profile-actions {
-    position: static;
-    margin-top: 1rem;
+    flex-direction: row;
     justify-content: center;
   }
   
-  .profile-info {
-    margin-top: -60px;
-    text-align: center;
-  }
-  
-  .profile-avatar {
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 1rem;
-  }
-  
-  .profile-name {
-    font-size: 1.5rem;
+  .action-button {
+    min-width: 120px;
   }
   
   .profile-stats {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .nav-container {
-    overflow-x: auto;
-    padding: 0 1rem;
-  }
-  
-  .nav-item {
-    white-space: nowrap;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
     padding: 1rem;
+  }
+  
+  .profile-tabs {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    padding: 0.75rem;
   }
   
   .events-grid {
     grid-template-columns: 1fr;
   }
   
-  .profile-content {
-    padding: 1rem;
-  }
-  
-  .about-card {
+  .info-card {
     padding: 1.5rem;
   }
   
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .info-item {
+  .info-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
@@ -869,6 +889,21 @@ function viewEvent(eventId) {
   
   .info-value {
     text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .action-button {
+    width: 100%;
   }
 }
 </style>

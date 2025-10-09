@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
         <div class="user-actions">
-          <button class="btn btn-primary" onclick="viewUserProfile('${user.uid}')">Ver Perfil</button>
+          <button class="btn btn-primary" onclick="viewUserProfile('${user.uid}')" data-user-id="${user.uid}">Ver Perfil</button>
         </div>
       </div>
     `;
@@ -603,8 +603,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Função para visualizar perfil do usuário
   window.viewUserProfile = function(userId) {
+    console.log('Redirecionando para perfil do usuário:', userId);
+    console.log('URL de destino:', `/user/${userId}`);
     window.location.href = `/user/${userId}`;
   };
+
+  // Event listener alternativo para botões de perfil
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('.btn-primary[data-user-id]')) {
+      const userId = e.target.getAttribute('data-user-id');
+      console.log('Botão clicado via event listener:', userId);
+      viewUserProfile(userId);
+    }
+  });
 
 
   // Event listeners

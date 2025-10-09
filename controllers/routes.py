@@ -517,17 +517,62 @@ def init_app(app, db):
             return jsonify({"success": False, "message": "Erro ao carregar mensagens"}), 500
 
     
-    @app.route("/chat_individual", methods=["POST"])
+    @app.route("/chat_individual", methods=["GET", "POST"])
     def chat_individual():
         if not g.user:
             return redirect(url_for("login"))
     
-        chat_uid = request.form.get("chat_uid")
-        if not chat_uid:
-            flash("Chat não informado.", "error")
-            return redirect(url_for("my_chats"))
-    
-        return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid)
+        if request.method == "GET":
+            # Para GET, usar user_id como parâmetro
+            user_id = request.args.get("user_id")
+            if not user_id:
+                flash("Usuário não informado.", "error")
+                return redirect(url_for("my_chats"))
+            
+            # Criar ou buscar chat individual
+            chat_uid = create_or_get_individual_chat(g.user["uid"], user_id)
+            if not chat_uid:
+                flash("Erro ao criar chat individual.", "error")
+                return redirect(url_for("my_chats"))
+            return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid)
+        else:
+            # Para POST, usar chat_uid do formulário
+            chat_uid = request.form.get("chat_uid")
+            if not chat_uid:
+                flash("Chat não informado.", "error")
+                return redirect(url_for("my_chats"))
+        
+            return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid)
+
+    def create_or_get_individual_chat(user1_uid, user2_uid):
+        """Criar ou buscar chat individual entre dois usuários"""
+        try:
+            # Verificar se já existe um chat entre os dois usuários
+            existing_chat = db.collection("chats")\
+                .where("participants", "array_contains", user1_uid)\
+                .where("participants", "array_contains", user2_uid)\
+                .where("type", "==", "individual")\
+                .limit(1)\
+                .stream()
+            
+            for doc in existing_chat:
+                return doc.id
+            
+            # Se não existe, criar novo chat
+            chat_data = {
+                "participants": [user1_uid, user2_uid],
+                "type": "individual",
+                "created_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+                "messages": []
+            }
+            
+            doc_ref = db.collection("chats").add(chat_data)
+            return doc_ref[1].id if isinstance(doc_ref, tuple) else doc_ref.id
+            
+        except Exception as e:
+            logger.exception(f"Erro ao criar/buscar chat individual: {e}")
+            return None
 
     
     @app.route("/my_chats")
@@ -1218,6 +1263,7 @@ def init_app(app, db):
     def user_profile(user_id):
         """Página de perfil de um usuário específico"""
         try:
+            logger.info(f"Acessando perfil do usuário: {user_id}")
             # Buscar dados do usuário
             user_doc = db.collection('user').document(user_id).get()
             
@@ -1244,6 +1290,7 @@ def init_app(app, db):
             elif hasattr(created_at, 'seconds'):
                 user_data['created_at'] = datetime.fromtimestamp(created_at.seconds)
             
+            logger.info(f"Renderizando perfil do usuário: {user_data.get('name', 'Nome não informado')}")
             return render_template('user_profile.html', user=user_data)
             
         except Exception as e:

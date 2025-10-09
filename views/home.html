@@ -189,12 +189,12 @@
           </button>
           <button class="action-btn comment-toggle" data-event-id="{{ event.id }}">
             <ion-icon name="chatbubble-outline"></ion-icon>
-            <span>Comentar</span>
+            <!-- <span>Comentar</span> -->
             <span class="comment-count" id="comment-count-{{ event.id }}">(0)</span>
           </button>
           <button class="action-btn share-btn">
             <ion-icon name="share-outline"></ion-icon>
-            <span>Compartilhar</span>
+            <!-- <span>Compartilhar</span> -->
           </button>
         </div>
 
@@ -584,7 +584,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (isFavorited) {
       icon.name = 'heart';
-      text.textContent = 'Favoritado';
+      // text.textContent = 'Favoritado';
       btn.classList.add('favorited');
       
       // Atualizar fire-rating para vermelho
@@ -596,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ratingCount.textContent = currentCount + 1;
     } else {
       icon.name = 'heart-outline';
-      text.textContent = 'Favoritar';
+      // text.textContent = 'Favoritar';
       btn.classList.remove('favorited');
       
       // Remover classe favorited do fire-rating
