@@ -491,7 +491,25 @@ def init_app(app, db):
                              .order_by("timestamp", direction=firestore.Query.ASCENDING) \
                              .limit(limit)
 
-            messages = [doc.to_dict() for doc in messages_ref.stream()]
+            messages = []
+            for doc in messages_ref.stream():
+                message_data = doc.to_dict()
+                message_data['id'] = doc.id  # Adicionar o ID da mensagem
+                
+                # Normalizar timestamp para compatibilidade com o frontend
+                ts = message_data.get("timestamp")
+                if isinstance(ts, datetime):
+                    message_data["timestamp"] = {
+                        "_seconds": int(ts.timestamp()),
+                        "_nanoseconds": ts.microsecond * 1000
+                    }
+                elif hasattr(ts, 'seconds'):
+                    message_data["timestamp"] = {
+                        "_seconds": int(ts.seconds),
+                        "_nanoseconds": int(getattr(ts, "nanos", 0))
+                    }
+                
+                messages.append(message_data)
 
             return jsonify({"success": True, "messages": messages})
         except Exception as e:
@@ -1022,6 +1040,318 @@ def init_app(app, db):
                 "total": 0
             }), 500
 
+    @app.route("/search_users_api", methods=["GET"])
+    def search_users_api():
+        """API para realizar busca de usuários"""
+        try:
+            # Obter parâmetros de busca
+            query = request.args.get('q', '').strip()
+            
+            # Construir query base
+            users_query = db.collection('user')
+            
+            # Executar query
+            users_docs = users_query.stream()
+            users = []
+            
+            for doc in users_docs:
+                user_data = doc.to_dict()
+                user_data['uid'] = doc.id
+                
+                # Filtrar por texto de busca se especificado
+                if query:
+                    searchable_text = f"{user_data.get('name', '')} {user_data.get('email', '')}".lower()
+                    if query.lower() not in searchable_text:
+                        continue
+                
+                # Contar eventos organizados pelo usuário
+                organized_events_query = db.collection('events').where('uid', '==', doc.id)
+                organized_events = list(organized_events_query.stream())
+                user_data['organizedEventsCount'] = len(organized_events)
+                
+                # Contar eventos participados pelo usuário
+                joined_events = user_data.get('joinedEvents', [])
+                user_data['joinedEventsCount'] = len(joined_events)
+                
+                # Processar data de criação para serialização JSON
+                created_at = user_data.get('created_at')
+                if hasattr(created_at, 'seconds'):
+                    user_data['created_at'] = {
+                        'seconds': created_at.seconds,
+                        'nanoseconds': getattr(created_at, 'nanoseconds', 0)
+                    }
+                
+                users.append(user_data)
+            
+            # Ordenar resultados
+            if query:
+                users.sort(key=lambda x: (
+                    query.lower() in x.get('name', '').lower(),
+                    x.get('organizedEventsCount', 0)
+                ), reverse=True)
+            else:
+                users.sort(key=lambda x: x.get('organizedEventsCount', 0), reverse=True)
+            
+            return jsonify({
+                "success": True,
+                "results": users,
+                "total": len(users),
+                "query": query
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro na busca de usuários: {e}")
+            return jsonify({
+                "success": False,
+                "message": "Erro ao realizar busca de usuários",
+                "results": [],
+                "total": 0
+            }), 500
+
+    @app.route("/user_details_api", methods=["GET"])
+    def user_details_api():
+        """API para obter detalhes de um usuário específico e suas viagens organizadas"""
+        try:
+            uid = request.args.get('uid', '').strip()
+            
+            if not uid:
+                return jsonify({
+                    "success": False,
+                    "message": "UID do usuário não fornecido"
+                }), 400
+            
+            # Buscar dados do usuário
+            user_doc = db.collection('user').document(uid).get()
+            
+            if not user_doc.exists:
+                return jsonify({
+                    "success": False,
+                    "message": "Usuário não encontrado"
+                }), 404
+            
+            user_data = user_doc.to_dict()
+            user_data['uid'] = uid
+            
+            # Buscar eventos organizados pelo usuário
+            events_query = db.collection('events').where('uid', '==', uid)
+            events_docs = events_query.stream()
+            events = []
+            
+            for doc in events_docs:
+                event_data = doc.to_dict()
+                event_data['id'] = doc.id
+                
+                # Processar datas para serialização JSON
+                exit_date = event_data.get('exit_date')
+                return_date = event_data.get('return_date')
+                
+                if isinstance(exit_date, datetime):
+                    event_data['exit_date'] = {
+                        'seconds': int(exit_date.timestamp()),
+                        'nanoseconds': exit_date.microsecond * 1000
+                    }
+                elif hasattr(exit_date, 'seconds'):
+                    event_data['exit_date'] = {
+                        'seconds': exit_date.seconds,
+                        'nanoseconds': getattr(exit_date, 'nanoseconds', 0)
+                    }
+                
+                if isinstance(return_date, datetime):
+                    event_data['return_date'] = {
+                        'seconds': int(return_date.timestamp()),
+                        'nanoseconds': return_date.microsecond * 1000
+                    }
+                elif hasattr(return_date, 'seconds'):
+                    event_data['return_date'] = {
+                        'seconds': return_date.seconds,
+                        'nanoseconds': getattr(return_date, 'nanoseconds', 0)
+                    }
+                
+                # Processar rota para JSON serializável
+                route = event_data.get('route')
+                if route and isinstance(route, dict):
+                    start = route.get('start')
+                    end = route.get('end')
+                    if start and hasattr(start, 'latitude'):
+                        route['start'] = {
+                            'latitude': start.latitude,
+                            'longitude': start.longitude
+                        }
+                    if end and hasattr(end, 'latitude'):
+                        route['end'] = {
+                            'latitude': end.latitude,
+                            'longitude': end.longitude
+                        }
+                
+                events.append(event_data)
+            
+            # Ordenar eventos por data de saída
+            events.sort(key=lambda x: x.get('exit_date', {}).get('seconds', 0), reverse=True)
+            
+            # Adicionar contadores ao usuário
+            user_data['organizedEventsCount'] = len(events)
+            joined_events = user_data.get('joinedEvents', [])
+            user_data['joinedEventsCount'] = len(joined_events)
+            
+            # Processar data de criação para serialização JSON
+            created_at = user_data.get('created_at')
+            if hasattr(created_at, 'seconds'):
+                user_data['created_at'] = {
+                    'seconds': created_at.seconds,
+                    'nanoseconds': getattr(created_at, 'nanoseconds', 0)
+                }
+            
+            return jsonify({
+                "success": True,
+                "user": user_data,
+                "events": events
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao obter detalhes do usuário: {e}")
+            return jsonify({
+                "success": False,
+                "message": "Erro ao obter detalhes do usuário"
+            }), 500
+
+    @app.route("/user/<user_id>")
+    def user_profile(user_id):
+        """Página de perfil de um usuário específico"""
+        try:
+            # Buscar dados do usuário
+            user_doc = db.collection('user').document(user_id).get()
+            
+            if not user_doc.exists:
+                flash('Usuário não encontrado.', 'error')
+                return redirect(url_for('home'))
+            
+            user_data = user_doc.to_dict()
+            user_data['uid'] = user_id
+            
+            # Contar eventos organizados pelo usuário
+            organized_events_query = db.collection('events').where('uid', '==', user_id)
+            organized_events = list(organized_events_query.stream())
+            user_data['organizedEventsCount'] = len(organized_events)
+            
+            # Contar eventos participados pelo usuário
+            joined_events = user_data.get('joinedEvents', [])
+            user_data['joinedEventsCount'] = len(joined_events)
+            
+            # Processar data de criação
+            created_at = user_data.get('created_at')
+            if hasattr(created_at, 'timestamp'):
+                user_data['created_at'] = datetime.fromtimestamp(created_at.timestamp())
+            elif hasattr(created_at, 'seconds'):
+                user_data['created_at'] = datetime.fromtimestamp(created_at.seconds)
+            
+            return render_template('user_profile.html', user=user_data)
+            
+        except Exception as e:
+            logger.exception(f"Erro ao carregar perfil do usuário: {e}")
+            flash('Erro ao carregar perfil do usuário.', 'error')
+            return redirect(url_for('home'))
+
+    @app.route("/user_participated_events_api", methods=["GET"])
+    def user_participated_events_api():
+        """API para obter eventos participados por um usuário"""
+        try:
+            uid = request.args.get('uid', '').strip()
+            
+            if not uid:
+                return jsonify({
+                    "success": False,
+                    "message": "UID do usuário não fornecido"
+                }), 400
+            
+            # Buscar dados do usuário para obter eventos participados
+            user_doc = db.collection('user').document(uid).get()
+            
+            if not user_doc.exists:
+                return jsonify({
+                    "success": False,
+                    "message": "Usuário não encontrado"
+                }), 404
+            
+            user_data = user_doc.to_dict()
+            joined_events_ids = user_data.get('joinedEvents', [])
+            
+            if not joined_events_ids:
+                return jsonify({
+                    "success": True,
+                    "events": []
+                })
+            
+            # Buscar eventos participados
+            events = []
+            for event_id in joined_events_ids:
+                try:
+                    event_doc = db.collection('events').document(event_id).get()
+                    if event_doc.exists:
+                        event_data = event_doc.to_dict()
+                        event_data['id'] = event_doc.id
+                        
+                        # Processar datas para serialização JSON
+                        exit_date = event_data.get('exit_date')
+                        return_date = event_data.get('return_date')
+                        
+                        if isinstance(exit_date, datetime):
+                            event_data['exit_date'] = {
+                                'seconds': int(exit_date.timestamp()),
+                                'nanoseconds': exit_date.microsecond * 1000
+                            }
+                        elif hasattr(exit_date, 'seconds'):
+                            event_data['exit_date'] = {
+                                'seconds': exit_date.seconds,
+                                'nanoseconds': getattr(exit_date, 'nanoseconds', 0)
+                            }
+                        
+                        if isinstance(return_date, datetime):
+                            event_data['return_date'] = {
+                                'seconds': int(return_date.timestamp()),
+                                'nanoseconds': return_date.microsecond * 1000
+                            }
+                        elif hasattr(return_date, 'seconds'):
+                            event_data['return_date'] = {
+                                'seconds': return_date.seconds,
+                                'nanoseconds': getattr(return_date, 'nanoseconds', 0)
+                            }
+                        
+                        # Processar rota para JSON serializável
+                        route = event_data.get('route')
+                        if route and isinstance(route, dict):
+                            start = route.get('start')
+                            end = route.get('end')
+                            if start and hasattr(start, 'latitude'):
+                                route['start'] = {
+                                    'latitude': start.latitude,
+                                    'longitude': start.longitude
+                                }
+                            if end and hasattr(end, 'latitude'):
+                                route['end'] = {
+                                    'latitude': end.latitude,
+                                    'longitude': end.longitude
+                                }
+                        
+                        events.append(event_data)
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar evento {event_id}: {e}")
+                    continue
+            
+            # Ordenar eventos por data de saída
+            events.sort(key=lambda x: x.get('exit_date', {}).get('seconds', 0), reverse=True)
+            
+            return jsonify({
+                "success": True,
+                "events": events
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao obter eventos participados: {e}")
+            return jsonify({
+                "success": False,
+                "message": "Erro ao obter eventos participados"
+            }), 500
+
     @app.route("/event/<event_id>")
     def event_detail(event_id):
         """Página de detalhes de um evento específico"""
@@ -1425,7 +1755,7 @@ def init_app(app, db):
         """Buscar avaliações de um evento da subcoleção avaliacoes com paginação"""
         try:
             page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', 10))
+            limit = int(request.args.get('limit', 5))
             offset = (page - 1) * limit
             
             # Buscar avaliações da subcoleção do evento
@@ -1533,7 +1863,7 @@ def init_app(app, db):
                 'comment_text': texto,
                 'nota': nota,
                 'user_id': g.user['uid'],
-                'username': g.user.get('email', g.user.get('name', 'Usuário Anônimo')),
+                'username': g.user.get('name', g.user.get('email', 'Usuário Anônimo')),
                 'createdAt': datetime.utcnow()
             }
             
@@ -1652,6 +1982,158 @@ def init_app(app, db):
         except Exception as e:
             logger.exception(f"Erro ao verificar status do favorito: {e}")
             return jsonify({"success": False, "is_favorited": False}), 500
+
+    # ==================== ROTAS DE EDIÇÃO E EXCLUSÃO DE MENSAGENS ====================
+    
+    @app.route("/api/messages/<message_id>/edit", methods=["PUT"])
+    def edit_message(message_id):
+        """Editar uma mensagem existente"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            data = request.get_json()
+            new_text = data.get('text', '').strip()
+            chat_type = data.get('chat_type', 'individual')  # 'individual' ou 'group'
+            chat_id = data.get('chat_id')  # chat_uid para individual ou event_id para group
+            
+            if not new_text:
+                return jsonify({"success": False, "message": "Texto da mensagem é obrigatório"}), 400
+            
+            if not chat_id:
+                return jsonify({"success": False, "message": "ID do chat é obrigatório"}), 400
+            
+            if len(new_text) > 1000:
+                return jsonify({"success": False, "message": "Mensagem muito longa (máximo 1000 caracteres)"}), 400
+            
+            # Buscar a mensagem
+            if chat_type == 'individual':
+                message_ref = db.collection("chats").document(chat_id).collection("messages").document(message_id)
+            else:  # group
+                message_ref = db.collection("chat-group").document(f"group_{chat_id}").collection("messages").document(message_id)
+            
+            logger.info(f"Buscando mensagem {message_id} no chat {chat_type} com ID {chat_id}")
+            message_doc = message_ref.get()
+            
+            if not message_doc.exists:
+                logger.error(f"Mensagem {message_id} não encontrada no chat {chat_type} com ID {chat_id}")
+                return jsonify({"success": False, "message": "Mensagem não encontrada"}), 404
+            
+            message_data = message_doc.to_dict()
+            
+            # Verificar se o usuário é o autor da mensagem
+            if message_data.get('uid_sender') != g.user['uid']:
+                return jsonify({"success": False, "message": "Você só pode editar suas próprias mensagens"}), 403
+            
+            # Verificar se a mensagem não é muito antiga (máximo 1 hora)
+            timestamp = message_data.get('timestamp')
+            logger.info(f"Timestamp da mensagem: {timestamp}, tipo: {type(timestamp)}")
+            
+            if timestamp:
+                try:
+                    if hasattr(timestamp, 'seconds'):
+                        message_time = datetime.fromtimestamp(timestamp.seconds)
+                    elif isinstance(timestamp, dict) and '_seconds' in timestamp:
+                        message_time = datetime.fromtimestamp(timestamp['_seconds'])
+                    elif isinstance(timestamp, datetime):
+                        message_time = timestamp
+                    else:
+                        message_time = datetime.now()  # Fallback
+                    
+                    time_diff = datetime.now() - message_time
+                    logger.info(f"Diferença de tempo: {time_diff.total_seconds()} segundos")
+                    
+                    if time_diff.total_seconds() > 3600:  # 1 hora
+                        return jsonify({"success": False, "message": "Não é possível editar mensagens com mais de 1 hora"}), 400
+                except Exception as time_error:
+                    logger.error(f"Erro ao processar timestamp: {time_error}")
+                    # Continuar sem validação de tempo em caso de erro
+            
+            # Atualizar a mensagem
+            message_ref.update({
+                'text': new_text,
+                'edited': True,
+                'edited_at': firestore.SERVER_TIMESTAMP
+            })
+            
+            return jsonify({
+                "success": True,
+                "message": "Mensagem editada com sucesso",
+                "new_text": new_text
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao editar mensagem: {e}")
+            return jsonify({"success": False, "message": "Erro ao editar mensagem"}), 500
+    
+    @app.route("/api/messages/<message_id>/delete", methods=["DELETE"])
+    def delete_message(message_id):
+        """Excluir uma mensagem existente"""
+        if not g.user:
+            return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        
+        try:
+            data = request.get_json()
+            chat_type = data.get('chat_type', 'individual')  # 'individual' ou 'group'
+            chat_id = data.get('chat_id')  # chat_uid para individual ou event_id para group
+            
+            if not chat_id:
+                return jsonify({"success": False, "message": "ID do chat é obrigatório"}), 400
+            
+            # Buscar a mensagem
+            if chat_type == 'individual':
+                message_ref = db.collection("chats").document(chat_id).collection("messages").document(message_id)
+            else:  # group
+                message_ref = db.collection("chat-group").document(f"group_{chat_id}").collection("messages").document(message_id)
+            
+            logger.info(f"Buscando mensagem {message_id} para exclusão no chat {chat_type} com ID {chat_id}")
+            message_doc = message_ref.get()
+            
+            if not message_doc.exists:
+                logger.error(f"Mensagem {message_id} não encontrada para exclusão no chat {chat_type} com ID {chat_id}")
+                return jsonify({"success": False, "message": "Mensagem não encontrada"}), 404
+            
+            message_data = message_doc.to_dict()
+            
+            # Verificar se o usuário é o autor da mensagem
+            if message_data.get('uid_sender') != g.user['uid']:
+                return jsonify({"success": False, "message": "Você só pode excluir suas próprias mensagens"}), 403
+            
+            # Verificar se a mensagem não é muito antiga (máximo 1 hora)
+            timestamp = message_data.get('timestamp')
+            logger.info(f"Timestamp da mensagem para exclusão: {timestamp}, tipo: {type(timestamp)}")
+            
+            if timestamp:
+                try:
+                    if hasattr(timestamp, 'seconds'):
+                        message_time = datetime.fromtimestamp(timestamp.seconds)
+                    elif isinstance(timestamp, dict) and '_seconds' in timestamp:
+                        message_time = datetime.fromtimestamp(timestamp['_seconds'])
+                    elif isinstance(timestamp, datetime):
+                        message_time = timestamp
+                    else:
+                        message_time = datetime.now()  # Fallback
+                    
+                    time_diff = datetime.now() - message_time
+                    logger.info(f"Diferença de tempo para exclusão: {time_diff.total_seconds()} segundos")
+                    
+                    if time_diff.total_seconds() > 3600:  # 1 hora
+                        return jsonify({"success": False, "message": "Não é possível excluir mensagens com mais de 1 hora"}), 400
+                except Exception as time_error:
+                    logger.error(f"Erro ao processar timestamp para exclusão: {time_error}")
+                    # Continuar sem validação de tempo em caso de erro
+            
+            # Excluir a mensagem
+            message_ref.delete()
+            
+            return jsonify({
+                "success": True,
+                "message": "Mensagem excluída com sucesso"
+            })
+            
+        except Exception as e:
+            logger.exception(f"Erro ao excluir mensagem: {e}")
+            return jsonify({"success": False, "message": "Erro ao excluir mensagem"}), 500
 
     # ==================== ROTAS DE AVALIAÇÕES ====================
     

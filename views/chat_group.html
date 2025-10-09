@@ -166,9 +166,25 @@
   function createGroupMessageElement(message) {
     const msgEl = document.createElement('div');
     msgEl.className = 'group-message';
+    msgEl.setAttribute('data-message-id', message.id);
     
     const senderName = message.name || "Usuário";
     const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const isOwnMessage = message.uid_sender === "{{ g.user['uid'] }}";
+    const isEdited = message.edited || false;
+    const messageTime = message.timestamp ? new Date(message.timestamp) : new Date();
+    const isOldMessage = (Date.now() - messageTime.getTime()) > 3600000; // 1 hora em ms
+    
+    const editDeleteButtons = isOwnMessage && !isOldMessage ? `
+      <div class="message-actions">
+        <button class="edit-btn" onclick="editGroupMessage('${message.id}', '${message.text.replace(/'/g, "\\'")}')">
+          <ion-icon name="create-outline"></ion-icon>
+        </button>
+        <button class="delete-btn" onclick="deleteGroupMessage('${message.id}')">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+      </div>
+    ` : '';
     
     msgEl.innerHTML = `
       <div class="group-message-content">
@@ -181,7 +197,9 @@
             <span class="group-message-time">${timestamp}</span>
           </div>
           <p class="group-message-text">${message.text}</p>
+          ${isEdited ? '<div class="message-footer"><span class="edited-indicator">(editado)</span></div>' : ''}
         </div>
+        ${editDeleteButtons}
       </div>
     `;
     
@@ -199,6 +217,88 @@
 
   function closeGroupInfo() {
     document.getElementById('group-info-modal').style.display = 'none';
+  }
+
+  // Função para editar mensagem no grupo
+  async function editGroupMessage(messageId, currentText) {
+    const newText = prompt('Editar mensagem:', currentText);
+    if (newText === null || newText.trim() === currentText.trim()) return;
+    
+    if (newText.trim().length === 0) {
+      alert('A mensagem não pode estar vazia');
+      return;
+    }
+    
+    if (newText.length > 1000) {
+      alert('A mensagem é muito longa (máximo 1000 caracteres)');
+      return;
+    }
+    
+    try {
+      const requestData = {
+        text: newText.trim(),
+        chat_type: 'group',
+        chat_id: eventId
+      };
+      
+      console.log('Enviando dados para edição (grupo):', requestData);
+      console.log('Message ID:', messageId);
+      
+      const res = await fetch(`/api/messages/${messageId}/edit`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(requestData)
+      });
+      
+      console.log('Resposta do servidor (grupo):', res.status, res.statusText);
+      
+      const result = await res.json();
+      console.log('Resultado da edição (grupo):', result);
+      
+      if (result.success) {
+        loadMessages(); // Recarregar mensagens
+      } else {
+        alert(result.message || 'Erro ao editar mensagem');
+      }
+    } catch (error) {
+      console.error('Erro ao editar mensagem:', error);
+      alert('Erro ao editar mensagem');
+    }
+  }
+
+  // Função para excluir mensagem no grupo
+  async function deleteGroupMessage(messageId) {
+    if (!confirm('Tem certeza que deseja excluir esta mensagem?')) return;
+    
+    try {
+      const requestData = {
+        chat_type: 'group',
+        chat_id: eventId
+      };
+      
+      console.log('Enviando dados para exclusão (grupo):', requestData);
+      console.log('Message ID:', messageId);
+      
+      const res = await fetch(`/api/messages/${messageId}/delete`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(requestData)
+      });
+      
+      console.log('Resposta do servidor (grupo):', res.status, res.statusText);
+      
+      const result = await res.json();
+      console.log('Resultado da exclusão (grupo):', result);
+      
+      if (result.success) {
+        loadMessages(); // Recarregar mensagens
+      } else {
+        alert(result.message || 'Erro ao excluir mensagem');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir mensagem:', error);
+      alert('Erro ao excluir mensagem');
+    }
   }
 
   // Auto-refresh das mensagens
