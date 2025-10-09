@@ -122,41 +122,139 @@ export default function Notificacoes() {
     };
   }, []);
 
-  // Conversas privadas a partir da coleção 'chats' usando participants (array-contains)
+  // Conversas privadas a partir da coleção 'chats' - versão robusta
   useEffect(() => {
-    if (!uid) return;
-
-    const chatsRef = collection(db, 'chats');
-    const q = query(chatsRef, where('participants', 'array-contains', uid));
-    const unsub = onSnapshot(q, async (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const items = await Promise.all(docs.map(async (c) => {
-        // otherUid é o outro participante que não é você
-        const participants = Array.isArray(c.participants) ? c.participants : [];
-        const otherUid = (participants.find(p => p && p !== uid)) || ((c.user_uid === uid) ? c.org_uid : c.user_uid);
-
-        let username = userCache[otherUid]?.userInfo?.nome || userCache[otherUid]?.nome || 'Usuário';
-        if (!userCache[otherUid] && otherUid) {
-          try {
-            const uSnap = await getDoc(doc(db, 'user', otherUid));
-            if (uSnap.exists()) {
-              const data = uSnap.data();
-              setUserCache(prev => ({ ...prev, [otherUid]: data.userInfo ? { userInfo: data.userInfo } : data }));
-              username = data?.userInfo?.nome || data?.nome || username;
+    if (!uid) {
+      return;
+    }
+    
+    // Função para buscar todos os chats e filtrar localmente
+    const fetchAllChats = async () => {
+      try {
+        // Buscar todos os chats (individuais e de grupo) na coleção 'chats'
+        const chatsRef = collection(db, 'chats');
+        const chatsSnapshot = await getDocs(chatsRef);
+        
+        const allChats = chatsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        console.log('Notificacoes: Todos os chats encontrados:', allChats.length);
+        console.log('Notificacoes: Dados dos chats:', allChats);
+        console.log('Notificacoes: UID do usuário atual:', uid);
+        
+        // Filtrar chats onde o usuário atual é participante
+        const userChats = allChats.filter(chat => {
+          // Verificar diferentes estruturas de dados
+          const participants = Array.isArray(chat.participants) ? chat.participants : [];
+          const userUid = chat.user_uid;
+          const orgUid = chat.org_uid;
+          
+          console.log('Notificacoes: Verificando chat:', chat.id, {
+            participants,
+            userUid,
+            orgUid,
+            currentUid: uid
+          });
+          
+          // Para chats individuais e de grupo (ambos na coleção 'chats')
+          // Verificar múltiplas estruturas possíveis
+          const isParticipant = 
+            participants.includes(uid) || 
+            userUid === uid || 
+            orgUid === uid ||
+            chat.uid === uid || // Estrutura alternativa
+            chat.creatorId === uid || // Estrutura alternativa
+            chat.creatorUid === uid; // Estrutura alternativa
+          
+          console.log('Notificacoes: É participante?', isParticipant);
+          
+          return isParticipant;
+        });
+        
+        console.log('Notificacoes: Chats filtrados para o usuário:', userChats.length);
+        
+        // Processar cada chat
+        const items = await Promise.all(userChats.map(async (c) => {
+          const isGroupChat = c.id.startsWith('group_');
+          let otherUid = null;
+          let username = 'Usuário';
+          
+          if (isGroupChat) {
+            // Para chats de grupo
+            username = c.group_name || 'Chat do Grupo';
+            otherUid = c.event_id; // Usar eventId como identificador
+          } else {
+            // Para chats individuais
+            const participants = Array.isArray(c.participants) ? c.participants : [];
+            
+            if (participants.length > 0) {
+              otherUid = participants.find(p => p && p !== uid);
+            } else {
+              // Fallback para diferentes estruturas antigas
+              if (c.user_uid === uid) {
+                otherUid = c.org_uid;
+              } else if (c.org_uid === uid) {
+                otherUid = c.user_uid;
+              } else if (c.uid === uid) {
+                otherUid = c.creatorId || c.creatorUid;
+              } else {
+                otherUid = c.user_uid || c.org_uid || c.uid;
+              }
             }
-          } catch (e) {}
-        }
-        const ts = c.updated_at?.toDate ? c.updated_at.toDate() : (c.updated_at ? new Date(c.updated_at) : new Date(0));
-        return {
-          chatId: c.id,
-          otherUid,
-          username,
-          lastText: c.last_message || '',
-          lastTimestamp: ts,
-        };
-      }));
-      items.sort((a, b) => (b.lastTimestamp - a.lastTimestamp));
-      setThreads(items);
+
+            if (otherUid) {
+              // Verificar cache primeiro
+              if (userCache[otherUid]) {
+                username = userCache[otherUid]?.userInfo?.nome || userCache[otherUid]?.nome || 'Usuário';
+              } else {
+                // Buscar dados do usuário
+                try {
+                  const uSnap = await getDoc(doc(db, 'user', otherUid));
+                  if (uSnap.exists()) {
+                    const data = uSnap.data();
+                    const userInfo = data.userInfo ? { userInfo: data.userInfo } : data;
+                    setUserCache(prev => ({ ...prev, [otherUid]: userInfo }));
+                    username = data?.userInfo?.nome || data?.nome || 'Usuário';
+                  }
+                } catch (e) {
+                  console.error('Erro ao buscar dados do usuário:', e);
+                }
+              }
+            }
+          }
+          
+          const ts = c.updated_at?.toDate ? c.updated_at.toDate() : (c.updated_at ? new Date(c.updated_at) : new Date(0));
+          const item = {
+            chatId: c.id,
+            otherUid,
+            username,
+            lastText: c.last_message || '',
+            lastTimestamp: ts,
+            isGroupChat,
+            eventId: c.event_id,
+          };
+          
+          return item;
+        }));
+        
+        items.sort((a, b) => (b.lastTimestamp - a.lastTimestamp));
+        setThreads(items);
+        
+      } catch (error) {
+        console.error('Erro ao buscar chats:', error);
+        setThreads([]);
+      }
+    };
+    
+    // Executar busca inicial
+    fetchAllChats();
+    
+    // Configurar listener para mudanças em tempo real
+    const chatsRef = collection(db, 'chats');
+    
+    const unsub = onSnapshot(chatsRef, (snapshot) => {
+      fetchAllChats(); // Re-executar busca quando há mudanças
+    }, (error) => {
+      console.error('Erro no listener de chats:', error);
     });
 
     return () => unsub();
@@ -185,15 +283,25 @@ export default function Notificacoes() {
 
   const renderThreadItem = ({ item }) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('Chat', { chatId: item.chatId, otherUid: item.otherUid })}
+      onPress={() => {
+        if (item.isGroupChat) {
+          navigation.navigate('ChatEmGrupo', { eventId: item.eventId });
+        } else {
+          navigation.navigate('Chat', { chatId: item.chatId, otherUid: item.otherUid });
+        }
+      }}
       style={[styles.item, { backgroundColor: theme?.backgroundSecondary, borderColor: theme?.border }]}
     >
       <View style={styles.itemIcon}>
-        <Ionicons name="person-circle-outline" size={22} color={theme?.primary} />
+        <Ionicons 
+          name={item.isGroupChat ? "people-circle-outline" : "person-circle-outline"} 
+          size={22} 
+          color={theme?.primary} 
+        />
       </View>
       <View style={styles.itemContent}>
         <Text style={[styles.itemTitle, { color: theme?.textPrimary }]}>
-          Conversa com {item.username}
+          {item.isGroupChat ? item.username : `Conversa com ${item.username}`}
         </Text>
         {item.lastText ? (
           <Text numberOfLines={1} style={[styles.itemSubtitle, { color: theme?.textSecondary }]}>
@@ -241,7 +349,7 @@ export default function Notificacoes() {
           )}
 
           {/* Chats privados - usando threads do chat global como fallback */}
-          <Text style={[styles.sectionTitle, { color: theme?.textPrimary, marginTop: 16 }]}>{}
+          <Text style={[styles.sectionTitle, { color: theme?.textPrimary, marginTop: 0 }]}>{}
             {`Chats privados ${unreadMessages > 0 ? `(${unreadMessages} nova${unreadMessages > 1 ? 's' : ''})` : ''}`}
           </Text>
           {threads.length === 0 ? (
@@ -286,5 +394,5 @@ const styles = StyleSheet.create({
   itemContent: { flex: 1 },
   itemTitle: { fontWeight: '600', marginBottom: 4 },
   itemSubtitle: { fontSize: 13 },
-  itemTime: { fontSize: 12, marginTop: 4 },
+  itemTime: { fontSize: 12, marginTop: 0 },
 });

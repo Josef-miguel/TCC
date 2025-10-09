@@ -73,7 +73,11 @@ export default function Perfil() {
         <MenuItem icon="account-outline" label={t('profile.myAccount')} onPress={() => setEditModalVisible(true)} />
         <MenuItem icon="cog" label={t('profile.settings')} onPress={() => setConfigModalVisible(true)} />
         {isOrganizer && (
-          <MenuItem icon="account-search-outline" label={t('profile.reviews')} onPress={() => navigation.navigate('Avaliacoes')} />
+          <MenuItem icon="account-search-outline" label={t('profile.reviews')} onPress={() => {
+            if (userData?.userInfo?.uid) {
+              navigation.navigate('Avaliacoes', { userId: userData.userInfo.uid });
+            }
+          }} />
         )}
         <MenuItem icon="heart-outline" label={t('profile.myTrips')} onPress={() => navigation.navigate('MinhasViagens')} />
         <MenuItem icon="logout" label={t('profile.logout')} onPress={() => setLogoutVisible(true)} />
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    marginTop: 50,
+    marginTop: 0,
     marginBottom: 20,
     alignItems: 'center',
   },
@@ -113,7 +117,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 8,
+    marginTop: 0,
   },
   menuItem: {
     flexDirection: 'row',
@@ -147,7 +151,7 @@ const styles = StyleSheet.create({
     textAlign: 'right'
   },
   cancelText: {
-    marginTop: 10,
+    marginTop: 0,
     textAlign: 'right',
   },
 });

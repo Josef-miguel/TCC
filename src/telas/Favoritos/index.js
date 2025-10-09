@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   },
   emptyText: { 
     fontSize: 16,
-    marginTop: 16,
+    marginTop: 0,
     textAlign: 'center'
   },
 });

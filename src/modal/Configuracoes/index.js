@@ -11,12 +11,15 @@ import {
   ScrollView,
   Alert,
   Platform,
-  StatusBar
+  StatusBar,
+  TextInput
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeContext } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from "../../../services/firebase";
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 
 const Configuracoes = ({ modalVisible, setModalVisible }) => {
   const [notificacoes, setNotificacoes] = useState(true);
@@ -30,6 +33,13 @@ const Configuracoes = ({ modalVisible, setModalVisible }) => {
   const { t, i18n } = useTranslation();
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
   const [expandedSection, setExpandedSection] = useState(null);
+  
+  // Estados para alterar senha
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -84,14 +94,93 @@ const Configuracoes = ({ modalVisible, setModalVisible }) => {
   };
 
   const handleChangePassword = () => {
-    Alert.alert(
-      t("settings.changePassword"),
-      t("settings.changePasswordMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        { text: t("common.continue"), onPress: () => console.log("Navegar para tela de alterar senha") }
-      ]
-    );
+    setChangePasswordModalVisible(true);
+  };
+
+  const validatePassword = (password) => {
+    if (password.length < 6) {
+      return "A senha deve ter pelo menos 6 caracteres";
+    }
+    return null;
+  };
+
+  const handleChangePasswordSubmit = async () => {
+    // Validações
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Erro", "As senhas não coincidem");
+      return;
+    }
+
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      Alert.alert("Erro", passwordError);
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      Alert.alert("Erro", "A nova senha deve ser diferente da senha atual");
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        Alert.alert("Erro", "Usuário não encontrado");
+        return;
+      }
+
+      // Reautenticar o usuário
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Atualizar a senha
+      await updatePassword(user, newPassword);
+
+      Alert.alert(
+        "Sucesso", 
+        "Senha alterada com sucesso!",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setChangePasswordModalVisible(false);
+              setCurrentPassword('');
+              setNewPassword('');
+              setConfirmPassword('');
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error("Erro ao alterar senha:", error);
+      
+      let errorMessage = "Erro ao alterar senha";
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = "Senha atual incorreta";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "A nova senha é muito fraca";
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = "Por favor, faça login novamente para alterar a senha";
+      }
+      
+      Alert.alert("Erro", errorMessage);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const closeChangePasswordModal = () => {
+    setChangePasswordModalVisible(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
   };
 
   const handleDeleteAccount = () => {
@@ -399,6 +488,108 @@ const Configuracoes = ({ modalVisible, setModalVisible }) => {
           </ScrollView>
         </View>
       </View>
+
+      {/* Modal de Alterar Senha */}
+      <Modal
+        visible={changePasswordModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeChangePasswordModal}
+      >
+        <View style={[styles.modalOverlay, { backgroundColor: theme?.overlay }]}>
+          <View style={[styles.changePasswordModal, { backgroundColor: theme?.backgroundSecondary }]}>
+            <View style={[styles.changePasswordHeader, { borderBottomColor: theme?.border }]}>
+              <TouchableOpacity onPress={closeChangePasswordModal}>
+                <Ionicons name="close" size={24} color={theme?.textPrimary} />
+              </TouchableOpacity>
+              <Text style={[styles.changePasswordTitle, { color: theme?.textPrimary }]}>
+                Alterar Senha
+              </Text>
+              <View style={{ width: 24 }} />
+            </View>
+
+            <ScrollView style={styles.changePasswordContent} showsVerticalScrollIndicator={false}>
+              <Text style={[styles.changePasswordSubtitle, { color: theme?.textSecondary }]}>
+                Para sua segurança, digite sua senha atual e a nova senha desejada.
+              </Text>
+
+              <View style={styles.passwordInputContainer}>
+                <Text style={[styles.inputLabel, { color: theme?.textPrimary }]}>
+                  Senha Atual
+                </Text>
+                <TextInput
+                  style={[styles.passwordInput, { 
+                    backgroundColor: theme?.background,
+                    borderColor: theme?.border,
+                    color: theme?.textPrimary
+                  }]}
+                  placeholder="Digite sua senha atual"
+                  placeholderTextColor={theme?.textTertiary}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.passwordInputContainer}>
+                <Text style={[styles.inputLabel, { color: theme?.textPrimary }]}>
+                  Nova Senha
+                </Text>
+                <TextInput
+                  style={[styles.passwordInput, { 
+                    backgroundColor: theme?.background,
+                    borderColor: theme?.border,
+                    color: theme?.textPrimary
+                  }]}
+                  placeholder="Digite a nova senha"
+                  placeholderTextColor={theme?.textTertiary}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+                <Text style={[styles.passwordHint, { color: theme?.textTertiary }]}>
+                  Mínimo de 6 caracteres
+                </Text>
+              </View>
+
+              <View style={styles.passwordInputContainer}>
+                <Text style={[styles.inputLabel, { color: theme?.textPrimary }]}>
+                  Confirmar Nova Senha
+                </Text>
+                <TextInput
+                  style={[styles.passwordInput, { 
+                    backgroundColor: theme?.background,
+                    borderColor: theme?.border,
+                    color: theme?.textPrimary
+                  }]}
+                  placeholder="Confirme a nova senha"
+                  placeholderTextColor={theme?.textTertiary}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.changePasswordButton,
+                  { backgroundColor: theme?.primary },
+                  isChangingPassword && styles.disabledButton
+                ]}
+                onPress={handleChangePasswordSubmit}
+                disabled={isChangingPassword}
+              >
+                <Text style={styles.changePasswordButtonText}>
+                  {isChangingPassword ? "Alterando..." : "Alterar Senha"}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 };
@@ -515,6 +706,71 @@ const styles = StyleSheet.create({
   appCopyright: {
     fontSize: 12,
     textAlign: 'center',
+  },
+  
+  // Estilos para o modal de alterar senha
+  changePasswordModal: {
+    flex: 1,
+    marginTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  changePasswordHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  changePasswordTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  changePasswordContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  changePasswordSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 30,
+    lineHeight: 20,
+  },
+  passwordInputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  passwordInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  passwordHint: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  changePasswordButton: {
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  changePasswordButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });
 

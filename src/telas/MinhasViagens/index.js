@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   cardSlots: {
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 4
+    marginTop: 0
   },
   cardIcon: { 
     padding: 8,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   emptyText: { 
     fontSize: 16,
-    marginTop: 16,
+    marginTop: 0,
     textAlign: 'center'
   },
 });

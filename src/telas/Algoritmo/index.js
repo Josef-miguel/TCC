@@ -173,7 +173,7 @@ const TravelPreferencesScreen = () => {
 
 
     if (loading || !userData) {
-      return <Text style={{ color: '#fff', textAlign: 'center', marginTop: 40 }}>Carregando usuário...</Text>;
+      return <Text style={{ color: '#fff', textAlign: 'center', marginTop: 0 }}>Carregando usuário...</Text>;
     }
 
   const currentStep = steps[step];
@@ -198,7 +198,7 @@ const TravelPreferencesScreen = () => {
             ))}
           </ScrollView>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 0 }}>
             {step > 0 && (
               <Button mode="outlined" onPress={handleBack} style={{ flex: 1, marginRight: 10 }}>
                 Voltar
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    marginTop: 30,
+    marginTop: 0,
     backgroundColor: '#f37100',
     borderRadius: 12,
   },
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   skipButton: {
-    marginTop: 10,
+    marginTop: 0,
   },
 });
 

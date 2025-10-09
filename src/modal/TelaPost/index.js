@@ -20,7 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import SimpleRouteMap from "../../components/SimpleRouteMap";
 import { ThemeContext } from "../../context/ThemeContext";
 import { db } from "../../../services/firebase";
-import { doc, updateDoc, onSnapshot, arrayUnion, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot, arrayUnion, collection, query, where, getDocs, addDoc, serverTimestamp, increment, getDoc } from "firebase/firestore";
 import ReportarProblema from "../ReportarProblema";
 import { auth } from "../../../services/firebase";
 import { useTranslation } from 'react-i18next';
@@ -161,6 +161,48 @@ const PostScreen = ({
       setModalVisible(false);
     } catch (e) {
       console.error('Erro ao abrir chat:', e);
+    }
+  };
+
+  const handleOpenGroupChat = async () => {
+    try {
+      if (!auth.currentUser) {
+        Alert.alert('Atenção', 'Faça login para acessar o chat do grupo.');
+        return;
+      }
+
+      if (!selectedPost?.id) {
+        Alert.alert('Erro', 'Evento não encontrado.');
+        return;
+      }
+
+      // Verificar se o usuário participa do evento
+      const userRef = doc(db, 'user', auth.currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        Alert.alert('Erro', 'Usuário não encontrado.');
+        return;
+      }
+
+      const userData = userDoc.data();
+      const joinedEvents = userData.joinedEvents || [];
+      
+      if (!joinedEvents.includes(selectedPost.id)) {
+        Alert.alert(
+          'Acesso Negado', 
+          'Você precisa participar do evento para acessar o chat do grupo.'
+        );
+        return;
+      }
+      
+      // Navegar para o chat em grupo
+      navigation.navigate('ChatEmGrupo', { eventId: selectedPost.id });
+      setModalVisible(false);
+      
+    } catch (e) {
+      console.error('Erro ao abrir chat do grupo:', e);
+      Alert.alert('Erro', 'Não foi possível abrir o chat do grupo.');
     }
   };
 
@@ -591,6 +633,21 @@ const PostScreen = ({
           Falar com Organizador
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.actionButton, styles.tertiaryButton, { borderColor: theme?.primary }]}
+        onPress={handleOpenGroupChat}
+      >
+        <Ionicons 
+          name="people" 
+          size={20} 
+          color={theme?.primary} 
+          style={styles.buttonIcon}
+        />
+        <Text style={[styles.tertiaryButtonText, { color: theme?.primary }]}>
+          Falar com o Grupo
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -960,6 +1017,10 @@ const styles = StyleSheet.create({
   secondaryButton: {
     borderWidth: 2,
   },
+  tertiaryButton: {
+    borderWidth: 2,
+    marginTop: 8,
+  },
   buttonIcon: {
     marginRight: 10,
   },
@@ -969,6 +1030,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  tertiaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },

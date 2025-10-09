@@ -15,10 +15,11 @@ import {
   RefreshControl,
   Alert,
   ScrollView,
-  Modal
+  Modal,
+  Share
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc, getDocs } from 'firebase/firestore';
+import { onSnapshot, collection, query, doc, updateDoc, arrayUnion, arrayRemove, getDoc, getDocs, increment } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { StandardHeader, StandardCard, StandardBadge, StandardAvatar } from '../../components/CommonComponents';
 import { textStyles, spacing, borderRadius, shadows } from '../../styles/typography';
@@ -159,6 +160,8 @@ export default function Home({ navigation, route }) {
   const [selectedTags, setSelectedTags] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [searchResults, setSearchResults] = useState({ posts: [], users: [] });
 
   // FUNÇÃO SIMPLIFICADA PARA TOGGLE DO SIDEBAR
   const toggleSidebar = () => {
@@ -245,6 +248,38 @@ export default function Home({ navigation, route }) {
 
       images: post.images && post.images[0] ? post.images : [DEFAULT_EVENT_IMAGE]
     }));
+  };
+
+  // Função para buscar usuários
+  const searchUsers = async (query) => {
+    if (!query || query.length < 2) {
+      setUsers([]);
+      setSearchResults({ posts: [], users: [] });
+      return;
+    }
+
+    try {
+      const usersRef = collection(db, 'user');
+      const usersSnapshot = await getDocs(usersRef);
+      const allUsers = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Filtrar usuários por nome ou email
+      const filteredUsers = allUsers.filter(user => {
+        const nome = (user.nome || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const searchTerm = query.toLowerCase();
+        
+        return nome.includes(searchTerm) || email.includes(searchTerm);
+      });
+
+      setUsers(filteredUsers);
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
+      setUsers([]);
+    }
   };
 
   const toggleFav = async (id) => {
@@ -365,6 +400,39 @@ export default function Home({ navigation, route }) {
     }
   };
 
+  const handleShare = async (post) => {
+    try {
+      // Preparar conteúdo para compartilhar
+      const shareContent = {
+        title: post.title || 'Excursão Incrível',
+        message: `🚀 ${post.title || 'Excursão Incrível'}\n\n${post.desc || 'Uma experiência única te aguarda!'}\n\n💰 Preço: R$ ${post.price || '0'}\n📅 Data: ${post.formattedExitDate || 'Em breve'}\n📍 Local: ${post.location || 'A definir'}\n\nBaixe o app para mais detalhes!`,
+        url: `https://app.excursao.com/event/${post.id}`, // URL fictícia, substitua pela real
+      };
+
+      // Abrir menu de compartilhamento nativo
+      const result = await Share.share(shareContent);
+      
+      // Se o compartilhamento foi bem-sucedido, incrementar contador
+      if (result.action === Share.sharedAction) {
+        // Incrementar contador de compartilhamentos no Firebase
+        const eventRef = doc(db, 'events', post.id);
+        await updateDoc(eventRef, {
+          shareCount: increment(1)
+        });
+        
+        // Atualizar estado local
+        setPosts(prev => prev.map(p => 
+          p.id === post.id 
+            ? { ...p, shareCount: (p.shareCount || 0) + 1 }
+            : p
+        ));
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      Alert.alert('Erro', 'Não foi possível compartilhar o post');
+    }
+  };
+
   const handleNavigateToProfile = (post) => {
     if (post?.creatorId) {
       navigation.navigate('VisualizarPerfil', { 
@@ -412,7 +480,8 @@ export default function Home({ navigation, route }) {
       (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (item.theme?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (item.location?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (item.desc?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      (item.desc?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (item.creatorName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     
     // Filtro por tags selecionadas
     const matchesTags = selectedTags.length === 0 || 
@@ -450,6 +519,15 @@ export default function Home({ navigation, route }) {
     });
     setAvailableTags(allTags.sort());
   }, [posts]);
+
+  // EFFECT PARA BUSCAR USUÁRIOS
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchUsers(searchQuery);
+    }, 300); // Debounce de 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   // EFFECT PARA BUSCAR POSTS
   useEffect(() => {
@@ -707,6 +785,41 @@ export default function Home({ navigation, route }) {
     </View>
   );
 
+  // Componente para exibir usuário encontrado
+  const UserSearchResult = ({ user }) => (
+    <StandardCard 
+      theme={theme}
+      style={styles.userCard}
+    >
+      <TouchableOpacity 
+        style={styles.userCardContent}
+        onPress={() => navigation.navigate('VisualizarPerfil', { uid: user.id })}
+        activeOpacity={0.7}
+      >
+        <StandardAvatar
+          source={user.profileImage || DEFAULT_AVATAR}
+          size="large"
+          theme={theme}
+          style={styles.userAvatar}
+        />
+        <View style={styles.userInfo}>
+          <Text style={[styles.userName, { color: theme?.textPrimary }]}>
+            {user.nome || 'Usuário'}
+          </Text>
+          <Text style={[styles.userEmail, { color: theme?.textSecondary }]}>
+            {user.email || ''}
+          </Text>
+          {user.bio && (
+            <Text style={[styles.userBio, { color: theme?.textTertiary }]} numberOfLines={2}>
+              {user.bio}
+            </Text>
+          )}
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={theme?.textTertiary} />
+      </TouchableOpacity>
+    </StandardCard>
+  );
+
   const renderPostItem = ({ item }) => (
     <StandardCard 
       theme={theme}
@@ -776,13 +889,17 @@ export default function Home({ navigation, route }) {
           <Ionicons name="search" size={20} color={theme?.textTertiary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInputInHeader, { color: theme?.textPrimary }]}
-            placeholder="Buscar excursões..."
+            placeholder="Buscar excursões e usuários..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={theme?.textTertiary}
           />
           {searchQuery.length > 0 ? (
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+            <TouchableOpacity onPress={() => {
+              setSearchQuery('');
+              setUsers([]);
+              setSearchResults({ posts: [], users: [] });
+            }} style={styles.clearButton}>
               <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
             </TouchableOpacity>
           ) : (
@@ -845,33 +962,87 @@ export default function Home({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* Lista de Posts */}
-        <FlatList
-        data={activeTab === 'timeline' ? sortedPosts : popularPosts}
-        renderItem={renderPostItem}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[theme?.primary]}
-            tintColor={theme?.primary}
+        {/* Lista de Posts e Usuários */}
+        {searchQuery && searchQuery.length >= 2 ? (
+          <ScrollView 
+            style={styles.searchResultsContainer}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme?.primary]}
+                tintColor={theme?.primary}
+              />
+            }
+          >
+            {/* Seção de Usuários */}
+            {users.length > 0 && (
+              <View style={styles.searchSection}>
+                <Text style={[styles.searchSectionTitle, { color: theme?.textPrimary }]}>
+                  Usuários ({users.length})
+                </Text>
+                {users.map((user) => (
+                  <UserSearchResult key={user.id} user={user} />
+                ))}
+              </View>
+            )}
+
+            {/* Seção de Posts */}
+            {filteredPosts.length > 0 && (
+              <View style={styles.searchSection}>
+                <Text style={[styles.searchSectionTitle, { color: theme?.textPrimary }]}>
+                  Excursões ({filteredPosts.length})
+                </Text>
+                {filteredPosts.map((post) => (
+                  <View key={post.id}>
+                    {renderPostItem({ item: post })}
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Estado vazio */}
+            {users.length === 0 && filteredPosts.length === 0 && (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="search-outline" size={64} color={theme?.textTertiary} />
+                <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>
+                  Nenhum resultado encontrado
+                </Text>
+                <Text style={[styles.emptySubtext, { color: theme?.textTertiary }]}>
+                  Tente buscar com outros termos
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+        ) : (
+          <FlatList
+            data={activeTab === 'timeline' ? sortedPosts : popularPosts}
+            renderItem={renderPostItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme?.primary]}
+                tintColor={theme?.primary}
+              />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Ionicons name="calendar-outline" size={64} color={theme?.textTertiary} />
+                <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>
+                  Nenhuma excursão encontrada
+                </Text>
+                <Text style={[styles.emptySubtext, { color: theme?.textTertiary }]}>
+                  {searchQuery ? 'Tente buscar com outros termos' : 'Novas excursões em breve!'}
+                </Text>
+              </View>
+            }
+            contentContainerStyle={styles.listContent}
           />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color={theme?.textTertiary} />
-            <Text style={[styles.emptyText, { color: theme?.textTertiary }]}>
-              Nenhuma excursão encontrada
-            </Text>
-            <Text style={[styles.emptySubtext, { color: theme?.textTertiary }]}>
-              {searchQuery ? 'Tente buscar com outros termos' : 'Novas excursões em breve!'}
-            </Text>
-          </View>
-        }
-        contentContainerStyle={styles.listContent}
-      />
+        )}
 
       {/* Overlay e Sidebar - DEVEM VIR POR ÚLTIMO PARA FICAREM POR CIMA */}
       {sidebarVisible && (
@@ -1001,6 +1172,14 @@ export default function Home({ navigation, route }) {
               <Ionicons name="person-outline" size={20} color={theme?.textPrimary} />
               <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>Ver Perfil</Text>
             </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.dropdownItem} onPress={() => {
+              closePostMenu();
+              handleShare(selectedPostForMenu);
+            }}>
+              <Ionicons name="share-outline" size={20} color={theme?.textPrimary} />
+              <Text style={[styles.dropdownText, { color: theme?.textPrimary }]}>Compartilhar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -1036,7 +1215,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 30,
-    marginTop: Platform.OS === 'ios' ? 50 : 20, // Reduzido o marginTop
+    marginTop: 0,
   },
   sidebarContent: {
     flex: 1,
@@ -1065,8 +1244,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: Platform.OS === 'ios' ? 20 : 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
@@ -1108,7 +1286,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
     position: 'relative',
   },
@@ -1158,7 +1336,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   badgeRow: {
-    marginTop: 4,
+    marginTop: 0,
     alignSelf: 'flex-start',
   },
   username: {
@@ -1180,8 +1358,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   titleContainer: {
-    marginTop: 8,
-    paddingTop: 8,
+    marginTop: 0,
+    paddingTop: 2,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.1)',
   },
@@ -1314,12 +1492,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    marginTop: 16,
+    marginTop: 0,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 0,
     textAlign: 'center',
   },
   notificationBadge: {
@@ -1489,5 +1667,50 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  
+  // Estilos para busca de usuários
+  searchResultsContainer: {
+    flex: 1,
+  },
+  searchSection: {
+    marginBottom: 20,
+  },
+  searchSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    marginHorizontal: 16,
+  },
+  userCard: {
+    marginHorizontal: spacing.base,
+    marginVertical: spacing.xs,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
+  userCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.base,
+  },
+  userAvatar: {
+    marginRight: spacing.md,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  userBio: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

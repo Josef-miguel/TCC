@@ -13,6 +13,7 @@ import {
   Animated,
   PanResponder,
   Alert,
+  Share,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Video, ResizeMode } from 'expo-av';
@@ -189,21 +190,34 @@ const TikTokScreen = () => {
 
   const handleShare = async (postId) => {
     try {
-      // Incrementar contador de compartilhamentos no Firebase
-      const eventRef = doc(db, 'events', postId);
-      await updateDoc(eventRef, {
-        shareCount: increment(1)
-      });
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      // Preparar conteúdo para compartilhar
+      const shareContent = {
+        title: post.title || 'Excursão Incrível',
+        message: `🚀 ${post.title || 'Excursão Incrível'}\n\n${post.desc || 'Uma experiência única te aguarda!'}\n\n💰 Preço: R$ ${post.price || '0'}\n📅 Data: ${post.exit_date || 'Em breve'}\n📍 Local: ${post.location || 'A definir'}\n\nBaixe o app para mais detalhes!`,
+        url: `https://app.excursao.com/event/${postId}`, // URL fictícia, substitua pela real
+      };
+
+      // Abrir menu de compartilhamento nativo
+      const result = await Share.share(shareContent);
       
-      // Atualizar estado local
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, shares: (post.shares || 0) + 1 }
-          : post
-      ));
-      
-      // Aqui você pode adicionar lógica para compartilhar via WhatsApp, Instagram, etc.
-      Alert.alert('Compartilhado!', 'Post compartilhado com sucesso!');
+      // Se o compartilhamento foi bem-sucedido, incrementar contador
+      if (result.action === Share.sharedAction) {
+        // Incrementar contador de compartilhamentos no Firebase
+        const eventRef = doc(db, 'events', postId);
+        await updateDoc(eventRef, {
+          shareCount: increment(1)
+        });
+        
+        // Atualizar estado local
+        setPosts(prev => prev.map(p => 
+          p.id === postId 
+            ? { ...p, shares: (p.shares || 0) + 1 }
+            : p
+        ));
+      }
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
       Alert.alert('Erro', 'Não foi possível compartilhar o post');
@@ -558,7 +572,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 0,
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
@@ -638,7 +652,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 0,
   },
   loadingContainer: {
     flex: 1,

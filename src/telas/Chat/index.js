@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Animated, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Animated, Alert, Modal } from 'react-native';
 import { auth, db } from '../../../services/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDoc, doc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useAuth } from '../../../services/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Chat() {
   const navigation = useNavigation();
@@ -19,6 +20,12 @@ export default function Chat() {
   const [otherUserName, setOtherUserName] = useState('Usuário');
   const scrollViewRef = useRef();
   const fadeAnim = useRef(new Animated.Value(0)).current; // For fade-in animation
+  
+  // Estados para edição e exclusão de mensagens
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [showMessageMenu, setShowMessageMenu] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
   // Função para buscar o nome do usuário correspondente
   const fetchOtherUserName = async (otherUid) => {
@@ -250,6 +257,121 @@ export default function Chat() {
     setInput('');
   };
 
+  // Função para abrir menu de opções da mensagem
+  const openMessageMenu = (message) => {
+    setSelectedMessage(message);
+    setShowMessageMenu(true);
+  };
+
+  // Função para fechar menu de opções da mensagem
+  const closeMessageMenu = () => {
+    setShowMessageMenu(false);
+    setSelectedMessage(null);
+  };
+
+  // Função para iniciar edição de mensagem
+  const startEditMessage = (message) => {
+    setEditingMessage(message);
+    setEditText(message.text);
+    closeMessageMenu();
+  };
+
+  // Função para cancelar edição
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setEditText('');
+  };
+
+  // Função para salvar edição da mensagem
+  const saveEditMessage = async () => {
+    if (!editText.trim() || !editingMessage) return;
+
+    const makeChatId = (a, b) => {
+      if (!a || !b) return null;
+      return [a, b].sort().join('_');
+    };
+
+    const { chatId: chatIdParam, otherUid } = route.params || {};
+    const myUid = auth.currentUser?.uid;
+    const chatId = chatIdParam || makeChatId(myUid, otherUid);
+
+    if (!chatId) {
+      Alert.alert('Erro', 'Não foi possível identificar a conversa.');
+      return;
+    }
+
+    try {
+      const messageRef = doc(db, 'chats', chatId, 'messages', editingMessage.id);
+      await updateDoc(messageRef, {
+        text: editText.trim(),
+        edited: true,
+        editedAt: serverTimestamp()
+      });
+
+      // Atualizar metadados da conversa
+      await updateDoc(doc(db, 'chats', chatId), { 
+        updated_at: serverTimestamp(),
+        last_message: editText.trim()
+      });
+
+      setEditingMessage(null);
+      setEditText('');
+      Alert.alert('Sucesso', 'Mensagem editada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao editar mensagem:', error);
+      Alert.alert('Erro', 'Não foi possível editar a mensagem.');
+    }
+  };
+
+  // Função para excluir mensagem
+  const deleteMessage = async (message) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza que deseja excluir esta mensagem? Esta ação não pode ser desfeita.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            const makeChatId = (a, b) => {
+              if (!a || !b) return null;
+              return [a, b].sort().join('_');
+            };
+
+            const { chatId: chatIdParam, otherUid } = route.params || {};
+            const myUid = auth.currentUser?.uid;
+            const chatId = chatIdParam || makeChatId(myUid, otherUid);
+
+            if (!chatId) {
+              Alert.alert('Erro', 'Não foi possível identificar a conversa.');
+              return;
+            }
+
+            try {
+              const messageRef = doc(db, 'chats', chatId, 'messages', message.id);
+              await deleteDoc(messageRef);
+
+              // Atualizar metadados da conversa
+              await updateDoc(doc(db, 'chats', chatId), { 
+                updated_at: serverTimestamp()
+              });
+
+              closeMessageMenu();
+              Alert.alert('Sucesso', 'Mensagem excluída com sucesso!');
+            } catch (error) {
+              console.error('Erro ao excluir mensagem:', error);
+              Alert.alert('Erro', 'Não foi possível excluir a mensagem.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -268,6 +390,8 @@ export default function Chat() {
         {messages.map((msg) => {
           const isOwn = msg.userId === auth.currentUser?.uid;
           const senderName = msg.username || (userCache[msg.userId]?.userInfo?.nome) || (isOwn ? t('chat.you') : t('chat.anonymous'));
+          const isEditing = editingMessage?.id === msg.id;
+          
           return (
             <Animated.View
               key={msg.id}
@@ -278,10 +402,60 @@ export default function Chat() {
               ]}
             >
               {!isOwn && <Text style={[styles.senderName, { color: theme?.textSecondary }]}>{senderName}</Text>}
-              <Text style={[
-                isOwn ? styles.messageText : styles.messageTextReceived,
-                { color: isOwn ? theme?.textInverted : theme?.textPrimary }
-              ]}>{msg.text}</Text>
+              
+              {isEditing ? (
+                <View style={styles.editContainer}>
+                  <TextInput
+                    style={[styles.editInput, { 
+                      backgroundColor: theme?.background, 
+                      color: theme?.textPrimary,
+                      borderColor: theme?.primary 
+                    }]}
+                    value={editText}
+                    onChangeText={setEditText}
+                    multiline
+                    autoFocus
+                  />
+                  <View style={styles.editButtons}>
+                    <TouchableOpacity 
+                      style={[styles.editButton, styles.saveButton, { backgroundColor: theme?.primary }]}
+                      onPress={saveEditMessage}
+                    >
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.editButton, styles.cancelButton, { backgroundColor: theme?.textTertiary }]}
+                      onPress={cancelEdit}
+                    >
+                      <Ionicons name="close" size={16} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.messageContent}>
+                  <Text style={[
+                    isOwn ? styles.messageText : styles.messageTextReceived,
+                    { color: isOwn ? theme?.textInverted : theme?.textPrimary }
+                  ]}>{msg.text}</Text>
+                  {msg.edited && (
+                    <Text style={[styles.editedLabel, { color: isOwn ? theme?.textInverted : theme?.textTertiary }]}>
+                      (editado)
+                    </Text>
+                  )}
+                  {isOwn && (
+                    <TouchableOpacity 
+                      style={styles.messageMenuButton}
+                      onPress={() => openMessageMenu(msg)}
+                    >
+                      <Ionicons 
+                        name="ellipsis-horizontal" 
+                        size={16} 
+                        color={isOwn ? theme?.textInverted : theme?.textTertiary} 
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
             </Animated.View>
           );
         })}
@@ -299,6 +473,52 @@ export default function Chat() {
           <Text style={[styles.sendButtonText, { color: theme?.textInverted }]}>➤</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal de Menu de Opções da Mensagem */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showMessageMenu}
+        onRequestClose={closeMessageMenu}
+      >
+        <TouchableOpacity 
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={closeMessageMenu}
+        >
+          <View style={[styles.messageMenu, { backgroundColor: theme?.cardBackground }]}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => startEditMessage(selectedMessage)}
+            >
+              <Ionicons name="create-outline" size={20} color={theme?.textPrimary} />
+              <Text style={[styles.menuItemText, { color: theme?.textPrimary }]}>
+                Editar Mensagem
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.menuItem, styles.deleteMenuItem]}
+              onPress={() => deleteMessage(selectedMessage)}
+            >
+              <Ionicons name="trash-outline" size={20} color="#ff4444" />
+              <Text style={[styles.menuItemText, { color: '#ff4444' }]}>
+                Excluir Mensagem
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={closeMessageMenu}
+            >
+              <Ionicons name="close-outline" size={20} color={theme?.textTertiary} />
+              <Text style={[styles.menuItemText, { color: theme?.textTertiary }]}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -389,7 +609,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   returnBtn: {
-    marginTop: 40,
+    marginTop: 0,
     width: 80,
     height: 35,
     alignItems: 'center',
@@ -404,5 +624,90 @@ const styles = StyleSheet.create({
   returnBtnText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  
+  // Estilos para edição de mensagens
+  editContainer: {
+    width: '100%',
+  },
+  editInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    fontSize: 16,
+    minHeight: 40,
+    maxHeight: 100,
+    marginBottom: 8,
+  },
+  editButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  editButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelButton: {
+    backgroundColor: '#f44336',
+  },
+  
+  // Estilos para conteúdo da mensagem
+  messageContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  editedLabel: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginLeft: 8,
+    opacity: 0.7,
+  },
+  messageMenuButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  
+  // Estilos para menu de opções da mensagem
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageMenu: {
+    borderRadius: 12,
+    padding: 8,
+    minWidth: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  deleteMenuItem: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    marginTop: 0,
+  },
+  menuItemText: {
+    fontSize: 16,
+    marginLeft: 12,
+    fontWeight: '500',
   },
 });

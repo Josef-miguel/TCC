@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: 0,
     marginBottom: 5,
   },
   optionDescription: {
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 20,
+    marginTop: 0,
   },
   primaryButton: {
     flex: 1,

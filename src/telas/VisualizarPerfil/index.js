@@ -563,12 +563,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    marginTop: 16,
+    marginTop: 0,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 0,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -583,12 +583,12 @@ const styles = StyleSheet.create({
   nonOrganizerText: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 16,
+    marginTop: 0,
     textAlign: 'center',
   },
   nonOrganizerSubtext: {
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 0,
     textAlign: 'center',
     lineHeight: 20,
   },

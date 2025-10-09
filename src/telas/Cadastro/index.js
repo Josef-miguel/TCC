@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.lg,
   },
   linkContainer: {
-    marginTop: spacing.lg,
+    marginTop: 0,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.base,
     minHeight: 44,
