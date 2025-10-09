@@ -47,31 +47,83 @@
       <div class="filter-tags" id="filterTags"></div>
     </div>
 
-    <!-- Resultados da pesquisa -->
-    <div class="search-results">
-      <div class="results-header" id="resultsHeader" style="display: none;">
-        <h2 id="resultsTitle">Resultados da pesquisa</h2>
-        <div class="results-count" id="resultsCount"></div>
-      </div>
-      
-      <div class="results-grid" id="resultsGrid">
-        <!-- Os resultados serão inseridos aqui via JavaScript -->
-      </div>
-      
-      <div class="no-results" id="noResults" style="display: none;">
-        <div class="no-results-content">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
-            <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <!-- Sistema de Abas -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button class="tab-button active" id="tripsTab" data-tab="trips">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
           </svg>
-          <h3>Nenhum resultado encontrado</h3>
-          <p>Tente ajustar seus filtros ou usar termos de pesquisa diferentes.</p>
+          Viagens
+        </button>
+        <button class="tab-button" id="usersTab" data-tab="users">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Usuários
+        </button>
+      </div>
+
+      <!-- Conteúdo da aba Viagens -->
+      <div class="tab-content active" id="tripsContent">
+        <div class="search-results">
+          <div class="results-header" id="resultsHeader" style="display: none;">
+            <h2 id="resultsTitle">Resultados da pesquisa</h2>
+            <div class="results-count" id="resultsCount"></div>
+          </div>
+          
+          <div class="results-grid" id="resultsGrid">
+            <!-- Os resultados serão inseridos aqui via JavaScript -->
+          </div>
+          
+          <div class="no-results" id="noResults" style="display: none;">
+            <div class="no-results-content">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <h3>Nenhum resultado encontrado</h3>
+              <p>Tente ajustar seus filtros ou usar termos de pesquisa diferentes.</p>
+            </div>
+          </div>
+          
+          <div class="loading" id="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Pesquisando...</p>
+          </div>
         </div>
       </div>
-      
-      <div class="loading" id="loading" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>Pesquisando...</p>
+
+      <!-- Conteúdo da aba Usuários -->
+      <div class="tab-content" id="usersContent">
+        <div class="search-results">
+          <div class="results-header" id="usersResultsHeader" style="display: none;">
+            <h2 id="usersResultsTitle">Usuários encontrados</h2>
+            <div class="results-count" id="usersResultsCount"></div>
+          </div>
+          
+          <div class="users-grid" id="usersGrid">
+            <!-- Os usuários serão inseridos aqui via JavaScript -->
+          </div>
+          
+          <div class="no-results" id="usersNoResults" style="display: none;">
+            <div class="no-results-content">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <h3>Nenhum usuário encontrado</h3>
+              <p>Tente usar termos de pesquisa diferentes.</p>
+            </div>
+          </div>
+          
+          <div class="loading" id="usersLoading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Pesquisando usuários...</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -188,6 +240,7 @@
     </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -211,15 +264,57 @@ document.addEventListener('DOMContentLoaded', function() {
   const appliedFilters = document.getElementById('appliedFilters');
   const filterTags = document.getElementById('filterTags');
 
+  // Elementos das abas
+  const tripsTab = document.getElementById('tripsTab');
+  const usersTab = document.getElementById('usersTab');
+  const tripsContent = document.getElementById('tripsContent');
+  const usersContent = document.getElementById('usersContent');
+  
+  // Elementos da busca de usuários
+  const usersGrid = document.getElementById('usersGrid');
+  const usersResultsHeader = document.getElementById('usersResultsHeader');
+  const usersResultsTitle = document.getElementById('usersResultsTitle');
+  const usersResultsCount = document.getElementById('usersResultsCount');
+  const usersNoResults = document.getElementById('usersNoResults');
+  const usersLoading = document.getElementById('usersLoading');
+
   let currentFilters = {};
   let searchResults = [];
+  let currentTab = 'trips';
 
   // Função para mostrar/ocultar loading
   function showLoading(show) {
     loading.style.display = show ? 'block' : 'none';
   }
 
-  // Função para realizar busca
+  // Função para mostrar/ocultar loading de usuários
+  function showUsersLoading(show) {
+    usersLoading.style.display = show ? 'block' : 'none';
+  }
+
+  // Função para alternar entre abas
+  function switchTab(tabName) {
+    // Atualizar botões das abas
+    tripsTab.classList.toggle('active', tabName === 'trips');
+    usersTab.classList.toggle('active', tabName === 'users');
+    
+    // Atualizar conteúdo das abas
+    tripsContent.classList.toggle('active', tabName === 'trips');
+    usersContent.classList.toggle('active', tabName === 'users');
+    
+    currentTab = tabName;
+    
+    // Realizar busca na aba ativa
+    if (searchInput.value.trim()) {
+      if (tabName === 'trips') {
+        performSearch(searchInput.value.trim(), currentFilters);
+      } else {
+        performUsersSearch(searchInput.value.trim());
+      }
+    }
+  }
+
+  // Função para realizar busca de viagens
   async function performSearch(query = '', filters = {}) {
     showLoading(true);
     hideResults();
@@ -258,7 +353,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Função para exibir resultados
+  // Função para realizar busca de usuários
+  async function performUsersSearch(query = '') {
+    showUsersLoading(true);
+    hideUsersResults();
+
+    try {
+      const params = new URLSearchParams();
+      if (query) params.append('q', query);
+
+      const response = await fetch(`/search_users_api?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.success) {
+        displayUsersResults(data.results || [], query);
+      } else {
+        console.error('Erro na busca de usuários:', data.message);
+        showUsersNoResults();
+      }
+    } catch (error) {
+      console.error('Erro ao realizar busca de usuários:', error);
+      showUsersNoResults();
+    } finally {
+      showUsersLoading(false);
+    }
+  }
+
+  // Função para exibir resultados de viagens
   function displayResults(results, query) {
     if (results.length === 0) {
       showNoResults();
@@ -273,6 +394,24 @@ document.addEventListener('DOMContentLoaded', function() {
     results.forEach(event => {
       const eventCard = createEventCard(event);
       resultsGrid.appendChild(eventCard);
+    });
+  }
+
+  // Função para exibir resultados de usuários
+  function displayUsersResults(results, query) {
+    if (results.length === 0) {
+      showUsersNoResults();
+      return;
+    }
+
+    usersResultsHeader.style.display = 'block';
+    usersResultsTitle.textContent = query ? `Usuários encontrados para "${query}"` : 'Todos os usuários';
+    usersResultsCount.textContent = `${results.length} usuário${results.length !== 1 ? 's' : ''} encontrado${results.length !== 1 ? 's' : ''}`;
+
+    usersGrid.innerHTML = '';
+    results.forEach(user => {
+      const userCard = createUserCard(user);
+      usersGrid.appendChild(userCard);
     });
   }
 
@@ -329,18 +468,73 @@ document.addEventListener('DOMContentLoaded', function() {
     return card;
   }
 
-  // Função para mostrar "nenhum resultado"
+  // Função para criar card do usuário
+  function createUserCard(user) {
+    const card = document.createElement('div');
+    card.className = 'user-card';
+    
+    card.innerHTML = `
+      <div class="user-avatar">
+        ${user.profileImage ? 
+          `<img src="${user.profileImage}" alt="${user.name}" loading="lazy">` : 
+          '<div class="default-avatar">' + (user.name ? user.name.charAt(0).toUpperCase() : 'U') + '</div>'
+        }
+      </div>
+      <div class="user-content">
+        <h3 class="user-name">${user.name || 'Nome não informado'}</h3>
+        <p class="user-email">${user.email || 'Email não informado'}</p>
+        <div class="user-details">
+          <div class="user-role">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2"/>
+              <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2"/>
+              <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>${user.isOrganizer ? 'Organizador' : 'Participante'}</span>
+          </div>
+          <div class="user-events-count">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>${user.organizedEventsCount || 0} viagens organizadas</span>
+          </div>
+        </div>
+        <div class="user-actions">
+          <button class="btn btn-primary" onclick="viewUserProfile('${user.uid}')">Ver Perfil</button>
+        </div>
+      </div>
+    `;
+    
+    return card;
+  }
+
+  // Função para mostrar "nenhum resultado" de viagens
   function showNoResults() {
     resultsHeader.style.display = 'none';
     resultsGrid.innerHTML = '';
     noResults.style.display = 'block';
   }
 
-  // Função para ocultar resultados
+  // Função para ocultar resultados de viagens
   function hideResults() {
     resultsHeader.style.display = 'none';
     resultsGrid.innerHTML = '';
     noResults.style.display = 'none';
+  }
+
+  // Função para mostrar "nenhum resultado" de usuários
+  function showUsersNoResults() {
+    usersResultsHeader.style.display = 'none';
+    usersGrid.innerHTML = '';
+    usersNoResults.style.display = 'block';
+  }
+
+  // Função para ocultar resultados de usuários
+  function hideUsersResults() {
+    usersResultsHeader.style.display = 'none';
+    usersGrid.innerHTML = '';
+    usersNoResults.style.display = 'none';
   }
 
   // Função para atualizar filtros aplicados
@@ -407,11 +601,21 @@ document.addEventListener('DOMContentLoaded', function() {
     performSearch(searchInput.value, currentFilters);
   };
 
+  // Função para visualizar perfil do usuário
+  window.viewUserProfile = function(userId) {
+    window.location.href = `/user/${userId}`;
+  };
+
+
   // Event listeners
   searchForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const query = searchInput.value.trim();
-    performSearch(query, currentFilters);
+    if (currentTab === 'trips') {
+      performSearch(query, currentFilters);
+    } else {
+      performUsersSearch(query);
+    }
   });
 
   filterBtn.addEventListener('click', function() {
@@ -466,6 +670,16 @@ document.addEventListener('DOMContentLoaded', function() {
     performSearch(searchInput.value, currentFilters);
   });
 
+  // Event listeners das abas
+  tripsTab.addEventListener('click', function() {
+    switchTab('trips');
+  });
+
+  usersTab.addEventListener('click', function() {
+    switchTab('users');
+  });
+
+
   // Funções globais para os botões dos cards
   window.joinEvent = function(eventId) {
     // Implementar lógica de participar do evento
@@ -481,12 +695,21 @@ document.addEventListener('DOMContentLoaded', function() {
   // Se houver uma query na URL, usar ela; senão, carregar todos os eventos
   const urlParams = new URLSearchParams(window.location.search);
   const initialQuery = urlParams.get('q') || '';
+  const initialTab = urlParams.get('tab') || 'trips';
   
   if (initialQuery) {
     searchInput.value = initialQuery;
   }
   
-  performSearch(initialQuery);
+  // Definir aba inicial
+  switchTab(initialTab);
+  
+  // Realizar busca inicial
+  if (initialTab === 'trips') {
+    performSearch(initialQuery);
+  } else {
+    performUsersSearch(initialQuery);
+  }
 });
 </script>
 
@@ -896,13 +1119,162 @@ document.addEventListener('DOMContentLoaded', function() {
   padding: 0.75rem;
 }
 
+/* Estilos das Abas */
+.tabs-container {
+  margin-top: 2rem;
+}
+
+.tabs-header {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 0.5rem;
+  margin-bottom: 2rem;
+  gap: 0.5rem;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tab-button.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Estilos dos Cards de Usuários */
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.user-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.default-avatar {
+  width: 100%;
+  height: 100%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.default-avatar.large {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+}
+
+.user-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+}
+
+.user-email {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.user-details > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.user-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.user-actions .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
   .search-header h1 {
     font-size: 2rem;
   }
   
-  .results-grid {
+  .results-grid, .users-grid {
     grid-template-columns: 1fr;
   }
   
@@ -917,6 +1289,28 @@ document.addEventListener('DOMContentLoaded', function() {
   
   .modal-footer {
     flex-direction: column;
+  }
+
+  .tabs-header {
+    flex-direction: column;
+  }
+
+  .user-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .user-profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .user-profile-stats {
+    justify-content: center;
+  }
+
+  .user-events-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

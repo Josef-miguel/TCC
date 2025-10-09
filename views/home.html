@@ -45,8 +45,8 @@
           </div>
           <div class="rating-section">
             <div class="fire-rating" id="fire-rating-{{ event.id }}">
-              <ion-icon name="{% if event.ratingCount and event.ratingCount > 0 %}flame{% else %}flame-outline{% endif %}" class="fire-icon"></ion-icon>
-              <span class="rating-count" id="rating-count-{{ event.id }}">{{ event.ratingCount or 0 }}</span>
+              <ion-icon name="{% if event.favoriteCount and event.favoriteCount > 0 %}flame{% else %}flame-outline{% endif %}" class="fire-icon"></ion-icon>
+              <span class="rating-count" id="rating-count-{{ event.id }}">{{ event.favoriteCount or 0 }}</span>
             </div>
           </div>
         </div>
@@ -137,8 +137,8 @@
           <!-- Botão de expandir informações -->
           <div class="expand-info-section">
             <button class="expand-info-btn" data-event-id="{{ event.id }}">
-              <span>Ver mais detalhes</span>
-              <ion-icon name="chevron-down-outline"></ion-icon>
+              <span>View More</span>
+              <ion-icon name="chevron-forward-outline"></ion-icon>
             </button>
           </div>
         </div>
@@ -271,20 +271,20 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
           expandedInfo.style.maxHeight = expandedInfo.scrollHeight + 'px';
           expandedInfo.style.opacity = '1';
-          // Atualizar apenas o ícone (não todos os ícones)
+          // Alterar ícone para seta para baixo quando expandido
           const chevronIcon = btn.querySelector('ion-icon');
           if (chevronIcon) {
-            chevronIcon.name = 'chevron-up-outline';
+            chevronIcon.name = 'chevron-down-outline';
           }
         }, 10);
       } else {
         // Animar contração
         expandedInfo.style.maxHeight = '0px';
         expandedInfo.style.opacity = '0';
-        // Atualizar apenas o ícone (não todos os ícones)
+        // Alterar ícone para seta para frente quando contraído
         const chevronIcon = btn.querySelector('ion-icon');
         if (chevronIcon) {
-          chevronIcon.name = 'chevron-down-outline';
+          chevronIcon.name = 'chevron-forward-outline';
         }
         
         setTimeout(() => {
@@ -365,27 +365,69 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   // Função para carregar comentários
-  async function loadComments(eventId) {
+  async function loadComments(eventId, page = 1, append = false) {
     try {
-      const response = await fetch(`/api/comments/${eventId}`);
+      const response = await fetch(`/api/comments/${eventId}?page=${page}&limit=5`);
       const data = await response.json();
       
       if (data.success) {
         const commentsList = document.getElementById(`comments-list-${eventId}`);
         if (commentsList) {
-          commentsList.innerHTML = '';
+          if (!append) {
+            commentsList.innerHTML = '';
+          }
+          
           data.comments.forEach(comment => {
             const commentElement = document.createElement('div');
             commentElement.className = 'comment-item';
+            
+            // Formatar data corretamente
+            let formattedDate = 'Data inválida';
+            if (comment.data_criacao_formatted) {
+              formattedDate = comment.data_criacao_formatted;
+            } else if (comment.data_criacao) {
+              try {
+                const date = comment.data_criacao.toDate ? comment.data_criacao.toDate() : new Date(comment.data_criacao);
+                formattedDate = date.toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+              } catch (e) {
+                console.error('Erro ao formatar data:', e);
+                formattedDate = 'Data inválida';
+              }
+            }
+            
             commentElement.innerHTML = `
               <div class="comment-header">
                 <strong>${comment.author_name || 'Usuário'}</strong>
-                <span class="comment-date">${new Date(comment.created_at).toLocaleDateString()}</span>
+                <span class="comment-date">${formattedDate}</span>
               </div>
-              <div class="comment-content">${comment.content}</div>
+              <div class="comment-content">${comment.texto || comment.content || 'Comentário sem conteúdo'}</div>
             `;
             commentsList.appendChild(commentElement);
           });
+          
+          // Adicionar botão "Carregar mais" se houver mais comentários
+          if (data.has_more && !append) {
+            const loadMoreBtn = document.createElement('button');
+            loadMoreBtn.className = 'btn btn-secondary load-more-comments';
+            loadMoreBtn.textContent = 'Carregar mais comentários';
+            loadMoreBtn.dataset.eventId = eventId;
+            loadMoreBtn.dataset.page = page + 1;
+            loadMoreBtn.style.marginTop = '1rem';
+            loadMoreBtn.style.width = '100%';
+            
+            loadMoreBtn.addEventListener('click', () => {
+              loadComments(eventId, page + 1, true);
+              loadMoreBtn.remove();
+            });
+            
+            commentsList.appendChild(loadMoreBtn);
+          }
         }
       }
     } catch (error) {
@@ -401,12 +443,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!content) return;
     
     try {
-      const response = await fetch(`/api/comments/${eventId}`, {
+      const response = await fetch(`/api/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: content })
+        body: JSON.stringify({ 
+          event_id: eventId,
+          texto: content,
+          nota: 5 // Nota padrão
+        })
       });
       
       const data = await response.json();
@@ -415,9 +461,13 @@ document.addEventListener("DOMContentLoaded", () => {
         textarea.value = '';
         loadComments(eventId);
         loadCommentsCount(eventId);
+      } else {
+        console.error('Erro ao criar comentário:', data.message);
+        alert('Erro ao criar comentário: ' + (data.message || 'Erro desconhecido'));
       }
     } catch (error) {
       console.error('Erro ao submeter comentário:', error);
+      alert('Erro ao submeter comentário. Tente novamente.');
     }
   }
   
@@ -439,7 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll('.clickable-post, .clickable-element').forEach(element => {
     element.addEventListener('click', (e) => {
       // Evitar redirecionamento se clicou em botões ou elementos interativos
-      if (e.target.closest('button') || e.target.closest('form') || e.target.closest('input') || e.target.closest('textarea')) {
+      if (e.target.closest('button') || e.target.closest('form') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('.map') || e.target.closest('.map-container') || e.target.closest('.leaflet-container')) {
         return;
       }
       
@@ -528,20 +578,48 @@ document.addEventListener("DOMContentLoaded", () => {
     const icon = document.getElementById(`heart-icon-${eventId}`);
     const text = document.getElementById(`favorite-text-${eventId}`);
     const btn = document.getElementById(`favorite-btn-${eventId}`);
+    const fireRating = document.getElementById(`fire-rating-${eventId}`);
+    const fireIcon = fireRating.querySelector('.fire-icon');
+    const ratingCount = document.getElementById(`rating-count-${eventId}`);
     
     if (isFavorited) {
       icon.name = 'heart';
       text.textContent = 'Favoritado';
       btn.classList.add('favorited');
+      
+      // Atualizar fire-rating para vermelho
+      fireRating.classList.add('favorited');
+      fireIcon.name = 'flame';
+      
+      // Atualizar contador de favoritos
+      const currentCount = parseInt(ratingCount.textContent) || 0;
+      ratingCount.textContent = currentCount + 1;
     } else {
       icon.name = 'heart-outline';
       text.textContent = 'Favoritar';
       btn.classList.remove('favorited');
+      
+      // Remover classe favorited do fire-rating
+      fireRating.classList.remove('favorited');
+      fireIcon.name = 'flame-outline';
+      
+      // Atualizar contador de favoritos
+      const currentCount = parseInt(ratingCount.textContent) || 0;
+      ratingCount.textContent = Math.max(0, currentCount - 1);
     }
   }
   
   // Inicializar sistema de favoritos
   initializeFavorites();
+  
+  // Tornar fire-rating clicável
+  document.querySelectorAll('.fire-rating').forEach(fireRating => {
+    fireRating.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const eventId = fireRating.id.replace('fire-rating-', '');
+      toggleFavorite(eventId);
+    });
+  });
   
   // ==================== MAPAS ====================
   
@@ -563,43 +641,87 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const centerLat = (route.start.latitude + route.end.latitude) / 2;
-    const centerLng = (route.start.longitude + route.end.longitude) / 2;
+    // Calcular centro e zoom para focar no trajeto completo
+    const startLat = route.start.latitude;
+    const startLng = route.start.longitude;
+    const endLat = route.end.latitude;
+    const endLng = route.end.longitude;
+    
+    // Calcular o centro entre os dois pontos
+    const centerLat = (startLat + endLat) / 2;
+    const centerLng = (startLng + endLng) / 2;
+    
+    // Calcular distância entre os pontos
+    const latDiff = Math.abs(startLat - endLat);
+    const lngDiff = Math.abs(startLng - endLng);
+    const maxDiff = Math.max(latDiff, lngDiff);
+    
+    // Definir zoom baseado na distância (zoom mais baixo para evitar bugs nos tiles)
+    let zoomLevel;
+    if (maxDiff > 1.0) {
+      zoomLevel = 4;  // Para viagens muito longas
+    } else if (maxDiff > 0.5) {
+      zoomLevel = 5;  // Para viagens longas
+    } else if (maxDiff > 0.1) {
+      zoomLevel = 6;  // Para viagens médias
+    } else {
+      zoomLevel = 7;  // Para viagens curtas
+    }
 
-    const map = L.map(div.id).setView([centerLat, centerLng], 8);
-
+    const map = L.map(div.id, {
+      zoomControl: true,
+      dragging: true,
+      touchZoom: true,
+      doubleClickZoom: true,
+      scrollWheelZoom: true,
+      boxZoom: true,
+      keyboard: true,
+      preferCanvas: false,
+      renderer: L.svg()
+    });
+    
+    // Adicionar tiles primeiro
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+      maxZoom: 8,  // Zoom máximo baixo para evitar bugs nos tiles
+      subdomains: ['a', 'b', 'c'],
+      errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
     }).addTo(map);
+    
+    // Definir a visualização inicial com centro e zoom calculados
+    map.setView([centerLat, centerLng], zoomLevel);
 
     // Marcadores
-    L.marker([route.start.latitude, route.start.longitude])
+    L.marker([startLat, startLng])
       .addTo(map)
       .bindPopup(route.display_start || "Saída");
 
-    L.marker([route.end.latitude, route.end.longitude])
+    L.marker([endLat, endLng])
       .addTo(map)
       .bindPopup(route.display_end || "Chegada");
 
-    // Linha da rota
-    L.Routing.control({
-      waypoints: [
-        L.latLng(route.start.latitude, route.start.longitude),
-        L.latLng(route.end.latitude, route.end.longitude)
-      ],
-      lineOptions: { styles: [{ color: 'blue', opacity: 0.7, weight: 4 }] },
-      addWaypoints: false,
-      draggableWaypoints: false,
-      routeWhileDragging: false,
-      fitSelectedRoutes: true,
-      showAlternatives: false
-    })
-    .on('routesfound', e => console.log("Rota encontrada:", e.routes))
-    .on('routingerror', e => console.error("Erro no roteamento:", e))
-    .addTo(map);
+    // Linha da rota simples (sem roteamento automático para evitar problemas de zoom)
+    const routeLine = L.polyline([
+      [startLat, startLng],
+      [endLat, endLng]
+    ], {
+      color: 'blue',
+      opacity: 0.7,
+      weight: 4,
+      dashArray: '10, 10'  // Linha tracejada para indicar que é uma rota aproximada
+    }).addTo(map);
 
-    // força o redimensionamento
-    setTimeout(() => map.invalidateSize(), 500);
+    // força o redimensionamento e renderização completa
+    setTimeout(() => {
+      map.invalidateSize();
+      // Garantir que os pontos estejam visíveis
+      map.setView([centerLat, centerLng], zoomLevel);
+    }, 500);
+    
+    // Redimensionar novamente após um tempo maior para garantir renderização completa
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 1000);
   });
 });
 </script>

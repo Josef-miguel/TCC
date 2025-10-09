@@ -822,7 +822,6 @@ footer {
     width: 280px;
     height: 100vh;
     background: var(--background-secondary);
-    border-right: 1px solid var(--border);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     padding: 1.5rem;
     padding-top: 5rem; /* Espaço para a navbar */
@@ -833,6 +832,22 @@ footer {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 0 20px 20px 0;
+}
+
+/* Tema Claro - Sidebar com efeito de vidro laranja */
+[data-theme="light"] .sidebar {
+    background-color: rgba(255, 107, 0, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 2px 20px rgba(255, 107, 0, 0.1);
+}
+
+/* Tema Escuro - Sidebar com efeito de vidro padrão */
+[data-theme="dark"] .sidebar {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* Estado minimizado da sidebar */
@@ -4991,6 +5006,91 @@ ion-icon.xlarge {
     font-weight: 500;
 }
 
+.message-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.edited-indicator {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Ações da mensagem */
+.message-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    margin-left: 0.5rem;
+}
+
+.message:hover .message-actions {
+    opacity: 1;
+}
+
+.group-message:hover .message-actions {
+    opacity: 1;
+}
+
+.edit-btn, .delete-btn {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+
+.edit-btn {
+    color: var(--secondary);
+    background: rgba(0, 119, 182, 0.1);
+}
+
+.edit-btn:hover {
+    background: rgba(0, 119, 182, 0.2);
+    transform: scale(1.1);
+}
+
+.delete-btn {
+    color: var(--error);
+    background: rgba(234, 67, 53, 0.1);
+}
+
+.delete-btn:hover {
+    background: rgba(234, 67, 53, 0.2);
+    transform: scale(1.1);
+}
+
+.edit-btn ion-icon, .delete-btn ion-icon {
+    font-size: 0.9rem;
+}
+
+/* Estilos responsivos para ações de mensagem */
+@media (max-width: 768px) {
+    .message-actions {
+        opacity: 1; /* Sempre visível em mobile */
+    }
+    
+    .edit-btn, .delete-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .edit-btn ion-icon, .delete-btn ion-icon {
+        font-size: 1rem;
+    }
+}
+
 /* Indicador de digitação */
 .typing-indicator {
     display: flex;
@@ -6411,6 +6511,126 @@ ion-icon.xlarge {
     margin-left: 0.25rem;
 }
 
+/* Fire Rating - Sistema de Favoritos */
+.fire-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.fire-rating:hover {
+    transform: scale(1.05);
+}
+
+.fire-icon {
+    font-size: 1.2rem;
+    color: #FF6B35;
+    transition: all var(--transition-normal);
+}
+
+.fire-rating.favorited .fire-icon {
+    color: #FF4444;
+    filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.6));
+    animation: flame-pulse 2s ease-in-out infinite;
+}
+
+@keyframes flame-pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.6));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 8px rgba(255, 68, 68, 0.8));
+    }
+}
+
+/* Comentários - Estilos Melhorados */
+.comments-section {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    padding-top: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+.comments-container {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.comment-item {
+    background: var(--background-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all var(--transition-normal);
+}
+
+.comment-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-header strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.comment-date {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.comment-content {
+    color: var(--text-primary);
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.comment-form {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    padding: 1rem;
+    background: var(--background-tertiary);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.comment-form textarea {
+    flex: 1;
+    min-height: 80px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: var(--background-secondary);
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+.comment-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+}
+
+.comment-form .btn {
+    white-space: nowrap;
+    padding: 0.75rem 1.5rem;
+}
+
 /* Suporte para meias estrelas */
 .rating-section .stars ion-icon[name="star-half"] {
     color: #FFD700;
@@ -6445,7 +6665,7 @@ ion-icon.xlarge {
 /* Imagem */
 .post-image {
     width: 100%;
-    height: 250px;
+    height: 320px;
     overflow: hidden;
 }
 
@@ -6677,7 +6897,7 @@ ion-icon.xlarge {
     }
     
     .post-image {
-        height: 200px;
+        height: 260px;
     }
     
     .trip-info {
@@ -6740,7 +6960,7 @@ ion-icon.xlarge {
 
 @media (max-width: 480px) {
     .post-image {
-        height: 180px;
+        height: 220px;
     }
     
     .post-header {
@@ -6848,29 +7068,45 @@ ion-icon.xlarge {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
     width: 100%;
     padding: 1rem 1.5rem;
-    background: var(--gradient-primary);
-    color: white;
-    border: none;
-    border-radius: 12px;
+    background: #ffffff;
+    color: #6B46C1;
+    border: 1px solid #E5E7EB;
+    border-radius: 0;
     font-size: 0.875rem;
     font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0.25px;
     cursor: pointer;
     transition: var(--transition-normal);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
+    margin-top: 1rem;
 }
 
 .expand-info-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    background: #F3F4F6;
+    border-color: #6B46C1;
 }
 
 .expand-info-btn ion-icon {
-    font-size: 1.125rem;
+    font-size: 1rem;
     transition: var(--transition-normal);
 }
+
+/* Tema escuro */
+[data-theme="dark"] .expand-info-btn {
+    background: #1F2937;
+    color: #A78BFA;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .expand-info-btn:hover {
+    background: #374151;
+    border-color: #A78BFA;
+}
+
 
 /* Informações expandidas */
 .card-info-expanded {
@@ -6950,9 +7186,60 @@ ion-icon.xlarge {
     border: 1px solid var(--card-border);
 }
 
+/* Estilos para o mapa funcionar corretamente */
 .map {
     height: 200px;
     width: 100%;
+    pointer-events: auto !important;
+    z-index: 1000;
+    position: relative;
+}
+
+.map-container {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1000;
+    overflow: visible;
+}
+
+.map-section {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1000;
+}
+
+/* Garantir que o Leaflet funcione corretamente */
+.leaflet-container {
+    pointer-events: auto !important;
+    z-index: 1000 !important;
+    position: relative !important;
+    background: #f8f9fa !important;
+}
+
+.leaflet-control-container {
+    pointer-events: auto !important;
+    z-index: 1001 !important;
+}
+
+.leaflet-popup-content-wrapper {
+    pointer-events: auto !important;
+    z-index: 1002 !important;
+}
+
+.leaflet-tile-container {
+    pointer-events: auto !important;
+}
+
+.leaflet-tile {
+    pointer-events: auto !important;
+}
+
+/* Garantir que o mapa não seja afetado por outros estilos */
+.simple-post .map,
+.simple-post .map-container,
+.simple-post .map-section {
+    pointer-events: auto !important;
+    z-index: 1000 !important;
 }
 
 /* Responsividade para cards com swipe */
@@ -7102,29 +7389,6 @@ ion-icon.xlarge {
     color: rgba(255, 255, 255, 0.9);
 }
 
-.expand-info-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    backdrop-filter: blur(10px);
-}
-
-.expand-info-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
-.expand-info-btn ion-icon {
-    font-size: 1.25rem;
-}
 
 .card-title {
     margin: 1rem 0;

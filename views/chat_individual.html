@@ -107,16 +107,34 @@ function createMessageElement(message) {
 
     const senderName = message.name || "Usuário";
     const timeString = ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const isEdited = message.edited || false;
+    const isOldMessage = (Date.now() - ts.getTime()) > 3600000; // 1 hora em ms
     
     msgEl.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
+    msgEl.setAttribute('data-message-id', message.id);
     
     if (isOwnMessage) {
+        const editDeleteButtons = !isOldMessage ? `
+            <div class="message-actions">
+                <button class="edit-btn" onclick="editMessage('${message.id}', '${message.text.replace(/'/g, "\\'")}')">
+                    <ion-icon name="create-outline"></ion-icon>
+                </button>
+                <button class="delete-btn" onclick="deleteMessage('${message.id}')">
+                    <ion-icon name="trash-outline"></ion-icon>
+                </button>
+            </div>
+        ` : '';
+        
         msgEl.innerHTML = `
             <div class="message-content">
                 <div class="message-bubble">
                     <p class="message-text">${message.text}</p>
-                    <span class="message-time">${timeString}</span>
+                    <div class="message-footer">
+                        <span class="message-time">${timeString}</span>
+                        ${isEdited ? '<span class="edited-indicator">(editado)</span>' : ''}
+                    </div>
                 </div>
+                ${editDeleteButtons}
             </div>
         `;
     } else {
@@ -130,7 +148,10 @@ function createMessageElement(message) {
                         <span class="sender-name">${senderName}</span>
                     </div>
                     <p class="message-text">${message.text}</p>
-                    <span class="message-time">${timeString}</span>
+                    <div class="message-footer">
+                        <span class="message-time">${timeString}</span>
+                        ${isEdited ? '<span class="edited-indicator">(editado)</span>' : ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -155,6 +176,88 @@ document.getElementById('send-btn').addEventListener('click', async () => {
     document.getElementById('message-input').value = '';
     fetchMessages();
 });
+
+// Função para editar mensagem
+async function editMessage(messageId, currentText) {
+    const newText = prompt('Editar mensagem:', currentText);
+    if (newText === null || newText.trim() === currentText.trim()) return;
+    
+    if (newText.trim().length === 0) {
+        alert('A mensagem não pode estar vazia');
+        return;
+    }
+    
+    if (newText.length > 1000) {
+        alert('A mensagem é muito longa (máximo 1000 caracteres)');
+        return;
+    }
+    
+    try {
+        const requestData = {
+            text: newText.trim(),
+            chat_type: 'individual',
+            chat_id: chatUid
+        };
+        
+        console.log('Enviando dados para edição:', requestData);
+        console.log('Message ID:', messageId);
+        
+        const res = await fetch(`/api/messages/${messageId}/edit`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(requestData)
+        });
+        
+        console.log('Resposta do servidor:', res.status, res.statusText);
+        
+        const result = await res.json();
+        console.log('Resultado da edição:', result);
+        
+        if (result.success) {
+            fetchMessages(); // Recarregar mensagens
+        } else {
+            alert(result.message || 'Erro ao editar mensagem');
+        }
+    } catch (error) {
+        console.error('Erro ao editar mensagem:', error);
+        alert('Erro ao editar mensagem');
+    }
+}
+
+// Função para excluir mensagem
+async function deleteMessage(messageId) {
+    if (!confirm('Tem certeza que deseja excluir esta mensagem?')) return;
+    
+    try {
+        const requestData = {
+            chat_type: 'individual',
+            chat_id: chatUid
+        };
+        
+        console.log('Enviando dados para exclusão:', requestData);
+        console.log('Message ID:', messageId);
+        
+        const res = await fetch(`/api/messages/${messageId}/delete`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(requestData)
+        });
+        
+        console.log('Resposta do servidor:', res.status, res.statusText);
+        
+        const result = await res.json();
+        console.log('Resultado da exclusão:', result);
+        
+        if (result.success) {
+            fetchMessages(); // Recarregar mensagens
+        } else {
+            alert(result.message || 'Erro ao excluir mensagem');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir mensagem:', error);
+        alert('Erro ao excluir mensagem');
+    }
+}
 
 </script>
 
