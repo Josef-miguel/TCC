@@ -4007,10 +4007,9 @@ ion-icon.xlarge {
 .description-text {
     font-size: 1.1rem;
     line-height: 1.7;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
     margin-bottom: 1rem;
     font-weight: 400;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .post-hashtags {
@@ -6421,6 +6420,20 @@ ion-icon.xlarge {
     margin-bottom: 2rem;
     border: 1px solid var(--border-light);
     overflow: hidden;
+    position: relative;
+}
+
+/* Texto de participação discreto */
+.participation-text {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.participation-text span {
+    font-size: 0.75rem;
+    color: #22c55e;
+    font-weight: 500;
+    opacity: 0.9;
 }
 
 /* Header do Post */
@@ -7424,7 +7437,7 @@ ion-icon.xlarge {
 }
 
 .card-info-expanded {
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--background-secondary);
     backdrop-filter: blur(10px);
     border-radius: 16px;
     margin-top: 1rem;
@@ -7443,7 +7456,7 @@ ion-icon.xlarge {
 .description-section p {
     font-size: 1rem;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -8869,7 +8882,7 @@ ion-icon.xlarge {
 
 .tag {
   background: var(--primary-light);
-  color: var(--primary-dark);
+  color: white;
   padding: 0.375rem 0.75rem;
   border-radius: 16px;
   font-size: 0.875rem;
@@ -9557,10 +9570,13 @@ ion-icon.xlarge {
 }
 
 .tag {
-    color: var(--primary);
+    background: var(--primary);
+    color: white;
     text-decoration: none;
     font-weight: 500;
     margin-right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
 }
 
 .post-metadata {

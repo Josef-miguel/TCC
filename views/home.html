@@ -48,6 +48,15 @@
               <ion-icon name="{% if event.favoriteCount and event.favoriteCount > 0 %}flame{% else %}flame-outline{% endif %}" class="fire-icon"></ion-icon>
               <span class="rating-count" id="rating-count-{{ event.id }}">{{ event.favoriteCount or 0 }}</span>
             </div>
+            {% if user %}
+              {% for joined_event_id in user.joinedEvents %}
+                {% if joined_event_id == event.id %}
+                  <div class="participation-text">
+                    <span>Você está participando</span>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
           </div>
         </div>
 
@@ -211,12 +220,12 @@
           </div>
         </div>
 
+
         <!-- Status de participação -->
         {% if user %}
           {% for events in user.joinedEvents %}
             {% if events == event.id %}
             <div class="participation-status">
-              <p class="status-message">Você já está participando desta viagem!</p>
               <form action="{{url_for('chat_group')}}" method="post">
                 <input type="hidden" name="org_uid" value="{{ event.id }}">
                 <button class="btn btn-secondary">Falar com o grupo</button>
@@ -651,45 +660,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const centerLat = (startLat + endLat) / 2;
     const centerLng = (startLng + endLng) / 2;
     
-    // Calcular distância entre os pontos
-    const latDiff = Math.abs(startLat - endLat);
-    const lngDiff = Math.abs(startLng - endLng);
-    const maxDiff = Math.max(latDiff, lngDiff);
-    
-    // Definir zoom baseado na distância (zoom mais baixo para evitar bugs nos tiles)
-    let zoomLevel;
-    if (maxDiff > 1.0) {
-      zoomLevel = 4;  // Para viagens muito longas
-    } else if (maxDiff > 0.5) {
-      zoomLevel = 5;  // Para viagens longas
-    } else if (maxDiff > 0.1) {
-      zoomLevel = 6;  // Para viagens médias
-    } else {
-      zoomLevel = 7;  // Para viagens curtas
-    }
 
-    const map = L.map(div.id, {
-      zoomControl: true,
-      dragging: true,
-      touchZoom: true,
-      doubleClickZoom: true,
-      scrollWheelZoom: true,
-      boxZoom: true,
-      keyboard: true,
-      preferCanvas: false,
-      renderer: L.svg()
-    });
-    
-    // Adicionar tiles primeiro
+    const map = L.map(div.id).setView([centerLat, centerLng], 8);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-      maxZoom: 8,  // Zoom máximo baixo para evitar bugs nos tiles
-      subdomains: ['a', 'b', 'c'],
-      errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
     }).addTo(map);
-    
-    // Definir a visualização inicial com centro e zoom calculados
-    map.setView([centerLat, centerLng], zoomLevel);
 
     // Marcadores
     L.marker([startLat, startLng])
@@ -711,17 +687,14 @@ document.addEventListener("DOMContentLoaded", () => {
       dashArray: '10, 10'  // Linha tracejada para indicar que é uma rota aproximada
     }).addTo(map);
 
-    // força o redimensionamento e renderização completa
+    // força o redimensionamento
     setTimeout(() => {
-      map.invalidateSize();
-      // Garantir que os pontos estejam visíveis
-      map.setView([centerLat, centerLng], zoomLevel);
+      try {
+        map.invalidateSize();
+      } catch (e) {
+        console.warn("Erro ao redimensionar mapa:", e);
+      }
     }, 500);
-    
-    // Redimensionar novamente após um tempo maior para garantir renderização completa
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 1000);
   });
 });
 </script>
