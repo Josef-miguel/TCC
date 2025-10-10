@@ -3455,11 +3455,24 @@ ion-icon.xlarge {
     background: var(--card-background);
     border: 1px solid var(--border-light);
     border-radius: 24px;
-    padding: 2rem;
+    padding: 2.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    border-radius: 24px 24px 0 0;
 }
 
 /* Container do avatar */
@@ -3562,6 +3575,78 @@ ion-icon.xlarge {
     flex-shrink: 0;
 }
 
+.profile-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--gradient-primary);
+    color: var(--text-inverted);
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    box-shadow: 0 4px 16px rgba(255, 107, 0, 0.3);
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.profile-edit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 107, 0, 0.4);
+    background: var(--primary-dark);
+    color: var(--text-inverted);
+    text-decoration: none;
+}
+
+.profile-edit-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 16px rgba(255, 107, 0, 0.3);
+}
+
+.profile-edit-btn ion-icon {
+    font-size: 1.2rem;
+}
+
+/* Melhorias específicas para tema claro */
+[data-theme="light"] .profile-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .profile-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .profile-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+}
+
+[data-theme="light"] .profile-name {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+[data-theme="light"] .card-title h3 {
+    color: #1a1a1a;
+    font-weight: 700;
+}
+
+[data-theme="light"] .card-title p {
+    color: #5f6368;
+}
+
+[data-theme="light"] .profile-email {
+    color: #5f6368;
+}
+
 /* Seções do perfil */
 .profile-sections {
     display: grid;
@@ -3574,17 +3659,35 @@ ion-icon.xlarge {
     background: var(--card-background);
     border: 1px solid var(--border-light);
     border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    padding: 1.75rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
     transition: all var(--transition-normal);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .profile-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     border-color: var(--border-highlight);
+}
+
+.profile-card:hover::before {
+    opacity: 1;
 }
 
 /* Card de perigo */
@@ -3601,7 +3704,8 @@ ion-icon.xlarge {
 /* Header do card */
 .card-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 1rem;
     margin-bottom: 1rem;
 }
@@ -3609,19 +3713,27 @@ ion-icon.xlarge {
 .card-icon {
     width: 48px;
     height: 48px;
-    border-radius: 16px;
-    background: var(--gradient-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-inverted);
     font-size: 1.5rem;
-    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+    transition: all 0.3s ease;
 }
 
-.card-icon.danger-icon {
-    background: var(--gradient-secondary);
-    box-shadow: 0 4px 12px rgba(234, 67, 53, 0.3);
+.card-icon ion-icon {
+    color: var(--primary);
+}
+
+.card-icon.danger-icon ion-icon {
+    color: var(--error);
+}
+
+.card-icon:hover ion-icon {
+    transform: scale(1.1);
+}
+
+.card-title {
+    flex: 1;
 }
 
 .card-title h3 {
