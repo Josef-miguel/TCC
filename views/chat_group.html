@@ -11,8 +11,8 @@
                 <ion-icon name="people"></ion-icon>
             </div>
             <div class="chat-group-details">
-                <h3 class="chat-group-name">Grupo de Viagem</h3>
-                <span class="chat-group-members">5 membros online</span>
+                <h3 class="chat-group-name">{{ group_name or 'Grupo de Viagem' }}</h3>
+                <span class="chat-group-members">{{ group_members_count or 0 }} membros</span>
             </div>
         </div>
         <div class="chat-actions">
@@ -21,9 +21,6 @@
             </button>
             <button class="chat-action-btn" onclick="showGroupMembers()">
                 <ion-icon name="people-outline"></ion-icon>
-            </button>
-            <button class="chat-action-btn">
-                <ion-icon name="ellipsis-vertical-outline"></ion-icon>
             </button>
         </div>
     </div>
@@ -75,36 +72,31 @@
         <div class="modal-body">
             <div class="group-info-section">
                 <h4>Nome do Grupo</h4>
-                <p>Grupo de Viagem - Destino Especial</p>
-            </div>
-            <div class="group-info-section">
-                <h4>Descrição</h4>
-                <p>Grupo para planejar nossa próxima aventura juntos!</p>
+                <p>{{ group_name or 'Grupo de Viagem' }}</p>
             </div>
             <div class="group-info-section">
                 <h4>Membros</h4>
+                <p>{{ group_members_count or 0 }} membros no total</p>
                 <div class="members-list">
-                    <div class="member-item">
-                        <div class="member-avatar">
-                            <ion-icon name="person"></ion-icon>
+                    {% if participants %}
+                        {% for participant in participants %}
+                        <div class="member-item">
+                            <div class="member-avatar">
+                                <ion-icon name="person"></ion-icon>
+                            </div>
+                            <span class="member-name">{{ participant.name }}</span>
+                            <span class="member-role">{{ 'Você' if participant.is_current_user else 'Membro' }}</span>
                         </div>
-                        <span class="member-name">Você</span>
-                        <span class="member-role">Admin</span>
-                    </div>
-                    <div class="member-item">
-                        <div class="member-avatar">
-                            <ion-icon name="person"></ion-icon>
+                        {% endfor %}
+                    {% else %}
+                        <div class="member-item">
+                            <div class="member-avatar">
+                                <ion-icon name="person"></ion-icon>
+                            </div>
+                            <span class="member-name">Você</span>
+                            <span class="member-role">Admin</span>
                         </div>
-                        <span class="member-name">João Silva</span>
-                        <span class="member-role">Membro</span>
-                    </div>
-                    <div class="member-item">
-                        <div class="member-avatar">
-                            <ion-icon name="person"></ion-icon>
-                        </div>
-                        <span class="member-name">Maria Santos</span>
-                        <span class="member-role">Membro</span>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -165,43 +157,81 @@
 
   function createGroupMessageElement(message) {
     const msgEl = document.createElement('div');
-    msgEl.className = 'group-message';
-    msgEl.setAttribute('data-message-id', message.id);
+    const isOwnMessage = message.uid_sender === "{{ g.user['uid'] }}";
+    
+    // Processar timestamp corretamente
+    let timestamp, messageTime;
+    if (message.timestamp) {
+      if (message.timestamp._seconds) {
+        // Firestore Timestamp format
+        messageTime = new Date(message.timestamp._seconds * 1000);
+      } else if (typeof message.timestamp === 'string') {
+        messageTime = new Date(message.timestamp);
+      } else if (message.timestamp instanceof Date) {
+        messageTime = message.timestamp;
+      } else {
+        messageTime = new Date();
+      }
+    } else {
+      messageTime = new Date();
+    }
+    
+    // Verificar se a data é válida
+    if (isNaN(messageTime.getTime())) {
+      messageTime = new Date();
+    }
     
     const senderName = message.name || "Usuário";
-    const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    const isOwnMessage = message.uid_sender === "{{ g.user['uid'] }}";
+    const timeString = messageTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const isEdited = message.edited || false;
-    const messageTime = message.timestamp ? new Date(message.timestamp) : new Date();
     const isOldMessage = (Date.now() - messageTime.getTime()) > 3600000; // 1 hora em ms
     
-    const editDeleteButtons = isOwnMessage && !isOldMessage ? `
-      <div class="message-actions">
-        <button class="edit-btn" onclick="editGroupMessage('${message.id}', '${message.text.replace(/'/g, "\\'")}')">
-          <ion-icon name="create-outline"></ion-icon>
-        </button>
-        <button class="delete-btn" onclick="deleteGroupMessage('${message.id}')">
-          <ion-icon name="trash-outline"></ion-icon>
-        </button>
-      </div>
-    ` : '';
+    msgEl.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
+    msgEl.setAttribute('data-message-id', message.id);
     
-    msgEl.innerHTML = `
-      <div class="group-message-content">
-        <div class="group-message-avatar">
-          <ion-icon name="person"></ion-icon>
+    if (isOwnMessage) {
+      const editDeleteButtons = !isOldMessage ? `
+        <div class="message-actions">
+          <button class="edit-btn" onclick="editGroupMessage('${message.id}', '${message.text.replace(/'/g, "\\'")}')">
+            <ion-icon name="create-outline"></ion-icon>
+          </button>
+          <button class="delete-btn" onclick="deleteGroupMessage('${message.id}')">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
         </div>
-        <div class="group-message-bubble">
-          <div class="group-message-header">
-            <span class="group-sender-name">${senderName}</span>
-            <span class="group-message-time">${timestamp}</span>
+      ` : '';
+      
+      msgEl.innerHTML = `
+        <div class="message-content">
+          <div class="message-bubble">
+            <p class="message-text">${message.text}</p>
+            <div class="message-footer">
+              <span class="message-time">${timeString}</span>
+              ${isEdited ? '<span class="edited-indicator">(editado)</span>' : ''}
+            </div>
           </div>
-          <p class="group-message-text">${message.text}</p>
-          ${isEdited ? '<div class="message-footer"><span class="edited-indicator">(editado)</span></div>' : ''}
+          ${editDeleteButtons}
         </div>
-        ${editDeleteButtons}
-      </div>
-    `;
+      `;
+    } else {
+      msgEl.innerHTML = `
+        <div class="message-content">
+          <div class="message-avatar">
+            <ion-icon name="person"></ion-icon>
+          </div>
+          <div class="message-bubble">
+            <div class="message-header">
+              <span class="sender-name">${senderName}</span>
+            </div>
+            <p class="message-text">${message.text}</p>
+            <div class="message-footer">
+              <span class="message-time">${timeString}</span>
+              ${isEdited ? '<span class="edited-indicator">(editado)</span>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
     
     return msgEl;
   }

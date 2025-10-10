@@ -25,7 +25,7 @@
             >
             <button type="button" class="filter-btn" id="filterBtn" aria-label="Abrir filtros">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zM6 13h12v-2H6v2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
             <button type="submit" class="search-btn" aria-label="Pesquisar">
@@ -423,6 +423,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const exitDate = event.exit_date ? new Date(event.exit_date.seconds * 1000) : null;
     const returnDate = event.return_date ? new Date(event.return_date.seconds * 1000) : null;
     
+    // Verificar se o usuário já participa do evento
+    const isParticipating = event.isParticipating || false;
+    
     card.innerHTML = `
       <div class="event-image">
         ${event.images && event.images.length > 0 ? 
@@ -459,7 +462,10 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
         <div class="event-actions">
-          <button class="btn btn-primary" onclick="joinEvent('${event.id}')">Participar</button>
+          ${isParticipating ? 
+            `<button class="btn btn-secondary" onclick="chatGroup('${event.id}')">Falar com o grupo</button>` :
+            `<button class="btn btn-primary" onclick="joinEvent('${event.id}')">Participar</button>`
+          }
           <button class="btn btn-secondary" onclick="viewEvent('${event.id}')">Ver Detalhes</button>
         </div>
       </div>
@@ -693,13 +699,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Funções globais para os botões dos cards
   window.joinEvent = function(eventId) {
-    // Implementar lógica de participar do evento
     console.log('Participar do evento:', eventId);
+    
+    // Criar formulário para enviar requisição POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/join_event';
+    
+    const eventIdInput = document.createElement('input');
+    eventIdInput.type = 'hidden';
+    eventIdInput.name = 'event_id';
+    eventIdInput.value = eventId;
+    
+    form.appendChild(eventIdInput);
+    document.body.appendChild(form);
+    form.submit();
   };
 
   window.viewEvent = function(eventId) {
-    // Implementar lógica de visualizar evento
     console.log('Ver detalhes do evento:', eventId);
+    window.location.href = `/event/${eventId}`;
+  };
+
+  window.chatGroup = function(eventId) {
+    console.log('Falar com o grupo do evento:', eventId);
+    
+    // Criar formulário para enviar requisição POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/chat_group';
+    
+    const eventIdInput = document.createElement('input');
+    eventIdInput.type = 'hidden';
+    eventIdInput.name = 'org_uid';
+    eventIdInput.value = eventId;
+    
+    form.appendChild(eventIdInput);
+    document.body.appendChild(form);
+    form.submit();
   };
 
   // Carregar eventos ao inicializar a página
