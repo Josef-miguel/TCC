@@ -12,7 +12,7 @@
                 <ion-icon name="person"></ion-icon>
             </div>
             <div class="chat-user-details">
-                <h3 class="chat-user-name">Conversa Individual</h3>
+                <h3 class="chat-user-name">{{ other_user_name or 'Conversa Individual' }}</h3>
                 <span class="chat-user-status">Online</span>
             </div>
         </div>
@@ -160,8 +160,8 @@ function createMessageElement(message) {
     return msgEl;
 }
 
-// Enviar mensagem: envia chat_uid em vez de org_uid
-document.getElementById('send-btn').addEventListener('click', async () => {
+// Função para enviar mensagem
+async function sendMessage() {
     const text = document.getElementById('message-input').value;
     if (!text) return;
 
@@ -175,6 +175,17 @@ document.getElementById('send-btn').addEventListener('click', async () => {
     if (!j.success) console.error("Erro ao enviar:", j.message);
     document.getElementById('message-input').value = '';
     fetchMessages();
+}
+
+// Enviar mensagem: envia chat_uid em vez de org_uid
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+
+// Enviar mensagem com Enter
+document.getElementById('message-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+    }
 });
 
 // Função para editar mensagem

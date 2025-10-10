@@ -407,6 +407,7 @@ def init_app(app, db):
                 "text": text,
                 "uid_sender": g.user["uid"],
                 "user_uid": g.user["uid"],
+                "name": f"{g.user.get('name', '')} {g.user.get('surname', '')}".strip() or "Usuário",
                 "read": False,
                 "timestamp": firestore.SERVER_TIMESTAMP,  # usa SERVER_TIMESTAMP para consistência
             }
@@ -437,7 +438,117 @@ def init_app(app, db):
             flash("ID do evento não informado.", "error")
             return redirect(url_for("home"))
         
-        return render_template("chat_group.html", user=g.user, event_id=event_id)
+        # Se o event_id começar com "group_", extrair o ID real do evento
+        if event_id.startswith("group_"):
+            event_id = event_id[6:]  # Remove "group_" do início
+            logger.info(f"ID do grupo extraído: {event_id}")
+        
+        logger.info(f"Processando chat do grupo para evento: {event_id}")
+        
+        # Buscar informações do grupo/evento
+        group_name = "Grupo de Viagem"
+        group_members_count = 0
+        members = []
+        
+        try:
+            logger.info(f"Tentando acessar chat do grupo para evento: {event_id}")
+            
+            # Buscar dados do grupo de chat
+            group_doc = db.collection("chat-group").document(f"group_{event_id}").get()
+            logger.info(f"Grupo de chat existe: {group_doc.exists}")
+            
+            if group_doc.exists:
+                group_data = group_doc.to_dict()
+                group_name = group_data.get("group_name", "Grupo de Viagem")
+                members = group_data.get("members", [])
+                group_members_count = len(members)
+                logger.info(f"Grupo encontrado: {group_name}, membros: {group_members_count}")
+                
+                # Verificar se o usuário atual é membro do grupo
+                if g.user["uid"] not in members:
+                    # Adicionar usuário ao grupo se não for membro
+                    members.append(g.user["uid"])
+                    db.collection("chat-group").document(f"group_{event_id}")\
+                      .update({"members": members})
+                    group_members_count = len(members)
+                    logger.info(f"Usuário adicionado ao grupo. Novo total de membros: {group_members_count}")
+            else:
+                # Grupo não existe, criar um novo
+                logger.info(f"Grupo não existe, buscando evento {event_id}")
+                event_doc = db.collection("events").document(event_id).get()
+                logger.info(f"Evento existe: {event_doc.exists}")
+                
+                if event_doc.exists:
+                    event_data = event_doc.to_dict()
+                    group_name = event_data.get("title", "Grupo de Viagem")
+                    logger.info(f"Evento encontrado: {group_name}")
+                    
+                    # Criar grupo de chat
+                    members = [g.user['uid']]
+                    db.collection("chat-group").document(f"group_{event_id}").set({
+                        "created_at": firestore.SERVER_TIMESTAMP,
+                        "updated_at": firestore.SERVER_TIMESTAMP,
+                        "group_name": group_name,
+                        "id_org": g.user['uid'],
+                        "members": members
+                    })
+                    group_members_count = len(members)
+                    logger.info(f"Grupo de chat criado para evento: {group_name}")
+                else:
+                    logger.warning(f"Evento {event_id} não encontrado na coleção 'events'")
+                    flash("Evento não encontrado.", "error")
+                    return redirect(url_for("home"))
+            
+            # Buscar dados do evento para informações adicionais se ainda não foi feito
+            if not group_name or group_name == "Grupo de Viagem":
+                event_doc = db.collection("events").document(event_id).get()
+                if event_doc.exists:
+                    event_data = event_doc.to_dict()
+                    group_name = event_data.get("title", "Grupo de Viagem")
+                    
+        except Exception as e:
+            logger.warning(f"Erro ao buscar informações do grupo {event_id}: {e}")
+            flash("Erro ao acessar chat do grupo.", "error")
+            return redirect(url_for("home"))
+        
+        # Buscar informações dos participantes
+        participants_info = []
+        try:
+            if group_members_count > 0 and members:
+                # Buscar dados dos participantes
+                for member_uid in members:
+                    try:
+                        member_doc = db.collection("users").document(member_uid).get()
+                        if member_doc.exists:
+                            member_data = member_doc.to_dict()
+                            participants_info.append({
+                                "uid": member_uid,
+                                "name": f"{member_data.get('name', '')} {member_data.get('surname', '')}".strip(),
+                                "is_current_user": member_uid == g.user["uid"]
+                            })
+                        else:
+                            # Fallback para coleção 'user' se 'users' não existir
+                            member_doc = db.collection("user").document(member_uid).get()
+                            if member_doc.exists:
+                                member_data = member_doc.to_dict()
+                                participants_info.append({
+                                    "uid": member_uid,
+                                    "name": f"{member_data.get('name', '')} {member_data.get('surname', '')}".strip(),
+                                    "is_current_user": member_uid == g.user["uid"]
+                                })
+                    except Exception as e:
+                        logger.warning(f"Erro ao buscar dados do participante {member_uid}: {e}")
+                        participants_info.append({
+                            "uid": member_uid,
+                            "name": "Usuário",
+                            "is_current_user": member_uid == g.user["uid"]
+                        })
+        except Exception as e:
+            logger.warning(f"Erro ao buscar participantes: {e}")
+        
+        return render_template("chat_group.html", user=g.user, event_id=event_id, 
+                             group_name=group_name, group_members_count=group_members_count,
+                             participants=participants_info)
     
     
     @app.route("/send_group_message", methods=["POST"])
@@ -459,12 +570,16 @@ def init_app(app, db):
                 "text": text,
                 "timestamp": firestore.SERVER_TIMESTAMP,
                 "uid_sender": g.user["uid"],
-                "name": g.user.get("name", "Anônimo")
+                "name": f"{g.user.get('name', '')} {g.user.get('surname', '')}".strip() or "Usuário"
             }
 
             # Salva mensagem na subcoleção do grupo
             db.collection("chat-group").document(f"group_{event_id}")\
               .collection("messages").add(message_data)
+            
+            # Atualizar timestamp do grupo
+            db.collection("chat-group").document(f"group_{event_id}")\
+              .update({"updated_at": firestore.SERVER_TIMESTAMP})
 
             return jsonify({"success": True})
 
@@ -568,16 +683,48 @@ def init_app(app, db):
                     return redirect(url_for("my_chats"))
                 
                 logger.info(f"Chat individual criado/encontrado: {chat_uid}")
+                
+                # Buscar informações do outro usuário
+                other_user_name = "Usuário"
+                try:
+                    target_user_doc = db.collection("user").document(user_id).get()
+                    if target_user_doc.exists:
+                        target_user_data = target_user_doc.to_dict()
+                        other_user_name = f"{target_user_data.get('name', '')} {target_user_data.get('surname', '')}".strip()
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar dados do usuário {user_id}: {e}")
+                
                 logger.info("Renderizando template chat_individual.html...")
-                return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid)
+                return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid, other_user_name=other_user_name)
             else:
                 # Para POST, usar chat_uid do formulário
                 chat_uid = request.form.get("chat_uid")
                 if not chat_uid:
                     flash("Chat não informado.", "error")
                     return redirect(url_for("my_chats"))
+                
+                # Buscar informações do outro usuário no chat
+                other_user_name = "Usuário"
+                try:
+                    chat_doc = db.collection("chats").document(chat_uid).get()
+                    if chat_doc.exists:
+                        chat_data = chat_doc.to_dict()
+                        participants = chat_data.get("participants", [])
+                        other_user_uid = None
+                        for uid in participants:
+                            if uid != g.user["uid"]:
+                                other_user_uid = uid
+                                break
+                        
+                        if other_user_uid:
+                            other_user_doc = db.collection("user").document(other_user_uid).get()
+                            if other_user_doc.exists:
+                                other_user_data = other_user_doc.to_dict()
+                                other_user_name = f"{other_user_data.get('name', '')} {other_user_data.get('surname', '')}".strip()
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar dados do outro usuário: {e}")
             
-                return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid)
+                return render_template("chat_individual.html", user=g.user, chat_uid=chat_uid, other_user_name=other_user_name)
                 
         except Exception as e:
             logger.exception(f"ERRO GERAL em chat_individual: {e}")
@@ -646,11 +793,129 @@ def init_app(app, db):
             for doc in chats_ref_ind:
                 chat_data = doc.to_dict()
                 chat_data["id"] = doc.id
+                
+                # Buscar informações do outro usuário para chat individual
+                participants = chat_data.get("participants", [])
+                other_user_uid = None
+                for uid in participants:
+                    if uid != g.user["uid"]:
+                        other_user_uid = uid
+                        break
+                
+                if other_user_uid:
+                    try:
+                        other_user_doc = db.collection("user").document(other_user_uid).get()
+                        if other_user_doc.exists:
+                            other_user_data = other_user_doc.to_dict()
+                            chat_data["other_user_name"] = f"{other_user_data.get('name', '')} {other_user_data.get('surname', '')}".strip()
+                            chat_data["other_user_avatar"] = other_user_data.get("profile_image")
+                        else:
+                            chat_data["other_user_name"] = "Usuário"
+                    except Exception as e:
+                        logger.warning(f"Erro ao buscar dados do usuário {other_user_uid}: {e}")
+                        chat_data["other_user_name"] = "Usuário"
+                
+                # Processar data da última mensagem
+                updated_at = chat_data.get("updated_at")
+                if updated_at:
+                    if hasattr(updated_at, 'timestamp'):
+                        # Firestore Timestamp
+                        last_message_time = datetime.fromtimestamp(updated_at.timestamp())
+                    elif isinstance(updated_at, datetime):
+                        last_message_time = updated_at
+                    else:
+                        last_message_time = datetime.now()
+                    
+                    now = datetime.now()
+                    time_diff = now - last_message_time
+                    
+                    if time_diff.total_seconds() < 60:  # Menos de 1 minuto
+                        chat_data["last_message_time"] = "Agora"
+                    elif time_diff.total_seconds() < 3600:  # Menos de 1 hora
+                        minutes = int(time_diff.total_seconds() / 60)
+                        chat_data["last_message_time"] = f"{minutes}min"
+                    elif time_diff.total_seconds() < 86400:  # Menos de 1 dia
+                        hours = int(time_diff.total_seconds() / 3600)
+                        chat_data["last_message_time"] = f"{hours}h"
+                    else:
+                        days = int(time_diff.total_seconds() / 86400)
+                        chat_data["last_message_time"] = f"{days}d"
+                else:
+                    chat_data["last_message_time"] = "Agora"
+                
+                # Buscar a última mensagem do chat individual
+                try:
+                    messages_ref = db.collection("chats").document(doc.id).collection("messages")\
+                        .order_by("timestamp", direction=firestore.Query.DESCENDING)\
+                        .limit(1)
+                    
+                    last_message_docs = list(messages_ref.stream())
+                    if last_message_docs:
+                        last_message_data = last_message_docs[0].to_dict()
+                        chat_data["last_message"] = last_message_data.get("text", "Nenhuma mensagem ainda")
+                    else:
+                        chat_data["last_message"] = "Nenhuma mensagem ainda"
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar última mensagem do chat {doc.id}: {e}")
+                    chat_data["last_message"] = "Nenhuma mensagem ainda"
+                
                 chats_individual.append(chat_data)
                 
             for doc in chats_ref_grp:
                 chat_data = doc.to_dict()
                 chat_data["id"] = doc.id
+                
+                # Processar data da última mensagem para chat em grupo
+                updated_at = chat_data.get("updated_at")
+                if updated_at:
+                    if hasattr(updated_at, 'timestamp'):
+                        # Firestore Timestamp
+                        last_message_time = datetime.fromtimestamp(updated_at.timestamp())
+                    elif isinstance(updated_at, datetime):
+                        last_message_time = updated_at
+                    else:
+                        last_message_time = datetime.now()
+                    
+                    now = datetime.now()
+                    time_diff = now - last_message_time
+                    
+                    if time_diff.total_seconds() < 60:  # Menos de 1 minuto
+                        chat_data["last_message_time"] = "Agora"
+                    elif time_diff.total_seconds() < 3600:  # Menos de 1 hora
+                        minutes = int(time_diff.total_seconds() / 60)
+                        chat_data["last_message_time"] = f"{minutes}min"
+                    elif time_diff.total_seconds() < 86400:  # Menos de 1 dia
+                        hours = int(time_diff.total_seconds() / 3600)
+                        chat_data["last_message_time"] = f"{hours}h"
+                    else:
+                        days = int(time_diff.total_seconds() / 86400)
+                        chat_data["last_message_time"] = f"{days}d"
+                else:
+                    chat_data["last_message_time"] = "Agora"
+                
+                # Buscar a última mensagem do chat em grupo
+                try:
+                    # Extrair event_id do ID do grupo (remover prefixo "group_")
+                    group_id = doc.id
+                    if group_id.startswith("group_"):
+                        event_id = group_id[6:]  # Remove "group_" do início
+                        
+                        messages_ref = db.collection("chat-group").document(group_id).collection("messages")\
+                            .order_by("timestamp", direction=firestore.Query.DESCENDING)\
+                            .limit(1)
+                        
+                        last_message_docs = list(messages_ref.stream())
+                        if last_message_docs:
+                            last_message_data = last_message_docs[0].to_dict()
+                            chat_data["last_message"] = last_message_data.get("text", "Nenhuma mensagem ainda")
+                        else:
+                            chat_data["last_message"] = "Nenhuma mensagem ainda"
+                    else:
+                        chat_data["last_message"] = "Nenhuma mensagem ainda"
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar última mensagem do grupo {doc.id}: {e}")
+                    chat_data["last_message"] = "Nenhuma mensagem ainda"
+                
                 chats_group.append(chat_data)
 
         except Exception as e:
@@ -1051,6 +1316,19 @@ def init_app(app, db):
             for doc in events_docs:
                 event_data = doc.to_dict()
                 event_data['id'] = doc.id
+                
+                # Verificar se o usuário logado já participa deste evento
+                if g.user:
+                    user_ref = db.collection('user').document(g.user['uid'])
+                    user_doc = user_ref.get()
+                    if user_doc.exists:
+                        user_data = user_doc.to_dict()
+                        joined_events = user_data.get('joinedEvents', [])
+                        event_data['isParticipating'] = event_data['id'] in joined_events
+                    else:
+                        event_data['isParticipating'] = False
+                else:
+                    event_data['isParticipating'] = False
                 
                 # Filtrar por tags se especificado
                 if tags:

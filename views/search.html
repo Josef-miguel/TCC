@@ -423,6 +423,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const exitDate = event.exit_date ? new Date(event.exit_date.seconds * 1000) : null;
     const returnDate = event.return_date ? new Date(event.return_date.seconds * 1000) : null;
     
+    // Verificar se o usuário já participa do evento
+    const isParticipating = event.isParticipating || false;
+    
     card.innerHTML = `
       <div class="event-image">
         ${event.images && event.images.length > 0 ? 
@@ -459,7 +462,10 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
         <div class="event-actions">
-          <button class="btn btn-primary" onclick="joinEvent('${event.id}')">Participar</button>
+          ${isParticipating ? 
+            `<button class="btn btn-secondary" onclick="chatGroup('${event.id}')">Falar com o grupo</button>` :
+            `<button class="btn btn-primary" onclick="joinEvent('${event.id}')">Participar</button>`
+          }
           <button class="btn btn-secondary" onclick="viewEvent('${event.id}')">Ver Detalhes</button>
         </div>
       </div>
@@ -693,13 +699,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Funções globais para os botões dos cards
   window.joinEvent = function(eventId) {
-    // Implementar lógica de participar do evento
     console.log('Participar do evento:', eventId);
+    
+    // Criar formulário para enviar requisição POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/join_event';
+    
+    const eventIdInput = document.createElement('input');
+    eventIdInput.type = 'hidden';
+    eventIdInput.name = 'event_id';
+    eventIdInput.value = eventId;
+    
+    form.appendChild(eventIdInput);
+    document.body.appendChild(form);
+    form.submit();
   };
 
   window.viewEvent = function(eventId) {
-    // Implementar lógica de visualizar evento
     console.log('Ver detalhes do evento:', eventId);
+    window.location.href = `/event/${eventId}`;
+  };
+
+  window.chatGroup = function(eventId) {
+    console.log('Falar com o grupo do evento:', eventId);
+    
+    // Criar formulário para enviar requisição POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/chat_group';
+    
+    const eventIdInput = document.createElement('input');
+    eventIdInput.type = 'hidden';
+    eventIdInput.name = 'org_uid';
+    eventIdInput.value = eventId;
+    
+    form.appendChild(eventIdInput);
+    document.body.appendChild(form);
+    form.submit();
   };
 
   // Carregar eventos ao inicializar a página
