@@ -157,10 +157,7 @@
 
   function createGroupMessageElement(message) {
     const msgEl = document.createElement('div');
-    msgEl.className = 'group-message';
-    msgEl.setAttribute('data-message-id', message.id);
-    
-    const senderName = message.name || "Usuário";
+    const isOwnMessage = message.uid_sender === "{{ g.user['uid'] }}";
     
     // Processar timestamp corretamente
     let timestamp, messageTime;
@@ -184,38 +181,57 @@
       messageTime = new Date();
     }
     
-    timestamp = messageTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    const isOwnMessage = message.uid_sender === "{{ g.user['uid'] }}";
+    const senderName = message.name || "Usuário";
+    const timeString = messageTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const isEdited = message.edited || false;
     const isOldMessage = (Date.now() - messageTime.getTime()) > 3600000; // 1 hora em ms
     
-    const editDeleteButtons = isOwnMessage && !isOldMessage ? `
-      <div class="message-actions">
-        <button class="edit-btn" onclick="editGroupMessage('${message.id}', '${message.text.replace(/'/g, "\\'")}')">
-          <ion-icon name="create-outline"></ion-icon>
-        </button>
-        <button class="delete-btn" onclick="deleteGroupMessage('${message.id}')">
-          <ion-icon name="trash-outline"></ion-icon>
-        </button>
-      </div>
-    ` : '';
+    msgEl.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
+    msgEl.setAttribute('data-message-id', message.id);
     
-    msgEl.innerHTML = `
-      <div class="group-message-content">
-        <div class="group-message-avatar">
-          <ion-icon name="person"></ion-icon>
+    if (isOwnMessage) {
+      const editDeleteButtons = !isOldMessage ? `
+        <div class="message-actions">
+          <button class="edit-btn" onclick="editGroupMessage('${message.id}', '${message.text.replace(/'/g, "\\'")}')">
+            <ion-icon name="create-outline"></ion-icon>
+          </button>
+          <button class="delete-btn" onclick="deleteGroupMessage('${message.id}')">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
         </div>
-        <div class="group-message-bubble">
-          <div class="group-message-header">
-            <span class="group-sender-name">${senderName}</span>
-            <span class="group-message-time">${timestamp}</span>
+      ` : '';
+      
+      msgEl.innerHTML = `
+        <div class="message-content">
+          <div class="message-bubble">
+            <p class="message-text">${message.text}</p>
+            <div class="message-footer">
+              <span class="message-time">${timeString}</span>
+              ${isEdited ? '<span class="edited-indicator">(editado)</span>' : ''}
+            </div>
           </div>
-          <p class="group-message-text">${message.text}</p>
-          ${isEdited ? '<div class="message-footer"><span class="edited-indicator">(editado)</span></div>' : ''}
+          ${editDeleteButtons}
         </div>
-        ${editDeleteButtons}
-      </div>
-    `;
+      `;
+    } else {
+      msgEl.innerHTML = `
+        <div class="message-content">
+          <div class="message-avatar">
+            <ion-icon name="person"></ion-icon>
+          </div>
+          <div class="message-bubble">
+            <div class="message-header">
+              <span class="sender-name">${senderName}</span>
+            </div>
+            <p class="message-text">${message.text}</p>
+            <div class="message-footer">
+              <span class="message-time">${timeString}</span>
+              ${isEdited ? '<span class="edited-indicator">(editado)</span>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
     
     return msgEl;
   }
