@@ -1,0 +1,214 @@
+/* Corporate UI - Complementary styles scoped to .corporate-ui
+   Goal: modern, professional desktop-first visuals without overriding global styles.
+   Scope every rule with .corporate-ui to avoid intrusive overrides. */
+
+/* =============================
+   Foundation & Variables (scoped)
+============================= */
+.corporate-ui {
+  --corp-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --corp-text: var(--text-primary);
+  --corp-text-muted: var(--text-secondary);
+  --corp-border: var(--border);
+  --corp-surface: var(--background-secondary);
+  --corp-surface-2: var(--background);
+  --corp-elev-1: var(--shadow-sm);
+  --corp-elev-2: var(--shadow-md);
+  --corp-primary: var(--primary);
+  --corp-primary-strong: var(--primary-dark);
+}
+
+/* =============================
+   Typography & Hierarchy
+============================= */
+.corporate-ui h1,
+.corporate-ui h2,
+.corporate-ui h3,
+.corporate-ui h4,
+.corporate-ui h5,
+.corporate-ui h6 {
+  font-family: var(--corp-font);
+  letter-spacing: -0.01em;
+  color: var(--corp-text);
+}
+
+/* Desktop-first sizes */
+@media (min-width: 1024px) {
+  .corporate-ui h1 { font-weight: 800; font-size: 2.25rem; line-height: 1.2; }
+  .corporate-ui h2 { font-weight: 700; font-size: 1.75rem; line-height: 1.25; }
+  .corporate-ui h3 { font-weight: 700; font-size: 1.375rem; line-height: 1.3; }
+}
+
+.corporate-ui p { color: var(--corp-text); }
+.corporate-ui .text-muted-strong { color: var(--corp-text-muted); font-weight: 500; }
+
+/* Content width helpers */
+.corporate-ui .container-xl {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Vertical rhythm helpers */
+.corporate-ui .stack-sm > * + * { margin-top: 0.5rem; }
+.corporate-ui .stack-md > * + * { margin-top: 1rem; }
+.corporate-ui .stack-lg > * + * { margin-top: 1.5rem; }
+.corporate-ui .stack-xl > * + * { margin-top: 2rem; }
+
+/* Spacing utilities (limited set) */
+.corporate-ui .mt-24 { margin-top: 1.5rem; }
+.corporate-ui .mb-24 { margin-bottom: 1.5rem; }
+.corporate-ui .pt-24 { padding-top: 1.5rem; }
+.corporate-ui .pb-24 { padding-bottom: 1.5rem; }
+
+/* =============================
+   Sections & Surfaces
+============================= */
+.corporate-ui .corp-section {
+  background: var(--corp-surface);
+  border: 1px solid var(--corp-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: var(--corp-elev-1);
+}
+
+@media (min-width: 1024px) {
+  .corporate-ui .corp-section { padding: 1.75rem; }
+}
+
+.corporate-ui .corp-card {
+  background: var(--corp-surface-2);
+  border: 1px solid var(--corp-border);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: var(--corp-elev-1);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+.corporate-ui .corp-card:hover { box-shadow: var(--corp-elev-2); transform: translateY(-2px); }
+
+/* KPI blocks */
+.corporate-ui .corp-kpis { display: grid; gap: 1rem; }
+@media (min-width: 1200px) { .corporate-ui .corp-kpis { grid-template-columns: repeat(4, 1fr); } }
+.corporate-ui .corp-kpi {
+  background: var(--corp-surface-2);
+  border: 1px solid var(--corp-border);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+}
+.corporate-ui .corp-kpi .label { color: var(--corp-text-muted); font-size: 0.875rem; }
+.corporate-ui .corp-kpi .value { font-size: 1.625rem; font-weight: 800; }
+
+/* =============================
+   Main content layout
+============================= */
+.corporate-ui main .container, /* reuse if used */
+.corporate-ui main .container-xl {
+  max-width: 1200px;
+}
+
+.corporate-ui main > .container, 
+.corporate-ui main > .container-xl {
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+/* Subtle hr separators */
+.corporate-ui hr { border: 0; height: 1px; background: var(--border-light); opacity: 0.6; }
+
+/* =============================
+   Tables (opt-in)
+============================= */
+.corporate-ui .corp-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--corp-surface-2);
+  border: 1px solid var(--corp-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.corporate-ui .corp-table thead th {
+  text-align: left;
+  background: var(--background-hover);
+  color: var(--corp-text);
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+}
+.corporate-ui .corp-table tbody td { padding: 0.75rem 1rem; border-top: 1px solid var(--corp-border); }
+.corporate-ui .corp-table tbody tr:hover { background: var(--background-hover); }
+
+/* =============================
+   Forms (opt-in)
+============================= */
+.corporate-ui .corp-form .form-field { margin-bottom: 1rem; }
+.corporate-ui .corp-form label { font-weight: 600; color: var(--corp-text); display: inline-block; margin-bottom: 0.4rem; }
+.corporate-ui .corp-form input,
+.corporate-ui .corp-form select,
+.corporate-ui .corp-form textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--corp-border);
+  border-radius: 10px;
+  background: var(--corp-surface-2);
+  color: var(--corp-text);
+}
+.corporate-ui .corp-form input:focus,
+.corporate-ui .corp-form select:focus,
+.corporate-ui .corp-form textarea:focus {
+  outline: 2px solid var(--border-focus);
+  border-color: var(--border-highlight);
+}
+
+/* =============================
+   Buttons (opt-in)
+============================= */
+.corporate-ui .btn-primary-corp {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: var(--gradient-primary);
+  color: var(--text-inverted);
+  border: 0; border-radius: 12px;
+  padding: 0.7rem 1rem; font-weight: 700;
+  box-shadow: var(--corp-elev-1);
+}
+.corporate-ui .btn-primary-corp:hover { filter: brightness(1.05); box-shadow: var(--corp-elev-2); transform: translateY(-1px); }
+.corporate-ui .btn-primary-corp:focus { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+/* =============================
+   Flash messages
+============================= */
+.corporate-ui .flash-messages { 
+  display: grid; gap: 0.75rem; 
+  margin: 0.75rem auto; max-width: 960px; padding: 0 1rem;
+}
+.corporate-ui .flash {
+  border: 1px solid var(--corp-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  box-shadow: var(--corp-elev-1);
+}
+.corporate-ui .flash.success { background: var(--success-light); color: var(--corp-text); border-color: rgba(52,168,83,.35); }
+.corporate-ui .flash.error { background: var(--error-light); color: var(--corp-text); border-color: rgba(234,67,53,.35); }
+.corporate-ui .flash.warning { background: var(--warning-light); color: var(--corp-text); border-color: rgba(251,188,4,.35); }
+.corporate-ui .flash.info { background: var(--info-light); color: var(--corp-text); border-color: rgba(66,133,244,.35); }
+
+/* =============================
+   Header subtle refinements (scoped)
+============================= */
+/* Only spacing tweaks to complement existing header visuals */
+.corporate-ui header .header-content { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+@media (min-width: 1200px) {
+  .corporate-ui .brand-name { letter-spacing: -0.02em; }
+  .corporate-ui .search-bar { max-width: 780px; }
+}
+
+/* =============================
+   Sidebar spacing tweaks (scoped)
+============================= */
+.corporate-ui .sidebar-nav { gap: 0.4rem; }
+.corporate-ui .sidebar-link { margin-bottom: 0.35rem; }
+
+/* =============================
+   Footer cleanup (scoped)
+============================= */
+.corporate-ui footer { color: var(--text-secondary); }

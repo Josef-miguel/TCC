@@ -4007,7 +4007,7 @@ ion-icon.xlarge {
 .post-category {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #FFD700;
+    color: var(--primary);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
@@ -6554,7 +6554,6 @@ ion-icon.xlarge {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.5rem;
-    background: var(--background-tertiary);
     border-bottom: 1px solid var(--border-light);
 }
 
@@ -6933,7 +6932,6 @@ ion-icon.xlarge {
     align-items: center;
     gap: 1rem;
     padding: 1rem 1.5rem;
-    background: var(--background-tertiary);
     border-top: 1px solid var(--border-light);
 }
 

@@ -7,6 +7,8 @@
 
   <!-- CSS global -->
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <!-- CSS complementar corporativo (não intrusivo) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='corporate.css') }}">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 
   <!-- Tipografia: Inter (var) para visual premium -->
@@ -20,7 +22,7 @@
 
   {% block head %}{% endblock %}
 </head>
-<body{% if request.endpoint in ['login', 'register'] %} class="auth-page"{% endif %}>
+<body class="corporate-ui{% if request.endpoint in ['login', 'register'] %} auth-page{% endif %}">
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-messages">
@@ -76,13 +78,6 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2"/>
           </svg>
         </button>
-        <a href="{{ url_for('search') }}" class="nav-link filter-link" aria-label="Filtros">
-          <div class="filter-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </a>
         <a href="{{ url_for('perfil') }}" class="nav-link profile-link" aria-label="Perfil">
           {% if g.user and g.user.profileImage %}
             <img class="profile-avatar" src="{{ g.user.profileImage }}" alt="Avatar">
@@ -92,7 +87,7 @@
             </div>
           {% endif %}
         </a>
-      </nav>
+      </nav>  
     </div>
   </header>
 
