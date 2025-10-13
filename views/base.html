@@ -9,6 +9,11 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 
+  <!-- Tipografia: Inter (var) para visual premium -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
   <!-- Ionicons v4 -->
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
@@ -28,7 +33,7 @@
   {% endif %}
 {% endwith %}
 
-  <header>
+  <header class="nav-glass">
     <div class="container header-content">
       <div class="brand">
         <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menu lateral" aria-controls="appSidebar" aria-expanded="false">
@@ -36,11 +41,15 @@
             <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
+        <a href="{{ url_for('home') }}">
         <div class="logo-placeholder">
           <img src="{{ url_for('static', filename='img/JSGlogo.png') }}" class="logo-img logo-light" alt="Logo" id="logoLight">
           <img src="{{ url_for('static', filename='img/JSGlogo-dark.png') }}" class="logo-img logo-dark" alt="Logo" id="logoDark">
         </div>
+        </a>
+        <a href="{{ url_for('home') }}">
         <span class="brand-name">JustSetGo</span>
+        </a>
       </div>
       <div class="search-container">
         <form class="search-bar" id="headerSearchForm" role="search" aria-label="Pesquisar">
