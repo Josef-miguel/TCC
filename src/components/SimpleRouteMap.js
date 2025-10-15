@@ -2,10 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import SimpleMap from './SimpleMap';
+import axios from 'axios';
 
 const SimpleRouteMap = ({ 
   startCoordinate, 
   endCoordinate, 
+  routeCoordinates = [],
   height = 200,
   style = {},
   onRouteCalculated = null
@@ -14,6 +16,53 @@ const SimpleRouteMap = ({
   const [mapHtml, setMapHtml] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [useFallback, setUseFallback] = useState(false);
+  const [calculatedRoute, setCalculatedRoute] = useState([]);
+
+  // Função para calcular rota usando OpenRouteService
+  const calculateRoute = async (startCoord, endCoord) => {
+    try {
+      const response = await axios.post(
+        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+        {
+          coordinates: [
+            [startCoord.longitude, startCoord.latitude],
+            [endCoord.longitude, endCoord.latitude],
+          ],
+        },
+        {
+          headers: {
+            Authorization: '5b3ce3597851110001cf6248391ebde1fc8d4266ab1f2b4264a64558',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      // Usar todas as coordenadas da rota para criar um traço contínuo
+      const allCoords = response.data.features[0].geometry.coordinates;
+      const fullRoute = allCoords.map(coord => ({
+        latitude: coord[1],
+        longitude: coord[0]
+      }));
+
+      setCalculatedRoute(fullRoute);
+      
+      // Notificar componente pai se callback foi fornecido
+      if (onRouteCalculated) {
+        onRouteCalculated(fullRoute);
+      }
+
+      return fullRoute;
+    } catch (error) {
+      console.log('Erro ao calcular rota:', error);
+      // Em caso de erro, usar linha reta entre os pontos
+      const fallbackRoute = [startCoord, endCoord];
+      setCalculatedRoute(fallbackRoute);
+      if (onRouteCalculated) {
+        onRouteCalculated(fallbackRoute);
+      }
+      return fallbackRoute;
+    }
+  };
 
   const generateMapHTML = () => {
     const startLat = startCoordinate?.latitude || -23.55052;
@@ -21,12 +70,8 @@ const SimpleRouteMap = ({
     const endLat = endCoordinate?.latitude;
     const endLng = endCoordinate?.longitude;
 
-    // Rota simplificada: apenas linha reta entre início e fim
-    const routeCoords = [];
-    if (startLat && startLng && endLat && endLng) {
-      routeCoords.push([startLat, startLng]);
-      routeCoords.push([endLat, endLng]);
-    }
+    // Usar coordenadas calculadas ou as fornecidas
+    const routeCoords = (calculatedRoute.length > 0 ? calculatedRoute : []).map(coord => [coord.latitude, coord.longitude]);
 
     return `
       <!DOCTYPE html>
@@ -112,8 +157,8 @@ const SimpleRouteMap = ({
                     endMarker.bindPopup('Destino');
                   ` : ''}
                   
-                  // Adicionar linha reta entre os pontos
-                  ${routeCoords.length === 2 ? `
+                  // Adicionar rota contínua se existir
+                  ${routeCoords.length > 0 ? `
                     const routeLine = L.polyline(${JSON.stringify(routeCoords)}, {
                       color: '#f37100',
                       weight: 4,
@@ -144,13 +189,24 @@ const SimpleRouteMap = ({
 
   useEffect(() => {
     setMapHtml(generateMapHTML());
-    
-    // Notificar rota calculada (linha reta)
-    if (startCoordinate && endCoordinate && onRouteCalculated) {
-      const simpleRoute = [startCoordinate, endCoordinate];
-      onRouteCalculated(simpleRoute);
+  }, [startCoordinate, endCoordinate, calculatedRoute]);
+
+  // Usar coordenadas fornecidas ou calcular rota automaticamente
+  useEffect(() => {
+    if (startCoordinate && endCoordinate) {
+      // Se há coordenadas fornecidas, usar elas
+      if (routeCoordinates && routeCoordinates.length > 0) {
+        console.log('Usando coordenadas fornecidas:', routeCoordinates.length, 'pontos');
+        setCalculatedRoute(routeCoordinates);
+        if (onRouteCalculated) {
+          onRouteCalculated(routeCoordinates);
+        }
+      } else if (calculatedRoute.length === 0) {
+        // Se não há coordenadas fornecidas, calcular nova rota
+        calculateRoute(startCoordinate, endCoordinate);
+      }
     }
-  }, [startCoordinate, endCoordinate]);
+  }, [startCoordinate, endCoordinate, routeCoordinates]);
 
   const handleLoadEnd = () => {
     setIsLoading(false);
@@ -168,7 +224,7 @@ const SimpleRouteMap = ({
       <SimpleMap
         startCoordinate={startCoordinate}
         endCoordinate={endCoordinate}
-        routeCoordinates={startCoordinate && endCoordinate ? [startCoordinate, endCoordinate] : []}
+        routeCoordinates={calculatedRoute.length > 0 ? calculatedRoute : (startCoordinate && endCoordinate ? [startCoordinate, endCoordinate] : [])}
         height={height}
         style={style}
         theme={{ primary: "#f37100", textPrimary: "#000", textSecondary: "#666", textTertiary: "#aaa", border: "#ddd" }}

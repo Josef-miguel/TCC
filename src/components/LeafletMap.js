@@ -18,9 +18,42 @@ const LeafletMap = ({
   const [useFallback, setUseFallback] = useState(false);
   const [calculatedRoute, setCalculatedRoute] = useState(routeCoordinates);
 
-  // Função para calcular rota usando OpenRouteService (apenas início e fim)
-  const calculateRoute = async (startCoord, endCoord) => {
+  // Função para validar coordenadas
+  const validateCoordinates = (startCoord, endCoord) => {
+    if (!startCoord || !endCoord) {
+      throw new Error('Coordenadas de início ou fim não fornecidas');
+    }
+
+    if (!startCoord.latitude || !startCoord.longitude || 
+        !endCoord.latitude || !endCoord.longitude) {
+      throw new Error('Coordenadas incompletas');
+    }
+
+    // Verificar se as coordenadas são válidas
+    if (startCoord.latitude < -90 || startCoord.latitude > 90 ||
+        startCoord.longitude < -180 || startCoord.longitude > 180 ||
+        endCoord.latitude < -90 || endCoord.latitude > 90 ||
+        endCoord.longitude < -180 || endCoord.longitude > 180) {
+      throw new Error('Coordenadas fora dos limites válidos');
+    }
+
+    // Verificar se os pontos são diferentes
+    if (Math.abs(startCoord.latitude - endCoord.latitude) < 0.0001 &&
+        Math.abs(startCoord.longitude - endCoord.longitude) < 0.0001) {
+      throw new Error('Pontos de início e fim são muito próximos');
+    }
+
+    return true;
+  };
+
+  // Função para calcular rota usando OpenRouteService com retry
+  const calculateRoute = async (startCoord, endCoord, retryCount = 0) => {
     try {
+      // Validar coordenadas
+      validateCoordinates(startCoord, endCoord);
+      
+      console.log(`Calculando rota (tentativa ${retryCount + 1}) entre:`, startCoord, 'e', endCoord);
+
       const response = await axios.post(
         'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
         {
@@ -28,39 +61,56 @@ const LeafletMap = ({
             [startCoord.longitude, startCoord.latitude],
             [endCoord.longitude, endCoord.latitude],
           ],
+          format: 'geojson',
+          options: {
+            avoid_features: [],
+            avoid_borders: 'none',
+            avoid_countries: [],
+            avoid_polygons: []
+          }
         },
         {
           headers: {
-            Authorization: '5b3ce3597851110001cf6248391ebde1fc8d4266ab1f2b4264a64558',
+            'Authorization': '5b3ce3597851110001cf6248391ebde1fc8d4266ab1f2b4264a64558',
             'Content-Type': 'application/json',
+            'User-Agent': 'JSG-TCC-App/1.0'
           },
+          timeout: 15000
         }
       );
 
-      // Pegar apenas o primeiro e último ponto da rota
-      const allCoords = response.data.features[0].geometry.coordinates;
-      const simplifiedRoute = [
-        {
-          latitude: allCoords[0][1], // Primeiro ponto (latitude)
-          longitude: allCoords[0][0] // Primeiro ponto (longitude)
-        },
-        {
-          latitude: allCoords[allCoords.length - 1][1], // Último ponto (latitude)
-          longitude: allCoords[allCoords.length - 1][0] // Último ponto (longitude)
-        }
-      ];
+      if (!response.data || !response.data.features || response.data.features.length === 0) {
+        throw new Error('Resposta OpenRouteService inválida');
+      }
 
-      setCalculatedRoute(simplifiedRoute);
+      // Usar todas as coordenadas da rota para criar um traço contínuo
+      const allCoords = response.data.features[0].geometry.coordinates;
+      const fullRoute = allCoords.map(coord => ({
+        latitude: coord[1],
+        longitude: coord[0]
+      }));
+
+      console.log('Rota calculada com sucesso:', fullRoute.length, 'pontos');
+      setCalculatedRoute(fullRoute);
       
       // Notificar componente pai se callback foi fornecido
       if (onRouteCalculated) {
-        onRouteCalculated(simplifiedRoute);
+        onRouteCalculated(fullRoute);
       }
 
-      return simplifiedRoute;
+      return fullRoute;
     } catch (error) {
-      console.log('Erro ao calcular rota:', error);
-      // Em caso de erro, usar linha reta entre os pontos
+      console.log('Erro ao calcular rota:', error.message);
+      
+      // Se ainda não tentou 3 vezes, tentar novamente
+      if (retryCount < 2) {
+        console.log(`Tentando novamente em 2 segundos... (${retryCount + 1}/3)`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return calculateRoute(startCoord, endCoord, retryCount + 1);
+      }
+      
+      // Em caso de erro após todas as tentativas, usar linha reta entre os pontos
+      console.log('Usando linha reta como fallback após todas as tentativas');
       const fallbackRoute = [startCoord, endCoord];
       setCalculatedRoute(fallbackRoute);
       if (onRouteCalculated) {
@@ -167,7 +217,7 @@ const LeafletMap = ({
                     endMarker.bindPopup('Destino');
                   ` : ''}
                   
-                  // Adicionar rota se existir
+                  // Adicionar rota contínua se existir
                   ${routeCoords.length > 0 ? `
                     const routeLine = L.polyline(${JSON.stringify(routeCoords)}, {
                       color: '#f37100',

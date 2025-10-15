@@ -22,6 +22,7 @@ import { textStyles, spacing, borderRadius, shadows } from '../../styles/typogra
 
 import SimpleRouteMap from '../../components/SimpleRouteMap';
 import RouteInfo from '../../components/RouteInfo';
+import PlaceSearch from '../../components/PlaceSearch';
 
 import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 import { db } from '../../../services/firebase'
@@ -49,6 +50,7 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState('');
+  const [selectedPlaceType, setSelectedPlaceType] = useState('start'); // 'start' ou 'end'
 
   const tripTypes = [
     { id: 1, label: 'VIAGEM', icon: 'airplane' },
@@ -68,7 +70,31 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
     setRouteCoords([]);
     setTags([]);
     setNewTag("");
+    setSelectedPlaceType('start');
   }
+
+  // Função para lidar com seleção de lugar
+  const handlePlaceSelect = (place) => {
+    const coordinate = {
+      latitude: place.latitude,
+      longitude: place.longitude,
+      name: place.name.split(',')[0], // Nome simplificado
+      fullAddress: place.name
+    };
+
+    if (selectedPlaceType === 'start') {
+      setMapStart(coordinate);
+    } else {
+      setMapEnd(coordinate);
+    }
+
+    showMessage({
+      message: "Local selecionado!",
+      description: `${selectedPlaceType === 'start' ? 'Ponto de partida' : 'Destino'}: ${coordinate.name}`,
+      type: "success",
+      duration: 2000,
+    });
+  };
 
   // Funções para gerenciar tags
   const addTag = () => {
@@ -534,9 +560,107 @@ const CreatePost = ({ modalVisible, setModalVisible }) => {
                 Rota da Viagem *
               </Text>
               
+              {/* Interface de Busca de Lugares */}
+              <View style={styles.searchSection}>
+                <Text style={[styles.searchLabel, { color: theme?.textSecondary }]}>
+                  Buscar lugares para marcar no mapa
+                </Text>
+                
+                {/* Botões para selecionar tipo de lugar */}
+                <View style={styles.placeTypeButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.placeTypeButton,
+                      { backgroundColor: theme?.background, borderColor: theme?.border },
+                      selectedPlaceType === 'start' && { backgroundColor: theme?.primary, borderColor: theme?.primary }
+                    ]}
+                    onPress={() => setSelectedPlaceType('start')}
+                  >
+                    <Ionicons 
+                      name="play-circle" 
+                      size={16} 
+                      color={selectedPlaceType === 'start' ? theme?.textInverted : theme?.primary} 
+                    />
+                    <Text style={[
+                      styles.placeTypeText,
+                      { color: selectedPlaceType === 'start' ? theme?.textInverted : theme?.textPrimary }
+                    ]}>
+                      Ponto de Partida
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.placeTypeButton,
+                      { backgroundColor: theme?.background, borderColor: theme?.border },
+                      selectedPlaceType === 'end' && { backgroundColor: theme?.primary, borderColor: theme?.primary }
+                    ]}
+                    onPress={() => setSelectedPlaceType('end')}
+                  >
+                    <Ionicons 
+                      name="flag" 
+                      size={16} 
+                      color={selectedPlaceType === 'end' ? theme?.textInverted : theme?.primary} 
+                    />
+                    <Text style={[
+                      styles.placeTypeText,
+                      { color: selectedPlaceType === 'end' ? theme?.textInverted : theme?.textPrimary }
+                    ]}>
+                      Destino
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Componente de busca */}
+                <PlaceSearch
+                  onPlaceSelect={handlePlaceSelect}
+                  placeholder={`Buscar ${selectedPlaceType === 'start' ? 'ponto de partida' : 'destino'}...`}
+                  theme={theme}
+                  style={styles.placeSearch}
+                />
+
+                {/* Mostrar lugares selecionados */}
+                <View style={styles.selectedPlaces}>
+                  {mapStart && (
+                    <View style={[styles.selectedPlace, { backgroundColor: theme?.backgroundSecondary }]}>
+                      <Ionicons name="play-circle" size={16} color={theme?.primary} />
+                      <View style={styles.selectedPlaceInfo}>
+                        <Text style={[styles.selectedPlaceLabel, { color: theme?.textSecondary }]}>
+                          Partida:
+                        </Text>
+                        <Text style={[styles.selectedPlaceName, { color: theme?.textPrimary }]}>
+                          {mapStart.name}
+                        </Text>
+                      </View>
+                      <TouchableOpacity onPress={() => setMapStart(null)}>
+                        <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  
+                  {mapEnd && (
+                    <View style={[styles.selectedPlace, { backgroundColor: theme?.backgroundSecondary }]}>
+                      <Ionicons name="flag" size={16} color={theme?.primary} />
+                      <View style={styles.selectedPlaceInfo}>
+                        <Text style={[styles.selectedPlaceLabel, { color: theme?.textSecondary }]}>
+                          Destino:
+                        </Text>
+                        <Text style={[styles.selectedPlaceName, { color: theme?.textPrimary }]}>
+                          {mapEnd.name}
+                        </Text>
+                      </View>
+                      <TouchableOpacity onPress={() => setMapEnd(null)}>
+                        <Ionicons name="close-circle" size={20} color={theme?.textTertiary} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </View>
+              
               <SimpleRouteMap
                 startCoordinate={mapStart}
                 endCoordinate={mapEnd}
+                routeCoordinates={routeCoords}
                 height={200}
                 onRouteCalculated={setRouteCoords}
                 theme={theme}
@@ -832,6 +956,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 14,
+  },
+  // Estilos para busca de lugares
+  searchSection: {
+    marginBottom: 16,
+  },
+  searchLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  placeTypeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  placeTypeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+  },
+  placeTypeText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  placeSearch: {
+    marginBottom: 12,
+  },
+  selectedPlaces: {
+    gap: 8,
+  },
+  selectedPlace: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    gap: 12,
+  },
+  selectedPlaceInfo: {
+    flex: 1,
+  },
+  selectedPlaceLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  selectedPlaceName: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

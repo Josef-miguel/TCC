@@ -493,6 +493,7 @@ const PostScreen = ({
                   <SimpleRouteMap
                     startCoordinate={selectedPost.route.start}
                     endCoordinate={selectedPost.route.end}
+                    routeCoordinates={selectedPost.route.coordinates || []}
                     height={200}
                   />
                 </View>
