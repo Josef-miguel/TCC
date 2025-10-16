@@ -95,11 +95,11 @@
 
             <!-- Botões de ação -->
             <div class="card-actions-bottom">
-              <button class="btn btn-primary">
+              <a href="{{url_for('event_detail', event_id=vacation.id)}}" class="btn btn-primary">
                 <ion-icon name="eye"></ion-icon>
-                Ver Detalhes
-              </button>
-              <button class="btn btn-secondary">
+                Ver detalhes
+              </a>
+              <button class="btn btn-secondary" onclick="shareEvent()">
                 <ion-icon name="share"></ion-icon>
                 Compartilhar
               </button>
@@ -131,6 +131,22 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+  function shareEvent() {
+  if (navigator.share) {
+    navigator.share({
+      title: document.querySelector('.card-title').textContent,
+      text: 'Confira esta viagem incrível!',
+      url: window.location.href
+    });
+  } else {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      alert('Link copiado para a área de transferência!');
+    });
+  }
+}
+</script>
+
 <style>
 /* ============================
    Página de Favoritos
