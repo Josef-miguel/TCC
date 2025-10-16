@@ -44,22 +44,26 @@
                       <!-- Header/Categoria -->
                       <div class="post-header">
                         <span class="post-category">Participando</span>
-                        <span class="post-type">Viagem</span>
+                                  <div class="rating-section">
+                                    <div class="fire-rating" id="fire-rating-{{ vacation.id }}">
+                                      <ion-icon name="{% if vacation.favoriteCount and vacation.favoriteCount > 0 %}flame{% else %}flame-outline{% endif %}" class="fire-icon"></ion-icon>
+                                      <span class="rating-count" id="rating-count-{{ vacation.id }}">{{ vacation.favoriteCount or 0 }}</span>
+                                    </div>
+                                    {% if user %}
+                                      {% for joined_event_id in user.joinedEvents %}  
+                                        {% if joined_event_id == vacation.id %}
+                                          <div class="participation-text">
+                                            <span>Você está participando</span>
+                                          </div>
+                                        {% endif %}
+                                      {% endfor %}
+                                    {% endif %}
+                                  </div>
                       </div>
 
                       <!-- Destino com Rating -->
                       <div class="post-destination">
                         <h2 class="post-title">{{ vacation.title }}</h2>
-                        <div class="post-rating">
-                          <span class="stars">
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                          </span>
-                          <span class="rating-value">4.9</span>
-                        </div>
                       </div>
 
                       <!-- Resumo da Viagem -->
@@ -94,8 +98,7 @@
 
                       <!-- Botões de Ação -->
                       <div class="post-actions">
-                        <button class="action-btn primary">Rota</button>
-                        <button class="action-btn secondary">Planejar</button>
+                          <a href="{{url_for('event_detail', event_id=vacation.id)}}" class="action-btn btn-primary">Ver mais detalhes</a>
                         <form action="{{url_for('chat_group')}}" method="post" style="display: inline;">
                           <input type="hidden" name="org_uid" value="{{ vacation.id }}">
                           <button class="action-btn icon" type="submit"><ion-icon name="chatbubbles"></ion-icon></button>
@@ -158,16 +161,6 @@
                       <!-- Destino com Rating -->
                       <div class="post-destination">
                         <h2 class="post-title">{{ vacation.title }}</h2>
-                        <div class="post-rating">
-                          <span class="stars">
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                            <ion-icon name="star"></ion-icon>
-                          </span>
-                          <span class="rating-value">4.9</span>
-                        </div>
                       </div>
 
                       <!-- Resumo da Viagem -->
@@ -202,7 +195,7 @@
 
                       <!-- Botões de Ação -->
                       <div class="post-actions">
-                        <button class="action-btn primary">Rota</button>
+                        <button class="action-btn secondary">Ver mais detalhes</button>
                         <a href="{{ url_for('edit_post', event_id=vacation.id) }}" class="action-btn secondary">Editar Evento</a>
                         <form action="{{url_for('chat_group')}}" method="post" style="display: inline;">
                           <input type="hidden" name="org_uid" value="{{ vacation.id }}">

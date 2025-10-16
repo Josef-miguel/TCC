@@ -41,6 +41,11 @@ def init_app(app, db):
             flash('Erro ao carregar eventos. Tente novamente.', 'error')
             return render_template('landing_page.html', events=[])
 
+
+    @app.route("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for('landing_page'))
     
     @app.route("/login", methods=["GET","POST"])
     def login():

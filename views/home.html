@@ -226,7 +226,7 @@
           {% for events in user.joinedEvents %}
             {% if events == event.id %}
             <div class="participation-status">
-              <form action="{{url_for('chat_group')}}" method="post">
+              <form action="{{url_for('chat_group')}}" method="post" style="width: 100%; display: flex; justify-content: center;">
                 <input type="hidden" name="org_uid" value="{{ event.id }}">
                 <button class="btn btn-secondary">Falar com o grupo</button>
               </form>

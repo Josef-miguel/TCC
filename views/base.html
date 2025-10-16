@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% block title %}Meu Site{% endblock %}</title>
+  <title>{% block title %}Just Set Go!{% endblock %}</title>
+  <link rel="shortcut icon" href="{{url_for('static', filename='img/favicon.ico')}}" type="image/x-icon">
 
   <!-- CSS global -->
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <!-- CSS complementar corporativo (não intrusivo) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='corporate.css') }}">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 
   <!-- Tipografia: Inter (var) para visual premium -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -121,10 +121,6 @@
       <a href="{{ url_for('my_chats') }}" class="sidebar-link">
         <ion-icon name="chatbubbles-outline"></ion-icon>
         <span>Meus Chats</span>
-      </a>
-      <a href="{{ url_for('perfil') }}" class="sidebar-link">
-        <ion-icon name="person-outline"></ion-icon>
-        <span>Perfil</span>
       </a>
     </nav>
   </aside>
