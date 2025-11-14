@@ -83,7 +83,7 @@
             <img class="profile-avatar" src="{{ g.user.profileImage }}" alt="Avatar">
           {% else %}
             <div class="profile-avatar-placeholder">
-              <ion-icon name="person-outline"></ion-icon>
+               <ion-icon name="person-outline"></ion-icon>
             </div>
           {% endif %}
         </a>
@@ -103,17 +103,9 @@
   <!-- Sidebar -->
   <aside class="sidebar" id="appSidebar" aria-hidden="true">
     <div class="sidebar-header">
-      <button class="sidebar-close" id="sidebarClose" aria-label="Fechar menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
+    
     </div>
     <nav class="sidebar-nav">
-      <a href="{{ url_for('home') }}" class="sidebar-link">
-        <ion-icon name="home-outline"></ion-icon>
-        <span>Início</span>
-      </a>
       <a href="{{ url_for('agenda') }}" class="sidebar-link">
         <ion-icon name="calendar-outline"></ion-icon>
         <span>Agenda</span>

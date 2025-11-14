@@ -278,6 +278,10 @@ a:focus {
     transform: rotate(15deg);
 }
 
+.icon-inner {
+    min-height: 1000px;
+}
+
 /* Ícones do tema */
 .theme-icon {
     display: block;
@@ -419,6 +423,7 @@ header .container {
     align-items: center;
     padding: 1rem 0;
     gap: 1rem;
+    min-height: 7vh;
 }
 
 /* Logo e marca modernizados */
@@ -878,7 +883,6 @@ footer {
     justify-content: space-between;
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
 }
 
 
