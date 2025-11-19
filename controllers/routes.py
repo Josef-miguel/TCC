@@ -2307,6 +2307,7 @@ def init_app(app, db):
                     'favoriteCount': firestore.Increment(-1)
                 })
                 action = "removed"
+                
             else:
                 # Adicionar aos favoritos
                 favorite_posts.append(event_id)
@@ -2322,13 +2323,13 @@ def init_app(app, db):
                 'favoritePosts': favorite_posts
             })
             
+            
             return jsonify({
                 "success": True,
                 "action": action,
                 "is_favorited": not is_favorited,
                 "message": f"Evento {'adicionado aos' if action == 'added' else 'removido dos'} favoritos"
             })
-            
         except Exception as e:
             logger.exception(f"Erro ao alterar favorito: {e}")
             return jsonify({"success": False, "message": "Erro ao alterar favorito"}), 500

@@ -31,11 +31,6 @@
             
             <!-- Overlay escuro -->
             <div class="card-overlay"></div>
-            
-            <!-- Badge de favorito -->
-            <div class="favorite-badge">
-              <ion-icon name="heart"></ion-icon>
-            </div>
           </div>
 
           <!-- Conteúdo do card -->
@@ -44,9 +39,11 @@
             <div class="card-header">
               <span class="card-category">Viagem Favorita</span>
               <div class="card-actions">
-                <button class="action-btn remove-favorite" title="Remover dos favoritos">
+                <form action="{{url_for('toggle_favorite', event_id=vacation.id)}}" method="post">
+                  <button class="action-btn remove-favorite" title="Remover dos favoritos">
                   <ion-icon name="heart-dislike"></ion-icon>
                 </button>
+                </form>
               </div>
             </div>
 
