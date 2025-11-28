@@ -30,22 +30,22 @@
             {% endif %}
             
             <!-- Overlay escuro -->
-            <div class="card-overlay"></div>
           </div>
 
           <!-- Conteúdo do card -->
           <div class="card-content">
             <!-- Header do card -->
             <div class="card-header">
-              <span class="card-category">Viagem Favorita</span>
-              <div class="card-actions">
+            <span class="card-category">Viagem favorita</span>
+            <div class="card-actions">
                 <form action="{{url_for('toggle_favorite', event_id=vacation.id)}}" method="post">
-                  <button class="action-btn remove-favorite" title="Remover dos favoritos">
+                  <button class="action-btn remove-favorite" title="Remover dos favoritos" type="button" data-event-id="{{ vacation.id }}">
                   <ion-icon name="heart-dislike"></ion-icon>
                 </button>
                 </form>
-              </div>
             </div>
+          </div>
+
 
             <!-- Título e descrição -->
             <div class="card-main">
@@ -92,7 +92,7 @@
 
             <!-- Botões de ação -->
             <div class="card-actions-bottom">
-              <a href="{{url_for('event_detail', event_id=vacation.id)}}" class="btn btn-primary">
+              <a href="{{ url_for('event_detail', event_id=vacation.id) }}" class="btn btn-primary">
                 <ion-icon name="eye"></ion-icon>
                 Ver detalhes
               </a>
@@ -104,23 +104,6 @@
           </div>
         </div>
         {% endfor %}
-      </div>
-    {% else %}
-      <!-- Estado vazio -->
-      <div class="empty-state">
-        <div class="empty-icon">
-          <ion-icon name="heart-outline"></ion-icon>
-        </div>
-        <h3 class="empty-title">Nenhuma viagem favoritada</h3>
-        <p class="empty-description">
-          Você ainda não favoritou nenhuma viagem. Explore as opções disponíveis e salve suas favoritas para acessá-las facilmente depois.
-        </p>
-        <div class="empty-actions">
-          <a href="{{ url_for('home') }}" class="btn btn-primary">
-            <ion-icon name="search"></ion-icon>
-            Explorar Viagens
-          </a>
-        </div>
       </div>
     {% endif %}
   </div>
@@ -144,11 +127,44 @@
 }
 </script>
 
-<style>
-/* ============================
-   Página de Favoritos
-============================ */
+<script>
+// Remover favorito via API e atualizar UI sem abrir JSON
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.remove-favorite').forEach(function(btn) {
+    btn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      if (btn.disabled) return;
+      const eventId = btn.getAttribute('data-event-id');
+      if (!eventId) return;
 
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/favorites/${eventId}`, { method: 'POST' });
+        const data = await res.json().catch(() => null);
+
+        if (res.ok && data && data.success) {
+          const card = btn.closest('.favorite-card');
+          if (card) card.remove();
+
+          const grid = document.querySelector('.favorites-grid');
+          if (grid && grid.children.length === 0) {
+            window.location.reload();
+          }
+        } else {
+          alert((data && data.message) || 'Erro ao remover dos favoritos.');
+        }
+      } catch (err) {
+        console.error('Erro ao desfavoritar:', err);
+        alert('Erro ao remover dos favoritos.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+});
+</script>
+
+<style>
 .favorites-container {
   max-width: 1200px;
   margin: 0 auto;

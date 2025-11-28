@@ -327,6 +327,52 @@
         });
       }
     })();
+
+    // Comentários: intercepta o toggle para usar a classe 'active' (compatível com o CSS)
+    (function() {
+      // Ajusta ícone inicial conforme o estado da seção
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.toggle-comments-btn').forEach(function(btn) {
+          const eventId = btn.getAttribute('data-event-id');
+          const section = document.getElementById(`comments-section-${eventId}`);
+          const icon = btn.querySelector('ion-icon');
+          if (section && icon) {
+            if (section.classList.contains('active')) {
+              icon.name = 'chevron-up-outline';
+            } else {
+              icon.name = 'chevron-down-outline';
+            }
+            // Sincroniza acessibilidade
+            btn.setAttribute('aria-expanded', section.classList.contains('active') ? 'true' : 'false');
+          }
+        });
+      });
+
+      // Captura o clique antes de outros handlers para evitar conflito com lógicas antigas
+      document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.toggle-comments-btn');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const eventId = btn.getAttribute('data-event-id');
+        const section = document.getElementById(`comments-section-${eventId}`);
+        const icon = btn.querySelector('ion-icon');
+        if (!section) return;
+
+        const isActive = section.classList.contains('active');
+        if (isActive) {
+          section.classList.remove('active');
+          if (icon) icon.name = 'chevron-down-outline';
+          btn.setAttribute('aria-expanded', 'false');
+        } else {
+          section.classList.add('active');
+          if (icon) icon.name = 'chevron-up-outline';
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      }, true);
+    })();
   </script>
-</body>
-</html>
+  </body>
+  </html>
