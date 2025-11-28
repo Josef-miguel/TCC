@@ -2056,13 +2056,18 @@ def init_app(app, db):
                 'favoritePosts': favorite_posts
             })
             
-            
-            return jsonify({
+            response = {
                 "success": True,
                 "action": action,
                 "is_favorited": not is_favorited,
-                "message": f"Evento {'adicionado aos' if action == 'added' else 'removido dos'} favoritos"
-            })
+                "message": f"Evento {'adicionado' if action=='added' else 'removido'} dos favoritos"
+            }
+            
+            if request.args.get("from") == "favorites" and action == "removed":
+                response["redirect"] = "/favorites"
+            
+            return jsonify(response)
+        
         except Exception as e:
             logger.exception(f"Erro ao alterar favorito: {e}")
             return jsonify({"success": False, "message": "Erro ao alterar favorito"}), 500

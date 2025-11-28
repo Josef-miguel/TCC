@@ -1,5 +1,4 @@
 from flask import Flask, session, g
-# from models.database import db, Usuario
 from controllers import routes
 import firebase_admin
 from firebase_admin import credentials, firestore

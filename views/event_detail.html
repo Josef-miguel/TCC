@@ -199,12 +199,14 @@
             {% endif %}
 
             <!-- Lista de Comentários -->
-            <div class="comments-list" id="comments-list-{{ event.id }}">
-              <div class="comments-loading" id="comments-loading-{{ event.id }}">
-                <div class="loading-spinner"></div>
-                <span>Carregando avaliações...</span>
-              </div>
+            <div class="comments-loading" id="comments-loading-{{ event.id }}">
+              <div class="loading-spinner"></div>
+              <span>Carregando avaliações...</span>
             </div>
+
+            <div class="comments-list" id="comments-list-{{ event.id }}">
+            </div>
+
           </div>
         </div>
       </div>
@@ -380,7 +382,8 @@ document.addEventListener("DOMContentLoaded", () => {
   
   function toggleComments(eventId) {
     const section = document.getElementById(`comments-section-${eventId}`);
-    const btn = document.querySelector(`[data-event-id="${eventId}"].toggle-comments-btn`);
+    const btn = document.querySelector(`.toggle-comments-btn[data-event-id="${eventId}"]`);
+
     const icon = btn.querySelector('ion-icon');
     
     if (section.style.display === 'none') {
@@ -393,38 +396,46 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   async function loadComments(eventId) {
-    const loadingElement = document.getElementById(`comments-loading-${eventId}`);
-    const listElement = document.getElementById(`comments-list-${eventId}`);
-    
-    loadingElement.style.display = 'flex';
-    
-    try {
-      const response = await fetch(`/api/comments/${eventId}?page=1&limit=10`);
-      const data = await response.json();
-      
-      if (data.success) {
-        listElement.innerHTML = '';
-        loadingElement.style.display = 'none';
-        
-        if (data.comments.length === 0) {
-          listElement.innerHTML = `
-            <div class="comments-empty">
-              <ion-icon name="chatbubble-outline"></ion-icon>
-              <h4>Nenhuma avaliação ainda</h4>
-              <p>Seja o primeiro a avaliar esta viagem!</p>
-            </div>
-          `;
-        } else {
-          data.comments.forEach(comment => {
-            listElement.appendChild(createCommentElement(comment));
-          });
-        }
+  const loadingElement = document.getElementById(`comments-loading-${eventId}`);
+  const listElement = document.getElementById(`comments-list-${eventId}`);
+
+  // Mostra o loading
+  loadingElement.style.display = 'flex';
+  listElement.style.display = 'none';
+
+  try {
+    const response = await fetch(`/api/comments/${eventId}?page=1&limit=10`);
+    const data = await response.json();
+
+    console.log("Resposta da API:", data);
+
+    // Some com o loading
+    loadingElement.style.display = 'none';
+    listElement.style.display = 'block';
+    listElement.innerHTML = '';
+
+    if (data.success) {
+      if (data.comments.length === 0) {
+        listElement.innerHTML = `
+          <div class="comments-empty">
+            <ion-icon name="chatbubble-outline"></ion-icon>
+            <h4>Nenhuma avaliação ainda</h4>
+            <p>Seja o primeiro a avaliar esta viagem!</p>
+          </div>
+        `;
+      } else {
+        data.comments.forEach(comment => {
+          listElement.appendChild(createCommentElement(comment));
+        });
       }
-    } catch (error) {
-      console.error('Erro ao carregar comentários:', error);
-      loadingElement.style.display = 'none';
     }
+
+  } catch (error) {
+    console.error("Erro ao carregar comentários:", error);
+    loadingElement.style.display = 'none';
   }
+}
+
   
   function createCommentElement(comment) {
     const div = document.createElement('div');
@@ -448,7 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   async function submitComment(eventId) {
     const input = document.getElementById(`comment-input-${eventId}`);
-    const submitBtn = document.querySelector(`[data-event-id="${eventId}"].comment-submit-btn`);
+    const submitBtn = document.querySelector(`.comment-submit-btn[data-event-id="${eventId}"]`);
     const texto = input.value.trim();
     
     if (!texto) return;
